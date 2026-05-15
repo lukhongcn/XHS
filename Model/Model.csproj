@@ -35,8 +35,10 @@
     <Compile Include="CheryCheckRecordRequest.cs" />
     <Compile Include="CheryScanDisplayRow.cs" />
     <Compile Include="CheryUploadInfo.cs" />
+    <Compile Include="Label\LabelInfo.cs" />
     <Compile Include="PackingDetailInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

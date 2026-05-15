@@ -56,6 +56,10 @@
       <Project>{0567035C-F4A7-4386-B738-6A763F970BC8}</Project>
       <Name>CheryPortHelp</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LabelHelp\LabelHelp.csproj">
+      <Project>{ed812210-62ab-4107-8d77-edbaaabeffe3}</Project>
+      <Name>LabelHelp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
       <Name>Model</Name>

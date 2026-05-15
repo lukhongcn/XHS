@@ -1,4 +1,9 @@
-using System;
+﻿using System;
+using Model.Label;
+using LabelHelp.Services;
+using LabelHelp.Enums;
+using System.Diagnostics;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -16,6 +21,7 @@ namespace CheryCheckSystem.WinForms
         private Button btnUpload;
         private Button btnTestUpload;
         private Button btnTestHaiXingYun;
+        private Button btnPrintOuterBoxLabel;
         private GroupBox grpResult;
         private DataGridView dgvResult;
         private StatusStrip statusStrip;
@@ -35,6 +41,7 @@ namespace CheryCheckSystem.WinForms
             btnUpload = new Button();
             btnTestUpload = new Button();
             btnTestHaiXingYun = new Button();
+            btnPrintOuterBoxLabel = new Button();
             grpResult = new GroupBox();
             dgvResult = new DataGridView();
             statusStrip = new StatusStrip();
@@ -60,35 +67,43 @@ namespace CheryCheckSystem.WinForms
             txtScanCode.Name = "txtScanCode";
             txtScanCode.Font = new Font("Microsoft YaHei UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 134);
             txtScanCode.Location = new Point(95, 17);
-            txtScanCode.Width = 500;
+            txtScanCode.Width = 420;
             txtScanCode.KeyDown += TxtScanCode_KeyDown;
 
             btnUpload.Name = "btnUpload";
             btnUpload.Text = "上传接口";
             btnUpload.AutoSize = true;
-            btnUpload.Location = new Point(620, 17);
+            btnUpload.Location = new Point(530, 17);
             btnUpload.Padding = new Padding(10, 4, 10, 4);
             btnUpload.Click += BtnUpload_Click;
 
             btnTestUpload.Name = "btnTestUpload";
             btnTestUpload.Text = "测试连接/上传";
             btnTestUpload.AutoSize = true;
-            btnTestUpload.Location = new Point(730, 17);
+            btnTestUpload.Location = new Point(635, 17);
             btnTestUpload.Padding = new Padding(10, 4, 10, 4);
             btnTestUpload.Click += BtnTestUpload_Click;
 
             btnTestHaiXingYun.Name = "btnTestHaiXingYun";
             btnTestHaiXingYun.Text = "海行云连接测试";
             btnTestHaiXingYun.AutoSize = true;
-            btnTestHaiXingYun.Location = new Point(875, 17);
+            btnTestHaiXingYun.Location = new Point(780, 17);
             btnTestHaiXingYun.Padding = new Padding(10, 4, 10, 4);
             btnTestHaiXingYun.Click += BtnTestHaiXingYun_Click;
+
+            btnPrintOuterBoxLabel.Name = "btnPrintOuterBoxLabel";
+            btnPrintOuterBoxLabel.Text = "打印外箱标签";
+            btnPrintOuterBoxLabel.AutoSize = true;
+            btnPrintOuterBoxLabel.Location = new Point(930, 17);
+            btnPrintOuterBoxLabel.Padding = new Padding(10, 4, 10, 4);
+            btnPrintOuterBoxLabel.Click += BtnPrintOuterBoxLabel_Click;
 
             pnlTop.Controls.Add(lblScanCodeTitle);
             pnlTop.Controls.Add(txtScanCode);
             pnlTop.Controls.Add(btnUpload);
             pnlTop.Controls.Add(btnTestUpload);
             pnlTop.Controls.Add(btnTestHaiXingYun);
+            pnlTop.Controls.Add(btnPrintOuterBoxLabel);
 
             grpResult.Name = "grpResult";
             grpResult.Text = "扫描与接口结果";
@@ -223,6 +238,149 @@ namespace CheryCheckSystem.WinForms
 
                 lblStatus.Text = "上传异常：" + ex.Message;
             }
+        }
+
+
+
+        private void BtnPrintOuterBoxLabel_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                lblStatus.Text = "正在生成外箱标签PDF...";
+
+                var uploadService = new BLL.CheryUpload();
+
+                // 外箱标签打印内容来源：
+                // 与测试上传中 var uploadInfo = uploadService.CreateUploadInfo(); 保持一致。
+                var uploadInfo = uploadService.CreateUploadInfo();
+
+                // ================================
+                // 包装箱标签二维码规则
+                // ================================
+                // 客户资料中的包装箱标签二维码内容格式为：
+                // 10#零件号$11#供应商代码$17#包装数量$18#发运批次$19#码放层数$20#生产日期$
+                //
+                // 对应关系：
+                // 10# = uploadInfo.MaterialNo      零件号
+                // 11# = supplierCode               供应商代码
+                // 17# = uploadInfo.PackingCount    包装数量
+                // 18# = lotNo                      发运批次 / 供货批次
+                // 19# = layerCount                 码放层数
+                // 20# = PackingDate yyyyMMdd       生产日期
+                //
+                // 注意：
+                // CheryUploadInfo 目前没有单独的 SupplierCode、LayerCount、ShippingLotNo 字段。
+                // 所以下面三个值暂时用常量/现有字段代替。
+                // 正式上线前建议确认：
+                // 1. supplierCode 是否应从 App.config 读取 Chery.SupplNo；
+                // 2. lotNo 是否等于 DeliveryNo，还是另有“发运批次/销售批次”字段；
+                // 3. layerCount 是否固定为 1，还是由业务录入/计算。
+                string supplierCode = "8KN";
+                string layerCount = "1";
+                string lotNo = uploadInfo.DeliveryNo;
+
+                string produceDateText = uploadInfo.PackingDate.HasValue
+                    ? uploadInfo.PackingDate.Value.ToString("yyyy-MM-dd")
+                    : "";
+
+                string produceDateQr = uploadInfo.PackingDate.HasValue
+                    ? uploadInfo.PackingDate.Value.ToString("yyyyMMdd")
+                    : "";
+
+                string checkDateText = uploadInfo.CheckTime.HasValue
+                    ? uploadInfo.CheckTime.Value.ToString("yyyy-MM-dd")
+                    : "";
+
+                string qrContent = BuildOuterBoxQrContent(
+                    uploadInfo.MaterialNo,
+                    supplierCode,
+                    uploadInfo.PackingCount,
+                    lotNo,
+                    layerCount,
+                    produceDateQr);
+
+                var labelInfo = new LabelInfo
+                {
+                    SupplierName = "",
+                    SupplierCode = supplierCode,
+                    PartNo = uploadInfo.MaterialNo,
+                    PartName = uploadInfo.MaterialName,
+                    Qty = uploadInfo.PackingCount,
+                    LotNo = lotNo,
+                    LayerCount = layerCount,
+                    ProduceDate = produceDateText,
+                    CheckDate = checkDateText,
+                    MaterialCode = uploadInfo.PackageName,
+                    SerialNo = uploadInfo.PackageBarCode,
+
+                    // 二维码内容不要放整个 uploadInfo，也不要直接使用 PackageBarCode。
+                    // 根据客户包装箱标签资料，二维码必须按固定项号规则拼接。
+                    QrContent = qrContent
+                };
+
+                var service = new LabelPrintService();
+                string pdfPath = service.Generate(
+                    new List<LabelInfo> { labelInfo },
+                    LabelTemplateType.TableLabel,
+                    LabelPrintMode.A4Pdf);
+
+                MessageBox.Show(
+                    "外箱标签PDF已生成：" + Environment.NewLine +
+                    pdfPath + Environment.NewLine + Environment.NewLine +
+                    "二维码内容：" + Environment.NewLine +
+                    qrContent,
+                    "打印外箱标签",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                lblStatus.Text = "外箱标签PDF已生成：" + pdfPath;
+
+                try
+                {
+                    Process.Start(pdfPath);
+                }
+                catch
+                {
+                    // 某些环境可能不允许自动打开，忽略即可。
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "生成外箱标签PDF异常：" + ex.Message,
+                    "错误",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
+                lblStatus.Text = "生成外箱标签PDF异常：" + ex.Message;
+            }
+        }
+
+        /// <summary>
+        /// 生成包装箱标签二维码内容。
+        /// 格式：
+        /// 10#零件号$11#供应商代码$17#包装数量$18#发运批次$19#码放层数$20#生产日期$
+        /// </summary>
+        private static string BuildOuterBoxQrContent(
+            string materialNo,
+            string supplierCode,
+            string packingCount,
+            string lotNo,
+            string layerCount,
+            string produceDate)
+        {
+            return
+                "10#" + SafeValue(materialNo) + "$" +
+                "11#" + SafeValue(supplierCode) + "$" +
+                "17#" + SafeValue(packingCount) + "$" +
+                "18#" + SafeValue(lotNo) + "$" +
+                "19#" + SafeValue(layerCount) + "$" +
+                "20#" + SafeValue(produceDate) + "$";
+        }
+
+        private static string SafeValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "" : value.Trim();
         }
 
         private void BtnTestHaiXingYun_Click(object sender, EventArgs e)

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <appSettings>
+    <!-- 单张标签尺寸，单位 mm -->
+    <add key="Label.Width" value="100" />
+    <add key="Label.Height" value="60" />
+
+    <!-- A4 拼版设置，单位 mm -->
+    <add key="Label.A4.PageWidth" value="210" />
+    <add key="Label.A4.PageHeight" value="297" />
+    <add key="Label.A4.MarginLeft" value="5" />
+    <add key="Label.A4.MarginTop" value="10" />
+    <add key="Label.A4.Columns" value="2" />
+    <add key="Label.A4.Rows" value="4" />
+    <add key="Label.A4.ColumnGap" value="0" />
+    <add key="Label.A4.RowGap" value="5" />
+
+    <!-- 字体设置 -->
+    <add key="Label.FontName" value="Microsoft YaHei" />
+    <add key="Label.TitleFontSize" value="8" />
+    <add key="Label.ValueFontSize" value="9" />
+
+    <!-- 模板目录和输出目录 -->
+    <add key="Label.TemplateFolder" value="Templates" />
+    <add key="Label.OutputFolder" value="Output" />
+  </appSettings>
+</configuration>
