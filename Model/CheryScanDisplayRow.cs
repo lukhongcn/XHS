@@ -20,5 +20,7 @@ namespace Model
         public string UploadStatus { get; set; }
         public string ReturnCode { get; set; }
         public string ReturnMsg { get; set; }
+        public string UploadContent { get; set; }
+        public string ResponseContent { get; set; }
     }
 }
