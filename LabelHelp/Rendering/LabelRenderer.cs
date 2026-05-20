@@ -66,7 +66,7 @@ namespace LabelHelp.Rendering
             float leftColWidth = 30f;
             float middleColWidth = 40f;
             float rightColWidth = tableWidth - leftColWidth - middleColWidth;
-            float rowHeight = tableHeight / 8f;
+            float rowHeight = tableHeight / 9f;
 
             float col1X = tableX;
             float col2X = tableX + leftColWidth;
@@ -91,7 +91,7 @@ namespace LabelHelp.Rendering
                 graphics.DrawLine(innerPen, col3X, tableY + rowHeight * 3f, col3X, tableBottom);
 
                 // 横线
-                for (int i = 1; i <= 7; i++)
+                for (int i = 1; i <= 8; i++)
                 {
                     float lineY = tableY + rowHeight * i;
 
@@ -124,14 +124,18 @@ namespace LabelHelp.Rendering
                 DrawText(graphics, "供货批次号(LOT NO.)", titleFont, textBrush, textX1, tableY + rowHeight * 4 + textOffsetY);
                 DrawText(graphics, Safe(info.LotNo), valueFont, textBrush, textX2, tableY + rowHeight * 4 + textOffsetY);
 
+                // 外箱标签这里按要求：先显示码放层数，再显示生产日期。
                 DrawText(graphics, "码放层数", titleFont, textBrush, textX1, tableY + rowHeight * 5 + textOffsetY);
                 DrawText(graphics, Safe(info.LayerCount), valueFont, textBrush, textX2, tableY + rowHeight * 5 + textOffsetY);
 
                 DrawText(graphics, "生产日期", titleFont, textBrush, textX1, tableY + rowHeight * 6 + textOffsetY);
                 DrawText(graphics, Safe(info.ProduceDate), valueFont, textBrush, textX2, tableY + rowHeight * 6 + textOffsetY);
 
-                DrawText(graphics, "检验确认/日期", titleFont, textBrush, textX1, tableY + rowHeight * 7 + textOffsetY);
-                DrawText(graphics, Safe(info.CheckDate), valueFont, textBrush, textX2, tableY + rowHeight * 7 + textOffsetY);
+                DrawText(graphics, "箱数", titleFont, textBrush, textX1, tableY + rowHeight * 7 + textOffsetY);
+                DrawText(graphics, Safe(info.BoxCount), valueFont, textBrush, textX2, tableY + rowHeight * 7 + textOffsetY);
+
+                DrawText(graphics, "检验确认日期", titleFont, textBrush, textX1, tableY + rowHeight * 8 + textOffsetY);
+                DrawText(graphics, Safe(info.CheckConfirmDate), valueFont, textBrush, textX2, tableY + rowHeight * 8 + textOffsetY);
 
                 // 二维码
                 string qrContent = new QrCodeGenerator().BuildDefaultQrContent(info);

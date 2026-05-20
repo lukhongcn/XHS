@@ -33,12 +33,12 @@ namespace BLL
                 // 后续正式使用时，把下面这些字段替换成扫码、Excel 或 MES 中取得的数据。
                 ScanCode = "10#WL008$11#8KK$31#TEST001$",
 
-                DeliveryNo = "DEL202403210001",
+                DeliveryNo = "1020MO-CS07260506",
                 SxCardSeq = "SX202403210001-1-1",
 
-                MaterialNo = "MAT001",
-                MaterialName = "螺丝M4x10",
-                PackingCount = "100",
+                MaterialNo = "202004114AA",
+                MaterialName = "后下控制臂总成",
+                PackingCount = "120",
 
                 // packageType：
                 // 1 = 标准装箱，箱码和零件码绑定
@@ -50,11 +50,11 @@ namespace BLL
                 PackageType = 1,
 
                 PackageBarCode = "10#WL008$11#8KK$31#TEST001$",
-                PackageCode = "BOX-01",
+                PackageCode = "ZF700300180",
                 PackageName = "外包装箱",
 
-                PackingDate = now,
-                CheckTime = now,
+                PackingDate = Convert.ToDateTime("2026-05-06 10:12:53"),
+                CheckTime = Convert.ToDateTime("2026-05-06 10:12:53"),
                 CheckUserName = Environment.UserName,
 
                 // ================================
@@ -66,20 +66,21 @@ namespace BLL
                 {
                     new PackingDetailInfo
                     {
-                        materialBarCode = "MT202403210001",
-                        materialNo = "MAT001",
-                        materialName = "螺丝M4x10",
+                        materialBarCode = "SKD1296626050604039",
+                        materialNo = "202004114AA",
+                        materialName = "后下控制臂总成",
                         createTime = now.AddMinutes(-5).ToString("yyyy-MM-dd HH:mm:ss"),
                         createName = Environment.UserName
-                    },
-                    new PackingDetailInfo
-                    {
-                        materialBarCode = "MT202403210002",
-                        materialNo = "MAT001",
-                        materialName = "螺丝M4x10",
-                        createTime = now.AddMinutes(-3).ToString("yyyy-MM-dd HH:mm:ss"),
-                        createName = Environment.UserName
                     }
+                    //},
+                    //new PackingDetailInfo
+                    //{
+                    //    materialBarCode = "MT202403210002",
+                    //    materialNo = "MAT001",
+                    //    materialName = "螺丝M4x10",
+                    //    createTime = now.AddMinutes(-3).ToString("yyyy-MM-dd HH:mm:ss"),
+                    //    createName = Environment.UserName
+                    //}
                 }
             };
 

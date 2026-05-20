@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Model.Label;
 using LabelHelp.Services;
 using LabelHelp.Enums;
@@ -15,13 +15,19 @@ namespace CheryCheckSystem.WinForms
     public class MainForm : Form
     {
         private readonly BindingList<CheryScanDisplayRow> _rows = new BindingList<CheryScanDisplayRow>();
+        private readonly Dictionary<string, TextBox> _labelInfoTextBoxes = new Dictionary<string, TextBox>();
+        private readonly Dictionary<string, DateTimeEditor> _labelInfoDateEditors = new Dictionary<string, DateTimeEditor>();
+
         private Panel pnlTop;
         private Label lblScanCodeTitle;
         private TextBox txtScanCode;
+        private FlowLayoutPanel pnlButtons;
         private Button btnUpload;
         private Button btnTestUpload;
         private Button btnTestHaiXingYun;
         private Button btnPrintOuterBoxLabel;
+        private GroupBox grpLabelInfo;
+        private TableLayoutPanel tblLabelInfo;
         private GroupBox grpResult;
         private DataGridView dgvResult;
         private StatusStrip statusStrip;
@@ -38,10 +44,13 @@ namespace CheryCheckSystem.WinForms
             pnlTop = new Panel();
             lblScanCodeTitle = new Label();
             txtScanCode = new TextBox();
+            pnlButtons = new FlowLayoutPanel();
             btnUpload = new Button();
             btnTestUpload = new Button();
             btnTestHaiXingYun = new Button();
             btnPrintOuterBoxLabel = new Button();
+            grpLabelInfo = new GroupBox();
+            tblLabelInfo = new TableLayoutPanel();
             grpResult = new GroupBox();
             dgvResult = new DataGridView();
             statusStrip = new StatusStrip();
@@ -52,61 +61,106 @@ namespace CheryCheckSystem.WinForms
             Text = "奇瑞防错漏系统";
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1200, 700);
-            MinimumSize = new Size(1000, 600);
+            Size = new Size(1200, 760);
+            MinimumSize = new Size(1000, 650);
             MaximizeBox = true;
 
             pnlTop.Dock = DockStyle.Top;
-            pnlTop.Height = 70;
+            pnlTop.Height = 120;
             pnlTop.Padding = new Padding(12);
 
             lblScanCodeTitle.AutoSize = true;
-            lblScanCodeTitle.Location = new Point(12, 24);
+            lblScanCodeTitle.Location = new Point(12, 20);
             lblScanCodeTitle.Text = "扫描条码：";
 
             txtScanCode.Name = "txtScanCode";
             txtScanCode.Font = new Font("Microsoft YaHei UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 134);
-            txtScanCode.Location = new Point(95, 17);
-            txtScanCode.Width = 420;
-            txtScanCode.KeyDown += TxtScanCode_KeyDown;
+            txtScanCode.Location = new Point(95, 12);
+            txtScanCode.Width = 1075;
+            txtScanCode.Height = 40;
+            txtScanCode.Multiline = true;
+            txtScanCode.AcceptsReturn = true;
+            txtScanCode.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtScanCode.TextChanged += TxtScanCode_TextChanged;
+
+            pnlButtons.Location = new Point(95, 62);
+            pnlButtons.Size = new Size(1075, 38);
+            pnlButtons.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            pnlButtons.WrapContents = true;
+            pnlButtons.FlowDirection = FlowDirection.LeftToRight;
+            pnlButtons.Margin = new Padding(0);
 
             btnUpload.Name = "btnUpload";
             btnUpload.Text = "上传接口";
             btnUpload.AutoSize = true;
-            btnUpload.Location = new Point(530, 17);
             btnUpload.Padding = new Padding(10, 4, 10, 4);
             btnUpload.Click += BtnUpload_Click;
 
             btnTestUpload.Name = "btnTestUpload";
             btnTestUpload.Text = "测试连接/上传";
             btnTestUpload.AutoSize = true;
-            btnTestUpload.Location = new Point(635, 17);
             btnTestUpload.Padding = new Padding(10, 4, 10, 4);
             btnTestUpload.Click += BtnTestUpload_Click;
 
             btnTestHaiXingYun.Name = "btnTestHaiXingYun";
             btnTestHaiXingYun.Text = "海行云连接测试";
             btnTestHaiXingYun.AutoSize = true;
-            btnTestHaiXingYun.Location = new Point(780, 17);
             btnTestHaiXingYun.Padding = new Padding(10, 4, 10, 4);
             btnTestHaiXingYun.Click += BtnTestHaiXingYun_Click;
 
             btnPrintOuterBoxLabel.Name = "btnPrintOuterBoxLabel";
             btnPrintOuterBoxLabel.Text = "打印外箱标签";
             btnPrintOuterBoxLabel.AutoSize = true;
-            btnPrintOuterBoxLabel.Location = new Point(930, 17);
             btnPrintOuterBoxLabel.Padding = new Padding(10, 4, 10, 4);
             btnPrintOuterBoxLabel.Click += BtnPrintOuterBoxLabel_Click;
 
+            pnlButtons.Controls.Add(btnUpload);
+            pnlButtons.Controls.Add(btnTestUpload);
+            pnlButtons.Controls.Add(btnTestHaiXingYun);
+            pnlButtons.Controls.Add(btnPrintOuterBoxLabel);
+
             pnlTop.Controls.Add(lblScanCodeTitle);
             pnlTop.Controls.Add(txtScanCode);
-            pnlTop.Controls.Add(btnUpload);
-            pnlTop.Controls.Add(btnTestUpload);
-            pnlTop.Controls.Add(btnTestHaiXingYun);
-            pnlTop.Controls.Add(btnPrintOuterBoxLabel);
+            pnlTop.Controls.Add(pnlButtons);
+
+            grpLabelInfo.Name = "grpLabelInfo";
+            grpLabelInfo.Text = "标签信息";
+            grpLabelInfo.Dock = DockStyle.Top;
+            grpLabelInfo.Height = 270;
+            grpLabelInfo.Padding = new Padding(10);
+
+            tblLabelInfo.Dock = DockStyle.Fill;
+            tblLabelInfo.ColumnCount = 4;
+            tblLabelInfo.RowCount = 7;
+            tblLabelInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
+            tblLabelInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tblLabelInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
+            tblLabelInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+
+            for (int i = 0; i < 7; i++)
+            {
+                tblLabelInfo.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+            }
+
+            AddTextField(0, 0, "BaseNo", "基地编号");
+            AddTextField(0, 2, "SupplierCode", "供应商代码");
+            AddTextField(1, 0, "PartNo", "零件号");
+            AddTextField(1, 2, "PartName", "零件名称");
+            AddTextField(2, 0, "Qty", "单包装数量");
+            AddTextField(2, 2, "LotNo", "供货批次号");
+            AddTextField(3, 0, "PackingSlipCardNo", "随箱卡号");
+            AddTextField(3, 2, "PackageCode", "包装编号");
+            AddTextField(4, 0, "LayerCount", "码放层数");
+            AddTextField(4, 2, "BoxCount", "箱数");
+            AddDateField(5, 0, "ProduceDate", "生产日期");
+            AddDateField(5, 2, "CheckDate", "到货时间");
+            AddTextField(6, 0, "SerialNo", "流水号");
+            AddDateField(6, 2, "CheckConfirmDate", "检验确认日期");
+
+            grpLabelInfo.Controls.Add(tblLabelInfo);
 
             grpResult.Name = "grpResult";
-            grpResult.Text = "扫描与接口结果";
+            grpResult.Text = "接口结果";
             grpResult.Dock = DockStyle.Fill;
             grpResult.Padding = new Padding(10);
 
@@ -129,6 +183,7 @@ namespace CheryCheckSystem.WinForms
             lblStatus.Text = "就绪";
 
             Controls.Add(grpResult);
+            Controls.Add(grpLabelInfo);
             Controls.Add(pnlTop);
             Controls.Add(statusStrip);
 
@@ -136,11 +191,42 @@ namespace CheryCheckSystem.WinForms
             PerformLayout();
         }
 
+        private void AddTextField(int rowIndex, int columnIndex, string propertyName, string displayName)
+        {
+            var lblTitle = new Label();
+            lblTitle.AutoSize = true;
+            lblTitle.Anchor = AnchorStyles.Left;
+            lblTitle.Text = displayName;
+
+            var txtValue = new TextBox();
+            txtValue.Name = "txt" + propertyName;
+            txtValue.Dock = DockStyle.Fill;
+
+            tblLabelInfo.Controls.Add(lblTitle, columnIndex, rowIndex);
+            tblLabelInfo.Controls.Add(txtValue, columnIndex + 1, rowIndex);
+            _labelInfoTextBoxes[propertyName] = txtValue;
+        }
+
+        private void AddDateField(int rowIndex, int columnIndex, string propertyName, string displayName)
+        {
+            var lblTitle = new Label();
+            lblTitle.AutoSize = true;
+            lblTitle.Anchor = AnchorStyles.Left;
+            lblTitle.Text = displayName;
+
+            var dateEditor = new DateTimeEditor();
+            dateEditor.Name = "dte" + propertyName;
+            dateEditor.Dock = DockStyle.Fill;
+
+            tblLabelInfo.Controls.Add(lblTitle, columnIndex, rowIndex);
+            tblLabelInfo.Controls.Add(dateEditor, columnIndex + 1, rowIndex);
+            _labelInfoDateEditors[propertyName] = dateEditor;
+        }
+
         private void BindGrid()
         {
             dgvResult.AutoGenerateColumns = false;
             dgvResult.Columns.Add(CreateTextColumn("ScanTime", "扫描时间"));
-            dgvResult.Columns.Add(CreateTextColumn("ScanCode", "扫描内容"));
             dgvResult.Columns.Add(CreateTextColumn("SupplNo", "供应商编码"));
             dgvResult.Columns.Add(CreateTextColumn("BaseNo", "基地编码"));
             dgvResult.Columns.Add(CreateTextColumn("DeliveryNo", "配送单号"));
@@ -169,17 +255,23 @@ namespace CheryCheckSystem.WinForms
             };
         }
 
-        private void TxtScanCode_KeyDown(object sender, KeyEventArgs e)
+        private void TxtScanCode_TextChanged(object sender, EventArgs e)
         {
-            if (e.KeyCode != Keys.Enter)
+            if (!txtScanCode.Text.Contains("\r") && !txtScanCode.Text.Contains("\n"))
             {
                 return;
             }
 
-            e.SuppressKeyPress = true;
-            e.Handled = true;
+            ParseScanCodeToLabelInfo();
+        }
 
-            var scanCode = txtScanCode.Text.Trim();
+        private void ParseScanCodeToLabelInfo()
+        {
+            string scanCode = txtScanCode.Text
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Trim();
+
             if (string.IsNullOrWhiteSpace(scanCode))
             {
                 txtScanCode.Clear();
@@ -187,16 +279,111 @@ namespace CheryCheckSystem.WinForms
                 return;
             }
 
+            var qrCodeService = new BLL.QRCode();
+            List<QRCodeInfo> qrCodes = qrCodeService.GetPackingSlipCardQRCodeInfoList();
+
+            var labelService = new BLL.Label();
+            LabelInfo labelInfo = labelService.GetLabelInfo(qrCodes, scanCode);
+            labelInfo.BaseNo = CheryPortConfig.BaseNo;
+            labelInfo.SupplierCode = CheryPortConfig.SupplNo;
+            if (string.IsNullOrWhiteSpace(labelInfo.LayerCount))
+            {
+                labelInfo.LayerCount = "1";
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.BoxCount))
+            {
+                labelInfo.BoxCount = "1";
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.ProduceDate))
+            {
+                labelInfo.ProduceDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.CheckDate))
+            {
+                labelInfo.CheckDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
+            {
+                labelInfo.CheckConfirmDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            UpdateLabelInfoDisplay(labelInfo);
+
+            lblStatus.Text = "已解析条码：" + scanCode;
+            txtScanCode.Clear();
+            txtScanCode.Focus();
+        }
+
+        private void UpdateLabelInfoDisplay(LabelInfo labelInfo)
+        {
+            foreach (KeyValuePair<string, TextBox> pair in _labelInfoTextBoxes)
+            {
+                string value = string.Empty;
+
+                if (labelInfo != null)
+                {
+                    var property = typeof(LabelInfo).GetProperty(pair.Key);
+                    if (property != null)
+                    {
+                        object propertyValue = property.GetValue(labelInfo, null);
+                        value = propertyValue == null ? string.Empty : propertyValue.ToString();
+                    }
+                }
+
+                if (pair.Key == "LayerCount" && string.IsNullOrWhiteSpace(value))
+                {
+                    value = "1";
+                }
+                if (pair.Key == "BoxCount" && string.IsNullOrWhiteSpace(value))
+                {
+                    value = "1";
+                }
+
+                pair.Value.Text = value;
+            }
+
+            foreach (KeyValuePair<string, DateTimeEditor> pair in _labelInfoDateEditors)
+            {
+                pair.Value.ClearValue();
+
+                if (labelInfo == null)
+                {
+                    continue;
+                }
+
+                var property = typeof(LabelInfo).GetProperty(pair.Key);
+                if (property == null)
+                {
+                    continue;
+                }
+
+                object propertyValue = property.GetValue(labelInfo, null);
+                DateTime dateValue;
+                if (propertyValue != null && DateTime.TryParse(propertyValue.ToString(), out dateValue))
+                {
+                    pair.Value.SetValue(dateValue);
+                }
+            }
+        }
+
+        private void AddScanResultRow(string scanCode, LabelInfo labelInfo)
+        {
             _rows.Insert(0, new CheryScanDisplayRow
             {
                 ScanTime = DateTime.Now,
                 ScanCode = scanCode,
-                UploadStatus = "未上传"
+                SupplNo = labelInfo == null ? string.Empty : labelInfo.SupplierCode,
+                BaseNo = labelInfo == null ? string.Empty : labelInfo.BaseNo,
+                DeliveryNo = labelInfo == null ? string.Empty : labelInfo.LotNo,
+                SxCardSeq = labelInfo == null ? string.Empty : labelInfo.PackingSlipCardNo,
+                MaterialNo = labelInfo == null ? string.Empty : labelInfo.PartNo,
+                MaterialName = labelInfo == null ? string.Empty : labelInfo.PartName,
+                PackingCount = labelInfo == null ? string.Empty : labelInfo.Qty,
+                PackageBarCode = labelInfo == null ? string.Empty : labelInfo.SerialNo,
+                PackageCode = labelInfo == null ? string.Empty : labelInfo.PackageCode,
+                PackageName = string.Empty,
+                UploadStatus = "已解析"
             });
-
-            lblStatus.Text = "已扫描：" + scanCode;
-            txtScanCode.Clear();
-            txtScanCode.Focus();
         }
 
         private void BtnUpload_Click(object sender, EventArgs e)
@@ -240,83 +427,31 @@ namespace CheryCheckSystem.WinForms
             }
         }
 
-
-
         private void BtnPrintOuterBoxLabel_Click(object sender, EventArgs e)
         {
             try
             {
                 lblStatus.Text = "正在生成外箱标签PDF...";
 
-                var uploadService = new BLL.CheryUpload();
-
-                // 外箱标签打印内容来源：
-                // 与测试上传中 var uploadInfo = uploadService.CreateUploadInfo(); 保持一致。
-                var uploadInfo = uploadService.CreateUploadInfo();
-
-                // ================================
-                // 包装箱标签二维码规则
-                // ================================
-                // 客户资料中的包装箱标签二维码内容格式为：
-                // 10#零件号$11#供应商代码$17#包装数量$18#发运批次$19#码放层数$20#生产日期$
-                //
-                // 对应关系：
-                // 10# = uploadInfo.MaterialNo      零件号
-                // 11# = supplierCode               供应商代码
-                // 17# = uploadInfo.PackingCount    包装数量
-                // 18# = lotNo                      发运批次 / 供货批次
-                // 19# = layerCount                 码放层数
-                // 20# = PackingDate yyyyMMdd       生产日期
-                //
-                // 注意：
-                // CheryUploadInfo 目前没有单独的 SupplierCode、LayerCount、ShippingLotNo 字段。
-                // 所以下面三个值暂时用常量/现有字段代替。
-                // 正式上线前建议确认：
-                // 1. supplierCode 是否应从 App.config 读取 Chery.SupplNo；
-                // 2. lotNo 是否等于 DeliveryNo，还是另有“发运批次/销售批次”字段；
-                // 3. layerCount 是否固定为 1，还是由业务录入/计算。
-                string supplierCode = "8KN";
-                string layerCount = "1";
-                string lotNo = uploadInfo.DeliveryNo;
-
-                string produceDateText = uploadInfo.PackingDate.HasValue
-                    ? uploadInfo.PackingDate.Value.ToString("yyyy-MM-dd")
-                    : "";
-
-                string produceDateQr = uploadInfo.PackingDate.HasValue
-                    ? uploadInfo.PackingDate.Value.ToString("yyyyMMdd")
-                    : "";
-
-                string checkDateText = uploadInfo.CheckTime.HasValue
-                    ? uploadInfo.CheckTime.Value.ToString("yyyy-MM-dd")
-                    : "";
-
-                string qrContent = BuildOuterBoxQrContent(
-                    uploadInfo.MaterialNo,
-                    supplierCode,
-                    uploadInfo.PackingCount,
-                    lotNo,
-                    layerCount,
-                    produceDateQr);
-
-                var labelInfo = new LabelInfo
+                LabelInfo labelInfo = BuildLabelInfoFromEditors();
+                string validateMessage;
+                if (!ValidateOuterPackageLabelInfo(labelInfo, out validateMessage))
                 {
-                    SupplierName = "",
-                    SupplierCode = supplierCode,
-                    PartNo = uploadInfo.MaterialNo,
-                    PartName = uploadInfo.MaterialName,
-                    Qty = uploadInfo.PackingCount,
-                    LotNo = lotNo,
-                    LayerCount = layerCount,
-                    ProduceDate = produceDateText,
-                    CheckDate = checkDateText,
-                    MaterialCode = uploadInfo.PackageName,
-                    SerialNo = uploadInfo.PackageBarCode,
+                    MessageBox.Show(
+                        validateMessage,
+                        "打印外箱标签",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    lblStatus.Text = "外箱标签资料不完整";
+                    return;
+                }
 
-                    // 二维码内容不要放整个 uploadInfo，也不要直接使用 PackageBarCode。
-                    // 根据客户包装箱标签资料，二维码必须按固定项号规则拼接。
-                    QrContent = qrContent
-                };
+                // 外包装二维码内容统一由字段映射生成，避免再手工拼接。
+                var qrCodeService = new BLL.QRCode();
+                var labelService = new BLL.Label();
+                List<QRCodeInfo> qrCodes = qrCodeService.GetOuterPackageQRCodeInfoList();
+                string qrContent = labelService.GetQRCodeContents(qrCodes, labelInfo);
+                labelInfo.QrContent = qrContent;
 
                 var service = new LabelPrintService();
                 string pdfPath = service.Generate(
@@ -341,7 +476,6 @@ namespace CheryCheckSystem.WinForms
                 }
                 catch
                 {
-                    // 某些环境可能不允许自动打开，忽略即可。
                 }
             }
             catch (Exception ex)
@@ -356,31 +490,135 @@ namespace CheryCheckSystem.WinForms
             }
         }
 
-        /// <summary>
-        /// 生成包装箱标签二维码内容。
-        /// 格式：
-        /// 10#零件号$11#供应商代码$17#包装数量$18#发运批次$19#码放层数$20#生产日期$
-        /// </summary>
-        private static string BuildOuterBoxQrContent(
-            string materialNo,
-            string supplierCode,
-            string packingCount,
-            string lotNo,
-            string layerCount,
-            string produceDate)
-        {
-            return
-                "10#" + SafeValue(materialNo) + "$" +
-                "11#" + SafeValue(supplierCode) + "$" +
-                "17#" + SafeValue(packingCount) + "$" +
-                "18#" + SafeValue(lotNo) + "$" +
-                "19#" + SafeValue(layerCount) + "$" +
-                "20#" + SafeValue(produceDate) + "$";
-        }
-
         private static string SafeValue(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? "" : value.Trim();
+        }
+
+        /// <summary>
+        /// 根据界面上的编辑值组装 LabelInfo。
+        /// 打印外箱标签时直接使用当前界面内容。
+        /// </summary>
+        private LabelInfo BuildLabelInfoFromEditors()
+        {
+            var labelInfo = new LabelInfo();
+
+            foreach (KeyValuePair<string, TextBox> pair in _labelInfoTextBoxes)
+            {
+                var property = typeof(LabelInfo).GetProperty(pair.Key);
+                if (property == null || !property.CanWrite)
+                {
+                    continue;
+                }
+
+                property.SetValue(labelInfo, SafeValue(pair.Value.Text), null);
+            }
+
+            foreach (KeyValuePair<string, DateTimeEditor> pair in _labelInfoDateEditors)
+            {
+                var property = typeof(LabelInfo).GetProperty(pair.Key);
+                if (property == null || !property.CanWrite)
+                {
+                    continue;
+                }
+
+                property.SetValue(labelInfo, pair.Value.GetFormattedValue(), null);
+            }
+
+            labelInfo.BaseNo = CheryPortConfig.BaseNo;
+            labelInfo.SupplierCode = CheryPortConfig.SupplNo;
+
+            if (string.IsNullOrWhiteSpace(labelInfo.LayerCount))
+            {
+                labelInfo.LayerCount = "1";
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.BoxCount))
+            {
+                labelInfo.BoxCount = "1";
+            }
+
+            return labelInfo;
+        }
+
+        /// <summary>
+        /// 校验外箱标签必填字段。
+        /// 只要存在空值，就提示用户先补齐后再打印。
+        /// </summary>
+        private static bool ValidateOuterPackageLabelInfo(LabelInfo labelInfo, out string message)
+        {
+            var missingFields = new List<string>();
+
+            if (labelInfo == null)
+            {
+                message = "标签信息为空，不能打印。";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(labelInfo.BaseNo))
+            {
+                missingFields.Add("基地编号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.SupplierCode))
+            {
+                missingFields.Add("供应商代码");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PartNo))
+            {
+                missingFields.Add("零件号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PartName))
+            {
+                missingFields.Add("零件名称");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.Qty))
+            {
+                missingFields.Add("单包装数量");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.LotNo))
+            {
+                missingFields.Add("供货批次号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PackingSlipCardNo))
+            {
+                missingFields.Add("随箱卡号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PackageCode))
+            {
+                missingFields.Add("包装编号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.LayerCount))
+            {
+                missingFields.Add("码放层数");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.BoxCount))
+            {
+                missingFields.Add("箱数");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.ProduceDate))
+            {
+                missingFields.Add("生产日期");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.CheckDate))
+            {
+                missingFields.Add("到货时间");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
+            {
+                missingFields.Add("检验确认日期");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.SerialNo))
+            {
+                missingFields.Add("流水号");
+            }
+
+            if (missingFields.Count > 0)
+            {
+                message = "以下字段不能为空：" + Environment.NewLine + string.Join(Environment.NewLine, missingFields);
+                return false;
+            }
+
+            message = string.Empty;
+            return true;
         }
 
         private void BtnTestHaiXingYun_Click(object sender, EventArgs e)
@@ -420,6 +658,127 @@ namespace CheryCheckSystem.WinForms
             finally
             {
                 btnTestHaiXingYun.Enabled = true;
+            }
+        }
+
+        private sealed class DateTimeEditor : UserControl
+        {
+            private readonly CheckBox chkEnabled;
+            private readonly DateTimePicker dtpDate;
+            private readonly NumericUpDown nudHour;
+            private readonly NumericUpDown nudMinute;
+            private readonly NumericUpDown nudSecond;
+            private readonly Label lblHourMinuteSep;
+            private readonly Label lblMinuteSecondSep;
+
+            public DateTimeEditor()
+            {
+                chkEnabled = new CheckBox();
+                dtpDate = new DateTimePicker();
+                nudHour = new NumericUpDown();
+                nudMinute = new NumericUpDown();
+                nudSecond = new NumericUpDown();
+                lblHourMinuteSep = new Label();
+                lblMinuteSecondSep = new Label();
+
+                Height = 24;
+
+                chkEnabled.AutoSize = true;
+                chkEnabled.Location = new Point(0, 4);
+                chkEnabled.CheckedChanged += ChkEnabled_CheckedChanged;
+
+                dtpDate.Format = DateTimePickerFormat.Custom;
+                dtpDate.CustomFormat = "yyyy-MM-dd";
+                dtpDate.Location = new Point(22, 0);
+                dtpDate.Width = 120;
+
+                nudHour.Minimum = 0;
+                nudHour.Maximum = 23;
+                nudHour.Location = new Point(150, 0);
+                nudHour.Width = 42;
+
+                lblHourMinuteSep.AutoSize = true;
+                lblHourMinuteSep.Text = ":";
+                lblHourMinuteSep.Location = new Point(194, 4);
+
+                nudMinute.Minimum = 0;
+                nudMinute.Maximum = 59;
+                nudMinute.Location = new Point(204, 0);
+                nudMinute.Width = 42;
+
+                lblMinuteSecondSep.AutoSize = true;
+                lblMinuteSecondSep.Text = ":";
+                lblMinuteSecondSep.Location = new Point(248, 4);
+
+                nudSecond.Minimum = 0;
+                nudSecond.Maximum = 59;
+                nudSecond.Location = new Point(258, 0);
+                nudSecond.Width = 42;
+
+                Controls.Add(chkEnabled);
+                Controls.Add(dtpDate);
+                Controls.Add(nudHour);
+                Controls.Add(lblHourMinuteSep);
+                Controls.Add(nudMinute);
+                Controls.Add(lblMinuteSecondSep);
+                Controls.Add(nudSecond);
+
+                ClearValue();
+            }
+
+            public void SetValue(DateTime value)
+            {
+                chkEnabled.Checked = true;
+                dtpDate.Value = value.Date;
+                nudHour.Value = value.Hour;
+                nudMinute.Value = value.Minute;
+                nudSecond.Value = value.Second;
+                SetEditorsEnabled(true);
+            }
+
+            public void ClearValue()
+            {
+                DateTime now = DateTime.Now;
+                chkEnabled.Checked = false;
+                dtpDate.Value = now.Date;
+                nudHour.Value = now.Hour;
+                nudMinute.Value = now.Minute;
+                nudSecond.Value = now.Second;
+                SetEditorsEnabled(false);
+            }
+
+            /// <summary>
+            /// 读取当前组合控件的日期时间文本。
+            /// 未勾选时返回空字符串。
+            /// </summary>
+            public string GetFormattedValue()
+            {
+                if (!chkEnabled.Checked)
+                {
+                    return string.Empty;
+                }
+
+                DateTime value = dtpDate.Value.Date
+                    .AddHours((double)nudHour.Value)
+                    .AddMinutes((double)nudMinute.Value)
+                    .AddSeconds((double)nudSecond.Value);
+
+                return value.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            private void ChkEnabled_CheckedChanged(object sender, EventArgs e)
+            {
+                SetEditorsEnabled(chkEnabled.Checked);
+            }
+
+            private void SetEditorsEnabled(bool enabled)
+            {
+                dtpDate.Enabled = enabled;
+                nudHour.Enabled = enabled;
+                nudMinute.Enabled = enabled;
+                nudSecond.Enabled = enabled;
+                lblHourMinuteSep.Enabled = enabled;
+                lblMinuteSecondSep.Enabled = enabled;
             }
         }
     }
