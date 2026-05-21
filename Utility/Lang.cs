@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Web.UI;
+
 
 namespace Utility
 {
@@ -287,212 +287,212 @@ namespace Utility
 
 
 
-        public static string INPUT_NUMBER = Translate.translateString("请输入数字");
-        public static string DENSITY_INPUT_NUMBER = Translate.translateString("价格,密度请输入数字");
-        public static string SAVE_SUCCESS = Translate.translateString("保存成功");
-        public static string SAVE_FAIL = Translate.translateString("保存失败");
-        public static string DELETE_SUCCESS = Translate.translateString("删除成功");
-        public static string DELETE_FAIL = Translate.translateString("删除失败");
-        public static string Edit_SUCCESS = Translate.translateString("编辑成功");
-        public static string Edit_FALL = Translate.translateString("编辑失败");
-        public static string NAME_DUPLICATE = Translate.translateString("名称已存在");
-        public static string NO_PROCESS = Translate.translateString("请设定工序");
-        public static string PROCESS_CHANGED = Translate.translateString("工序已单独编辑过，请使用异常处理方法修改");
-        public static string NO_MERCHINDISE = Translate.translateString("采购编号重复");
-        public static string OUT_INPUT = Translate.translateString("退货数量不能大于进货数量,请重新输入");
-        public static string DO_PROCESS = Translate.translateString("工序正在使用中，无法删除");
-        public static string NO_PRODUCTNO = Translate.translateString("无材料编号");
+        public static string INPUT_NUMBER = "请输入数字";
+        public static string DENSITY_INPUT_NUMBER = "价格,密度请输入数字";
+        public static string SAVE_SUCCESS = "保存成功";
+        public static string SAVE_FAIL = "保存失败";
+        public static string DELETE_SUCCESS = "删除成功";
+        public static string DELETE_FAIL = "删除失败";
+        public static string Edit_SUCCESS = "编辑成功";
+        public static string Edit_FALL = "编辑失败";
+        public static string NAME_DUPLICATE = "名称已存在";
+        public static string NO_PROCESS = "请设定工序";
+        public static string PROCESS_CHANGED = "工序已单独编辑过，请使用异常处理方法修改";
+        public static string NO_MERCHINDISE = "采购编号重复";
+        public static string OUT_INPUT = "退货数量不能大于进货数量,请重新输入";
+        public static string DO_PROCESS = "工序正在使用中，无法删除";
+        public static string NO_PRODUCTNO = "无材料编号";
 
-        public static string NO_ERROR = Translate.translateString("请设定正确的编码");
-        public static string NO_DUPLICATE = Translate.translateString("编码重复");
-        public static string APPLY_NO_EXISTS = Translate.translateString("不存在委外申请单");
+        public static string NO_ERROR = "请设定正确的编码";
+        public static string NO_DUPLICATE = "编码重复";
+        public static string APPLY_NO_EXISTS = "不存在委外申请单";
 
-        public static string INPUT_MODULE_PART = Translate.translateString("请输入模具编号及零件编号");
+        public static string INPUT_MODULE_PART = "请输入模具编号及零件编号";
 
-        public static string NO_NOT_UNIQUE = Translate.translateString("编码重复，请确认其唯一性。");
-        public static string MERCHINDISE_NO_DEFAULT = Translate.translateString("采购单号前12位为自动产生");
-        public static string MERCHINDISE_NO_MODULE = Translate.translateString("采购单号-后必须为存在的模具编号");
+        public static string NO_NOT_UNIQUE = "编码重复，请确认其唯一性。";
+        public static string MERCHINDISE_NO_DEFAULT = "采购单号前12位为自动产生";
+        public static string MERCHINDISE_NO_MODULE = "采购单号-后必须为存在的模具编号";
 
-        public static string SHEET_FIRST = Translate.translateString("请先输入申请单");
-        public static string OUT_TOO_BIG = Translate.translateString("出库量不能大于库存量");
-        public static string NO_REJECT_PROJECT = Translate.translateString("无退货项目");
+        public static string SHEET_FIRST = "请先输入申请单";
+        public static string OUT_TOO_BIG = "出库量不能大于库存量";
+        public static string NO_REJECT_PROJECT = "无退货项目";
 
-        public static string NO_Product = Translate.translateString("有库存不能删除");
+        public static string NO_Product = "有库存不能删除";
 
-        public static string FILENAME_FORMAT = Translate.translateString("文件名不能包含_");
+        public static string FILENAME_FORMAT = "文件名不能包含_";
 
-        public static string CHECKER_INPUT = Translate.translateString("必须输入审核者");
+        public static string CHECKER_INPUT = "必须输入审核者";
 
-        public static string MERCHINDISE_BIG_APPLY = Translate.translateString("申购数量大于请购数量");
+        public static string MERCHINDISE_BIG_APPLY = "申购数量大于请购数量";
 
-        public static string NO_DELETE = Translate.translateString("已审核不能删除");
+        public static string NO_DELETE = "已审核不能删除";
 
-        public static string MERCHINDISE_SHEET_FIRST = Translate.translateString("请先输入采购单号");
+        public static string MERCHINDISE_SHEET_FIRST = "请先输入采购单号";
 
-        public static string NO_ENGLISH = Translate.translateString("不是纯英文，请重新输入");
+        public static string NO_ENGLISH = "不是纯英文，请重新输入";
 
-        public static string PART_OR_MODULE_NOT_EXIST = Translate.translateString("零件,模具不存在或库存数量大于工艺数量");
+        public static string PART_OR_MODULE_NOT_EXIST = "零件,模具不存在或库存数量大于工艺数量";
 
-        public static string SHLF_NO_ERROR = Translate.translateString("货架横向，纵向设定格式为 x-x");
+        public static string SHLF_NO_ERROR = "货架横向，纵向设定格式为 x-x";
 
-        public static string CHECK_DATE = Translate.translateString("请输入审核日期");
+        public static string CHECK_DATE = "请输入审核日期";
 
-        public static string NODELDEPARTMENT = Translate.translateString("因管理员存在,该部门不能被删除");
+        public static string NODELDEPARTMENT = "因管理员存在,该部门不能被删除";
 
         public static DateTime DEFAULTDATE = Convert.ToDateTime("1960-01-01");
 
         //order over
-        public static string OVER_MODULEID_ERROR = Translate.translateString("请输入正确的结案编号");
+        public static string OVER_MODULEID_ERROR = "请输入正确的结案编号";
 
 
-        public static string APPROV_PASS = Translate.translateString("核准通过");
+        public static string APPROV_PASS = "核准通过";
 
-        public static string APPROV_FAIL = Translate.translateString("核准失败");
+        public static string APPROV_FAIL = "核准失败";
 
-        public static string NO_REQUESTION_NO_ADD = Translate.translateString("无申请单无法添加");
+        public static string NO_REQUESTION_NO_ADD = "无申请单无法添加";
 
-        public static string OUTSOURCE_OUTSOURCECOUNT = Translate.translateString("外包数量必须小于可外包数量且必须选择至少一个工序");
-        public static string OUTSOURCE_PROCESS_CONTINUED = Translate.translateString("一次外包的工序必须连续");
-        public static string OUTSOURCE_OUTSOURCEEXIST = Translate.translateString("此零件此工序已外包");
+        public static string OUTSOURCE_OUTSOURCECOUNT = "外包数量必须小于可外包数量且必须选择至少一个工序";
+        public static string OUTSOURCE_PROCESS_CONTINUED = "一次外包的工序必须连续";
+        public static string OUTSOURCE_OUTSOURCEEXIST = "此零件此工序已外包";
 
-        public static string OUTSOURCE_EXIST = Translate.translateString("工序正在加工中");
+        public static string OUTSOURCE_EXIST = "工序正在加工中";
 
-        public static string PartNoIdNull = Translate.translateString("零件小编号不能为空");
+        public static string PartNoIdNull = "零件小编号不能为空";
 
-        public static string NO_MERCHISE = Translate.translateString("此采购单已经不存在，此数据已报废，不能进行任何操作，请删除");
-        public static string MERCHINDISE_ERROR = Translate.translateString("无采购单,不能进行此操作");
+        public static string NO_MERCHISE = "此采购单已经不存在，此数据已报废，不能进行任何操作，请删除";
+        public static string MERCHINDISE_ERROR = "无采购单,不能进行此操作";
 
-        public static string NO_Customer = Translate.translateString("客户正在使用，不能删除");
+        public static string NO_Customer = "客户正在使用，不能删除";
 
-        public static string NO_DETAIL = Translate.translateString("有明细，不能删除");
+        public static string NO_DETAIL = "有明细，不能删除";
 
-        public static string X0_X1 = Translate.translateString("横向编码必须X0<X1");
-        public static string Y0_Y1 = Translate.translateString("纵向编码必须Y0<Y1");
+        public static string X0_X1 = "横向编码必须X0<X1";
+        public static string Y0_Y1 = "纵向编码必须Y0<Y1";
 
-        public static string DATE1_DATE2 = Translate.translateString("两个日期不能相差60天");
-        public static string DATE1DATE2 = Translate.translateString("结束日期必须大于开始日期");
+        public static string DATE1_DATE2 = "两个日期不能相差60天";
+        public static string DATE1DATE2 = "结束日期必须大于开始日期";
 
-        public static string INPUT_FIRST = Translate.translateString("必须输入");
+        public static string INPUT_FIRST = "必须输入";
 
-        public static string MODULE_CUSTOMER_EXISTED = Translate.translateString("该客户已经在订单中存在，请先删除订单");
-        public static string MODULE_CUSTOMERMODEL_EXISTED = Translate.translateString("该客户已经在机种中存在，请先删除订单");
-        public static string CUSTOMERMODEL_EXISTED = Translate.translateString("该客户已经在机种中存在，请先删除机种");
+        public static string MODULE_CUSTOMER_EXISTED = "该客户已经在订单中存在，请先删除订单";
+        public static string MODULE_CUSTOMERMODEL_EXISTED = "该客户已经在机种中存在，请先删除订单";
+        public static string CUSTOMERMODEL_EXISTED = "该客户已经在机种中存在，请先删除机种";
 
-        public static string DATE_TYPE_CHANGE_ERROR = Translate.translateString("请输入正确的日期格式");
-        public static string NO_FIND = Translate.translateString("所查找的记录不存在");
-        public static string NO_SPACES = Translate.translateString("不能为空");
+        public static string DATE_TYPE_CHANGE_ERROR = "请输入正确的日期格式";
+        public static string NO_FIND = "所查找的记录不存在";
+        public static string NO_SPACES = "不能为空";
         //public static string INPUT_DATETIME = "请输入正确时间");
-        public static string INPUT_MACHINE = Translate.translateString("请输入几台号");
+        public static string INPUT_MACHINE = "请输入几台号";
 
-        public static string INPUT_PROGRAMNO = Translate.translateString("请输入程式编号");
-        public static string INPUT_CountERROR = Translate.translateString("超出库存数量");
-        public static string DUPLICATE = Translate.translateString("不存在");
-        public static string PRODUCTPARTNO_NOT_EXIST = Translate.translateString("工令单不存在");
+        public static string INPUT_PROGRAMNO = "请输入程式编号";
+        public static string INPUT_CountERROR = "超出库存数量";
+        public static string DUPLICATE = "不存在";
+        public static string PRODUCTPARTNO_NOT_EXIST = "工令单不存在";
 
-        public static string INPUT_DATETIME = Translate.translateString("请输入日期");
-        public static string NO_HAVE = Translate.translateString("不能为空");
-        public static string NO_REJECT = Translate.translateString("存在退货单不能删除");
+        public static string INPUT_DATETIME = "请输入日期";
+        public static string NO_HAVE = "不能为空";
+        public static string NO_REJECT = "存在退货单不能删除";
 
-        public static string No_ModuleIdINorder = Translate.translateString("模具编号不能为空");
-        public static string SELECT_PART = Translate.translateString("请选择零件");
-        public static string QRCODE_BOUNDED = Translate.translateString("二维码已经绑定");
-        public static string PART_EXIST = Translate.translateString("零件已存在");
-        public static string PART_DELETED = Translate.translateString("零件已删除");
+        public static string No_ModuleIdINorder = "模具编号不能为空";
+        public static string SELECT_PART = "请选择零件";
+        public static string QRCODE_BOUNDED = "二维码已经绑定";
+        public static string PART_EXIST = "零件已存在";
+        public static string PART_DELETED = "零件已删除";
 
-        public static string DELAYTIME = Translate.translateString("未确定");
+        public static string DELAYTIME = "未确定";
 
-        public static string COUNTRY_IS_USING = Translate.translateString("国家使用中，不可删除。");
+        public static string COUNTRY_IS_USING = "国家使用中，不可删除。";
 
-        public static string ORDER_IS_USING = Translate.translateString("订单使用中，不可删除。");
+        public static string ORDER_IS_USING = "订单使用中，不可删除。";
         //
         //		public static string NO_PRODUCTNO = "没有项目号");
 
-        public static string MACHINE_MULTUPLE = Translate.translateString("机台编号重复");
+        public static string MACHINE_MULTUPLE = "机台编号重复";
 
-        public static string MACHINE_IPADDRESS_MULTUPLE = Translate.translateString("机台IP地址重复");
+        public static string MACHINE_IPADDRESS_MULTUPLE = "机台IP地址重复";
 
-        public static string NO_RETURN = Translate.translateString("同一物料不能入库两次");
+        public static string NO_RETURN = "同一物料不能入库两次";
 
-        public static string DONOT_ADD_DESIGNPARTPROCESS = Translate.translateString("此模具相同设计类别的工序已存在");
+        public static string DONOT_ADD_DESIGNPARTPROCESS = "此模具相同设计类别的工序已存在";
 
-        public static string SINGLE_NO_SPACES = Translate.translateString("工令单号不能为空");
+        public static string SINGLE_NO_SPACES = "工令单号不能为空";
 
-        public static string SPEC_FORMAT_ERRORTWO = Translate.translateString("格式为 A*B*C 或 A*B ,ABC都只能为数字");
+        public static string SPEC_FORMAT_ERRORTWO = "格式为 A*B*C 或 A*B ,ABC都只能为数字";
 
-        public static string ORDER_DUPLICATE = Translate.translateString("模具编号已存在");
+        public static string ORDER_DUPLICATE = "模具编号已存在";
 
-        public static string NO_ORDER = Translate.translateString("没有模具编号");
+        public static string NO_ORDER = "没有模具编号";
 
-        public static string INPUT_ORDERID = Translate.translateString("模具编号不能为空");
+        public static string INPUT_ORDERID = "模具编号不能为空";
 
-        public static string FORMATETIMEERROR = Translate.translateString("需要使用正确格式 ：(00:00)");
+        public static string FORMATETIMEERROR = "需要使用正确格式 ：(00:00)";
 
-        public static string TRYCHANGERFALL = Translate.translateString("领用数量修改会使仓库数量成负数,操作失败");
+        public static string TRYCHANGERFALL = "领用数量修改会使仓库数量成负数,操作失败";
 
-        public static string No_TryScheduleNo = Translate.translateString("试模编号不能为空");
+        public static string No_TryScheduleNo = "试模编号不能为空";
 
-        public static string No_UserNo = Translate.translateString("此员工编号不存在");
+        public static string No_UserNo = "此员工编号不存在";
 
-        public static string NO_PARTNOID = Translate.translateString("工件名称不能为空");
+        public static string NO_PARTNOID = "工件名称不能为空";
 
-        public static string NO_T0 = Translate.translateString("试模日期不能为空");
+        public static string NO_T0 = "试模日期不能为空";
 
-        public static string NO_CREATEDATE = Translate.translateString("开单日期不能为空");
+        public static string NO_CREATEDATE = "开单日期不能为空";
 
-        public static string NO_UNORMALREASONS = Translate.translateString("返修原因不能为空");
+        public static string NO_UNORMALREASONS = "返修原因不能为空";
 
-        public static string NO_USER = Translate.translateString("员工不存在");
+        public static string NO_USER = "员工不存在";
 
-        public static string ProductMaterialNo_Repeat = Translate.translateString("新增的原物料编号重复");
+        public static string ProductMaterialNo_Repeat = "新增的原物料编号重复";
 
-        public static string ProductMaterialNmae_Repeat = Translate.translateString("新增的原物料名称重复");
+        public static string ProductMaterialNmae_Repeat = "新增的原物料名称重复";
 
-        public static string Transsatciton_No_Exist = Translate.translateString("交易信息不存在");
+        public static string Transsatciton_No_Exist = "交易信息不存在";
 
-        public static string Customer_No_Exist = Translate.translateString("客户信息不存在");
+        public static string Customer_No_Exist = "客户信息不存在";
 
-        public static string HeatProcess_No_Exist = Translate.translateString("热处理方式不存在");
+        public static string HeatProcess_No_Exist = "热处理方式不存在";
 
-        public static string ContractNo_No_Exist = Translate.translateString("合同编号没有填写");
+        public static string ContractNo_No_Exist = "合同编号没有填写";
 
-        public static string Material_No_Exist = Translate.translateString("材质不存在");
+        public static string Material_No_Exist = "材质不存在";
 
-        public static string No_Number = Translate.translateString("非数字");
+        public static string No_Number = "非数字";
 
-        public static string ConstractNo_No_Equals = Translate.translateString("合同编号不符合");
+        public static string ConstractNo_No_Equals = "合同编号不符合";
 
-        public static string PROCESSINGSHEET_EXIST = Translate.translateString("加工单存在,请先删除加工单");
+        public static string PROCESSINGSHEET_EXIST = "加工单存在,请先删除加工单";
 
-        public static string TOTAL = Translate.translateString("总计");
+        public static string TOTAL = "总计";
 
         //Quote
-        public static string QUOTE_PROCESS_DUPLICATE = Translate.translateString("工序编号已存在");
-        public static string QUOTE_PROCESS_INPUT = Translate.translateString("请输入工序编号");
-        public static string QUOTE_PRICE_NUMBER = Translate.translateString("价格请输入数字");
+        public static string QUOTE_PROCESS_DUPLICATE = "工序编号已存在";
+        public static string QUOTE_PROCESS_INPUT = "请输入工序编号";
+        public static string QUOTE_PRICE_NUMBER = "价格请输入数字";
 
         public static string DuplicateKeys(string val)
         {
-            return val + Translate.translateString(" 已经存在,请重新输入!");
+            return val + " 已经存在,请重新输入!";
         }
 
         public static string DuplicateKeys()
         {
-            return Translate.translateString(" 此笔录入数据已经存在,请重新输入!");
+            return " 此笔录入数据已经存在,请重新输入!";
         }
 
         public static string DuplicateKeysCNC(string val)
         {
-            return val + Translate.translateString(" 机台编号在CNC普通机,CNC高速机,或CNC电极机中已经存在,请重新输入!");
+            return val + " 机台编号在CNC普通机,CNC高速机,或CNC电极机中已经存在,请重新输入!";
         }
 
         public static string EditKeyError(string val)
         {
-            return val + Translate.translateString(" 非法执行此项操作!");
+            return val + " 非法执行此项操作!";
         }
 
         public static string PrevProcessNotDone(string val)
         {
-            return Translate.translateString("该零件前一道工序") + "[" + val + "]" + Translate.translateString("还没有完成，并且这道工序不允许暂停!");
+            return "该零件前一道工序" + "[" + val + "]" + "还没有完成，并且这道工序不允许暂停!";
         }
 
         public static string MiddleScheduleAlarmMessage(int int_oldlevel, int int_newlevel)
@@ -502,12 +502,12 @@ namespace Utility
             {
                 if (int_newlevel == 1)
                 {
-                    retmsg = Translate.translateString("您当前的操作会使原有的零件中排程设定无效，您确定执行此操作吗？");
+                    retmsg = "您当前的操作会使原有的零件中排程设定无效，您确定执行此操作吗？";
                 }
 
                 if (int_newlevel == 2)
                 {
-                    retmsg = Translate.translateString("您当前的操作会使原有的零件中排程设定无效，您确定执行此操作吗？");
+                    retmsg = "您当前的操作会使原有的零件中排程设定无效，您确定执行此操作吗？";
                 }
             }
 
@@ -516,16 +516,16 @@ namespace Utility
 
         public static string ErrorSettingStatus(string processname, string statusname)
         {
-            return Translate.translateString("零件当前的") + processname + Translate.translateString("工序的状态已经为") + statusname + "," + Translate.translateString("您不能设置此状态！");
+            return "零件当前的" + processname + "工序的状态已经为" + statusname + "," + "您不能设置此状态！";
         }
 
 
     public class MsSQL_ViewLang
     {
-        public static string TXT_NORMAL = Translate.translateString("正常");
-        public static string TXT_DELAY = Translate.translateString("延迟");
-        //public static string TXT_EARLY = Translate.translateString("提前");
-        public static string TXT_FINISH = Translate.translateString("结束");
+        public static string TXT_NORMAL = "正常";
+        public static string TXT_DELAY = "延迟";
+        //public static string TXT_EARLY = "提前";
+        public static string TXT_FINISH = "结束";
     }
 
     public Lang()
