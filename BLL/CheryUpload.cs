@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Web.Script.Serialization;
 using Model;
 using Model.Label;
-using Newtonsoft.Json;
 
 namespace BLL
 {
@@ -126,14 +126,7 @@ namespace BLL
         public string CreateCheryUpload(LabelInfo labelInfo)
         {
             var uploadInfo = CreateUploadInfo(labelInfo);
-
-            return JsonConvert.SerializeObject(
-                uploadInfo,
-                Formatting.Indented,
-                new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
+            return SerializeUploadInfo(uploadInfo);
         }
 
         /// <summary>
@@ -142,14 +135,7 @@ namespace BLL
         public string CreateCheryUpload()
         {
             var uploadInfo = CreateUploadInfo();
-
-            return JsonConvert.SerializeObject(
-                uploadInfo,
-                Formatting.Indented,
-                new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
+            return SerializeUploadInfo(uploadInfo);
         }
 
         private static string BuildPackingSlipSequence(LabelInfo labelInfo)
@@ -179,6 +165,12 @@ namespace BLL
         private static string SafeValue(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string SerializeUploadInfo(CheryUploadInfo uploadInfo)
+        {
+            var serializer = new JavaScriptSerializer();
+            return serializer.Serialize(uploadInfo);
         }
     }
 }

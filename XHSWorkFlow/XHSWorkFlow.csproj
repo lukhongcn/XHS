@@ -36,24 +36,126 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BLL, Version=1.0.9637.27680, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="DALFactory, Version=1.0.9637.27678, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\DALFactory.dll</HintPath>
+    </Reference>
+    <Reference Include="IDAL, Version=1.0.9632.20481, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\IDAL.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.UI.WebControls, Version=1.0.2.226, Culture=neutral">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Microsoft.Web.UI.WebControls.dll</HintPath>
+    </Reference>
+    <Reference Include="ModuleWorkFlow.Model, Version=1.0.9622.26681, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\ModuleWorkFlow.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="MsSQL, Version=1.0.9637.27675, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\MsSQL.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="WebView, Version=1.0.9637.27691, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\WebView.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="admin\UserEdit.aspx.cs">
+      <DependentUpon>UserEdit.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\UserList.aspx.cs">
+      <DependentUpon>UserList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\UserPasswordChange.aspx.cs">
+      <DependentUpon>UserPasswordChange.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\UserPrivilegeAddEdit.aspx.cs">
+      <DependentUpon>UserPrivilegeAddEdit.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="admin\UserPrivilegeList.aspx.cs">
+      <DependentUpon>UserPrivilegeList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\newLeft.aspx.cs">
+      <DependentUpon>newLeft.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Default.aspx.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Default.aspx.designer.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="DefaultSub.Master.cs">
+      <DependentUpon>DefaultSub.Master</DependentUpon>
+    </Compile>
+    <Compile Include="DefaultSub.Master.designer.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Login.aspx.cs">
+      <DependentUpon>Login.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="middle.aspx.cs">
+      <DependentUpon>middle.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="admin\UserEdit.aspx" />
+    <Content Include="admin\UserList.aspx" />
+    <Content Include="admin\UserPasswordChange.aspx" />
+    <Content Include="admin\UserPrivilegeAddEdit.aspx" />
+    <Content Include="admin\UserPrivilegeList.aspx" />
+    <Content Include="Controls\newLeft.aspx" />
+    <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
+    <Content Include="Login.aspx" />
+    <Content Include="middle.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BLL\XHS.BLL.csproj">
+      <Project>{fb5d93c8-b96d-43f0-a6a6-7050f503606f}</Project>
+      <Name>XHS.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\business\business.csproj">
+      <Project>{d63a2045-57a0-460b-8781-fc60d6ef7b36}</Project>
+      <Name>business</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utility\Utility.csproj">
+      <Project>{421f17d9-9d55-4e8e-a292-3857605ae16d}</Project>
+      <Name>Utility</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="admin\UserEdit.aspx.resx" />
+    <EmbeddedResource Include="admin\UserList.aspx.resx" />
+    <EmbeddedResource Include="admin\UserPrivilegeAddEdit.aspx.resx">
+      <DependentUpon>UserPrivilegeAddEdit.aspx.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="admin\UserPrivilegeList.aspx.resx">
+      <DependentUpon>UserPrivilegeList.aspx.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\newLeft.aspx.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DefaultSub.Master" />
+  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
