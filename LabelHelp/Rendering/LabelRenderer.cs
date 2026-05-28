@@ -57,45 +57,43 @@ namespace LabelHelp.Rendering
             float width = config.LabelWidth;
             float height = config.LabelHeight;
 
-            float margin = 3f;
+            float margin = 1f;
             float tableX = x + margin;
             float tableY = y + margin;
             float tableWidth = width - margin * 2f;
             float tableHeight = height - margin * 2f;
 
-            float leftColWidth = 30f;
-            float middleColWidth = 40f;
+            float titleRowHeight = tableHeight * 0.12f;
+            float rowHeight = (tableHeight - titleRowHeight) / 9f;
+            float leftColWidth = tableWidth * 0.24f;
+            float middleColWidth = tableWidth * 0.31f;
             float rightColWidth = tableWidth - leftColWidth - middleColWidth;
-            float rowHeight = tableHeight / 9f;
 
             float col1X = tableX;
             float col2X = tableX + leftColWidth;
             float col3X = tableX + leftColWidth + middleColWidth;
             float tableRight = tableX + tableWidth;
             float tableBottom = tableY + tableHeight;
+            float row0Y = tableY + titleRowHeight;
 
-            using (Pen borderPen = new Pen(Color.Black, 0.35f))
-            using (Pen innerPen = new Pen(Color.Black, 0.25f))
-            using (Font titleFont = new Font(config.FontName, config.TitleFontSize, FontStyle.Bold, GraphicsUnit.Point))
-            using (Font valueFont = new Font(config.FontName, config.ValueFontSize, FontStyle.Bold, GraphicsUnit.Point))
+            using (Pen borderPen = new Pen(Color.Black, 0.45f))
+            using (Pen innerPen = new Pen(Color.Black, 0.35f))
+            using (Font headerFont = new Font(config.FontName, 12f, FontStyle.Bold, GraphicsUnit.Point))
+            using (Font titleFont = new Font(config.FontName, 9f, FontStyle.Bold, GraphicsUnit.Point))
+            using (Font valueFont = new Font(config.FontName, 9.5f, FontStyle.Bold, GraphicsUnit.Point))
             using (Brush textBrush = new SolidBrush(Color.Black))
+            using (Brush backgroundBrush = new SolidBrush(Color.FromArgb(0, 176, 226)))
             {
-                graphics.FillRectangle(Brushes.White, x, y, width, height);
+                graphics.FillRectangle(backgroundBrush, x, y, width, height);
 
-                // 外框
                 graphics.DrawRectangle(borderPen, tableX, tableY, tableWidth, tableHeight);
+                graphics.DrawLine(innerPen, tableX, row0Y, tableRight, row0Y);
 
-                // 竖线
-                graphics.DrawLine(innerPen, col2X, tableY, col2X, tableBottom);
-                // 右侧二维码区域从第4行开始合并，所以竖线从第4行顶部开始
-                graphics.DrawLine(innerPen, col3X, tableY + rowHeight * 3f, col3X, tableBottom);
-
-                // 横线
-                for (int i = 1; i <= 8; i++)
+                for (int i = 1; i <= 9; i++)
                 {
-                    float lineY = tableY + rowHeight * i;
+                    float lineY = row0Y + rowHeight * i;
 
-                    if (i <= 3)
+                    if (i <= 2)
                     {
                         graphics.DrawLine(innerPen, tableX, lineY, tableRight, lineY);
                     }
@@ -105,51 +103,29 @@ namespace LabelHelp.Rendering
                     }
                 }
 
-                float textX1 = col1X + 1.5f;
-                float textX2 = col2X + 1.5f;
-                float textOffsetY = 1.7f;
+                graphics.DrawLine(innerPen, col2X, row0Y, col2X, tableBottom);
+                graphics.DrawLine(innerPen, col3X, row0Y + rowHeight * 2f, col3X, tableBottom);
 
-                DrawText(graphics, "供应商名称/代码", titleFont, textBrush, textX1, tableY + rowHeight * 0 + textOffsetY);
-                DrawText(graphics, CombineSupplier(info), valueFont, textBrush, textX2, tableY + rowHeight * 0 + textOffsetY);
-
-                DrawText(graphics, "零件号", titleFont, textBrush, textX1, tableY + rowHeight * 1 + textOffsetY);
-                DrawText(graphics, Safe(info.PartNo), valueFont, textBrush, textX2, tableY + rowHeight * 1 + textOffsetY);
-
-                DrawText(graphics, "零件名称", titleFont, textBrush, textX1, tableY + rowHeight * 2 + textOffsetY);
-                DrawText(graphics, Safe(info.PartName), valueFont, textBrush, textX2, tableY + rowHeight * 2 + textOffsetY);
-
-                DrawText(graphics, "单包装数量(QTY)", titleFont, textBrush, textX1, tableY + rowHeight * 3 + textOffsetY);
-                DrawText(graphics, Safe(info.Qty), valueFont, textBrush, textX2, tableY + rowHeight * 3 + textOffsetY);
-
-                DrawText(graphics, "供货批次号(LOT NO.)", titleFont, textBrush, textX1, tableY + rowHeight * 4 + textOffsetY);
-                DrawText(graphics, Safe(info.LotNo), valueFont, textBrush, textX2, tableY + rowHeight * 4 + textOffsetY);
-
-                // 外箱标签这里按要求：先显示码放层数，再显示生产日期。
-                DrawText(graphics, "码放层数", titleFont, textBrush, textX1, tableY + rowHeight * 5 + textOffsetY);
-                DrawText(graphics, Safe(info.LayerCount), valueFont, textBrush, textX2, tableY + rowHeight * 5 + textOffsetY);
-
-                DrawText(graphics, "生产日期", titleFont, textBrush, textX1, tableY + rowHeight * 6 + textOffsetY);
-                DrawText(graphics, Safe(info.ProduceDate), valueFont, textBrush, textX2, tableY + rowHeight * 6 + textOffsetY);
-
-                DrawText(graphics, "箱数", titleFont, textBrush, textX1, tableY + rowHeight * 7 + textOffsetY);
-                DrawText(graphics, Safe(info.BoxCount), valueFont, textBrush, textX2, tableY + rowHeight * 7 + textOffsetY);
-
-                DrawText(graphics, "检验确认日期", titleFont, textBrush, textX1, tableY + rowHeight * 8 + textOffsetY);
-                DrawText(graphics, Safe(info.CheckConfirmDate), valueFont, textBrush, textX2, tableY + rowHeight * 8 + textOffsetY);
+                DrawFittedText(graphics, "KD专用", headerFont, textBrush, new RectangleF(tableX + 1.5f, tableY, tableWidth - 3f, titleRowHeight), ContentAlignment.MiddleLeft);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "供应商代码", Safe(info.SupplierCode), col1X, col2X, tableRight, row0Y, rowHeight, 0);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "零件号", Safe(info.PartNo), col1X, col2X, col3X, row0Y, rowHeight, 1);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "零件名称", Safe(info.PartName), col1X, col2X, col3X, row0Y, rowHeight, 2);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "数量", Safe(info.Qty), col1X, col2X, col3X, row0Y, rowHeight, 3);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "供货批次号", Safe(info.LotNo), col1X, col2X, col3X, row0Y, rowHeight, 4);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "码放层数", Safe(info.LayerCount), col1X, col2X, col3X, row0Y, rowHeight, 5);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "生产日期", ValueOrSlash(info.ProduceDate), col1X, col2X, col3X, row0Y, rowHeight, 6);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "检验确认/日期", ValueOrSlash(info.CheckConfirmDate), col1X, col2X, col3X, row0Y, rowHeight, 7);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "纸箱编号", GetBoxNumber(info), col1X, col2X, col3X, row0Y, rowHeight, 8);
 
                 // 二维码
                 string qrContent = new QrCodeGenerator().BuildDefaultQrContent(info);
                 using (Image qrImage = new QrCodeGenerator().Generate(qrContent, 300, 300))
                 {
                     float qrAreaX = col3X;
-                    float qrAreaY = tableY + rowHeight * 3f;
+                    float qrAreaY = row0Y + rowHeight * 2f;
                     float qrAreaWidth = rightColWidth;
-                    float qrAreaHeight = tableHeight - rowHeight * 3f;
-                    float qrSize = Math.Min(24f, Math.Min(qrAreaWidth - 4f, qrAreaHeight - 4f));
-                    if (qrSize < 15f)
-                    {
-                        qrSize = Math.Min(qrAreaWidth, qrAreaHeight) - 2f;
-                    }
+                    float qrAreaHeight = tableBottom - qrAreaY;
+                    float qrSize = Math.Min(qrAreaWidth - 8f, qrAreaHeight - 8f);
 
                     float qrX = qrAreaX + (qrAreaWidth - qrSize) / 2f;
                     float qrY = qrAreaY + (qrAreaHeight - qrSize) / 2f;
@@ -211,9 +187,114 @@ namespace LabelHelp.Rendering
             graphics.DrawString(text ?? string.Empty, font, brush, x, y);
         }
 
+        private static void DrawRow(Graphics graphics, Font titleFont, Font valueFont, Brush brush, string title, string value, float labelLeft, float valueLeft, float valueRight, float firstRowY, float rowHeight, int rowIndex)
+        {
+            float rowTop = firstRowY + rowHeight * rowIndex;
+            RectangleF titleRect = new RectangleF(labelLeft + 1f, rowTop, valueLeft - labelLeft - 2f, rowHeight);
+            RectangleF valueRect = new RectangleF(valueLeft + 1f, rowTop, valueRight - valueLeft - 2f, rowHeight);
+
+            DrawFittedText(graphics, title, titleFont, brush, titleRect, ContentAlignment.MiddleCenter);
+            DrawFittedText(graphics, value, valueFont, brush, valueRect, ContentAlignment.MiddleCenter);
+        }
+
+        private static void DrawFittedText(Graphics graphics, string text, Font font, Brush brush, RectangleF bounds, ContentAlignment alignment)
+        {
+            string safeText = text ?? string.Empty;
+            using (StringFormat format = CreateStringFormat(alignment))
+            {
+                Font drawFont = font;
+                Font scaledFont = null;
+
+                try
+                {
+                    for (float size = font.Size; size >= 4f; size -= 0.25f)
+                    {
+                        SizeF measured = graphics.MeasureString(safeText, drawFont, Size.Ceiling(bounds.Size), format);
+                        if (measured.Width <= bounds.Width + 0.5f && measured.Height <= bounds.Height + 0.5f)
+                        {
+                            break;
+                        }
+
+                        if (size <= 4f)
+                        {
+                            break;
+                        }
+
+                        if (scaledFont != null)
+                        {
+                            scaledFont.Dispose();
+                        }
+
+                        scaledFont = new Font(font.FontFamily, size - 0.25f, font.Style, GraphicsUnit.Point);
+                        drawFont = scaledFont;
+                    }
+
+                    graphics.DrawString(safeText, drawFont, brush, bounds, format);
+                }
+                finally
+                {
+                    if (scaledFont != null)
+                    {
+                        scaledFont.Dispose();
+                    }
+                }
+            }
+        }
+
+        private static StringFormat CreateStringFormat(ContentAlignment alignment)
+        {
+            StringFormat format = new StringFormat();
+            format.Trimming = StringTrimming.None;
+            format.FormatFlags = StringFormatFlags.NoWrap;
+
+            switch (alignment)
+            {
+                case ContentAlignment.MiddleLeft:
+                    format.Alignment = StringAlignment.Near;
+                    format.LineAlignment = StringAlignment.Center;
+                    break;
+                case ContentAlignment.MiddleCenter:
+                default:
+                    format.Alignment = StringAlignment.Center;
+                    format.LineAlignment = StringAlignment.Center;
+                    break;
+            }
+
+            return format;
+        }
+
         private static string Safe(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string ValueOrSlash(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "/" : value.Trim();
+        }
+
+        private static string GetBoxNumber(LabelInfo info)
+        {
+            if (info == null)
+            {
+                return string.Empty;
+            }
+
+            string packingSlipCardNo = Safe(info.PackingSlipCardNo);
+            if (!string.IsNullOrEmpty(packingSlipCardNo))
+            {
+                int lastDashIndex = packingSlipCardNo.LastIndexOf('-');
+                if (lastDashIndex > 0)
+                {
+                    int secondLastDashIndex = packingSlipCardNo.LastIndexOf('-', lastDashIndex - 1);
+                    if (secondLastDashIndex >= 0 && secondLastDashIndex < packingSlipCardNo.Length - 1)
+                    {
+                        return packingSlipCardNo.Substring(secondLastDashIndex + 1);
+                    }
+                }
+            }
+
+            return !string.IsNullOrWhiteSpace(info.PackageCode) ? info.PackageCode.Trim() : Safe(info.SerialNo);
         }
 
         private static string CombineSupplier(LabelInfo info)

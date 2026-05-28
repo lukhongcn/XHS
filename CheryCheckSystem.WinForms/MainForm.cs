@@ -444,18 +444,6 @@ namespace CheryCheckSystem.WinForms
             {
                 labelInfo.BoxCount = "1";
             }
-            if (string.IsNullOrWhiteSpace(labelInfo.ProduceDate))
-            {
-                labelInfo.ProduceDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckDate))
-            {
-                labelInfo.CheckDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
-            {
-                labelInfo.CheckConfirmDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            }
             if (string.IsNullOrWhiteSpace(labelInfo.SxCardSeq))
             {
                 labelInfo.SxCardSeq = BuildPackingSlipSequence(labelInfo.PackingSlipCardNo, labelInfo.SerialNo);
@@ -980,29 +968,9 @@ namespace CheryCheckSystem.WinForms
             {
                 missingFields.Add("箱数");
             }
-            if (string.IsNullOrWhiteSpace(labelInfo.ProduceDate))
-            {
-                missingFields.Add("生产日期");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckDate))
-            {
-                missingFields.Add("到货时间");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
-            {
-                missingFields.Add("检验确认日期");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckTime))
-            {
-                missingFields.Add("检测日期");
-            }
             if (string.IsNullOrWhiteSpace(labelInfo.CheckUserName))
             {
                 missingFields.Add("检测人员");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.PackingCreateTime))
-            {
-                missingFields.Add("装箱时间");
             }
             if (string.IsNullOrWhiteSpace(labelInfo.PackingCreateName))
             {
