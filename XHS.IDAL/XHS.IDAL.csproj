@@ -54,7 +54,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
-      <Name>Model</Name>
+      <Name>XHS.Model</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

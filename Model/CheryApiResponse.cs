@@ -1,4 +1,4 @@
-namespace Model
+﻿namespace XHS.Model
 {
     public class CheryApiResponse
     {

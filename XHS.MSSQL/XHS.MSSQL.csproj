@@ -54,7 +54,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
-      <Name>Model</Name>
+      <Name>XHS.Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utility\Utility.csproj">
+      <Project>{421F17D9-9D55-4E8E-A292-3857605AE16D}</Project>
+      <Name>Utility</Name>
     </ProjectReference>
     <ProjectReference Include="..\XHS.IDAL\XHS.IDAL.csproj">
       <Project>{EE584718-8A95-4115-AE35-8458AEF4222F}</Project>

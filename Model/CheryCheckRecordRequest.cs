@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Model
+namespace XHS.Model
 {
     public class CheryCheckRecordRequest
     {

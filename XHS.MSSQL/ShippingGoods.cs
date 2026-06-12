@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using Model;
+using XHS.Model;
+using Utility;
 using XHS.IDAL;
 
 namespace XHS.MSSQL
@@ -12,134 +14,131 @@ namespace XHS.MSSQL
     /// </summary>
     public class ShippingGoods : IShippingGoods
     {
-        private const string ConnectionString = "server=.;Pooling=false;database=XHS;uid=sa;pwd=MES2016mj";
+        private const string ShippingGoodsOrderBy = " order by SupplyBatchNo, PartNo, case when charindex('-', CartonNo) > 0 and substring(CartonNo, charindex('-', CartonNo) + 1, len(CartonNo)) not like '%[^0-9]%' then cast(substring(CartonNo, charindex('-', CartonNo) + 1, len(CartonNo)) as int) when CartonNo not like '%[^0-9]%' then cast(CartonNo as int) else 2147483647 end, CartonNo";
 
         public List<ShippingGoodsInfo> GetShippingGoods()
         {
-            const string sql = "select SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Creater,CreatDate from tb_ShippingGoods order by CreatDate desc, SupplyBatchNo";
-            return GetShippingGoodsBySql(sql, null);
+            const string queryString = "select SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Creater,CreatDate from tb_ShippingGoods" + ShippingGoodsOrderBy;
+            return GetShippingGoodsBySql(queryString);
         }
 
-        public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo)
+        public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo)
         {
-            const string sql = "select SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Creater,CreatDate from tb_ShippingGoods where SupplyBatchNo=@SupplyBatchNo";
-            SqlParameter[] parameters =
-            {
-                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(supplyBatchNo) }
-            };
+            string queryString = "select SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Creater,CreatDate from tb_ShippingGoods where 1=1";
 
-            return GetShippingGoodsBySql(sql, parameters);
-        }
-
-        public bool InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
-        {
-            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
+            if (!string.IsNullOrWhiteSpace(partNo))
             {
-                return false;
+                queryString += string.Format(" and PartNo like '%{0}%'", SafeSqlValue(partNo));
             }
 
+            if (!string.IsNullOrWhiteSpace(partName))
+            {
+                string safePartName = SafeSqlValue(partName);
+                queryString += string.Format(" and (PartChineseName like '%{0}%' or PartEnglishName like '%{0}%')", safePartName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(supplyBatchNo))
+            {
+                queryString += string.Format(" and SupplyBatchNo like '%{0}%'", SafeSqlValue(supplyBatchNo));
+            }
+
+            queryString += ShippingGoodsOrderBy;
+            return GetShippingGoodsBySql(queryString);
+        }
+
+        public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
+        {
+            string queryString = string.Format(
+                "select SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Creater,CreatDate from tb_ShippingGoods where SupplyBatchNo='{0}'",
+                SafeSqlValue(supplyBatchNo));
+
+            if (!string.IsNullOrWhiteSpace(cartonNo))
+            {
+                queryString += string.Format(" and CartonNo='{0}'", SafeSqlValue(cartonNo));
+            }
+
+            queryString += ShippingGoodsOrderBy;
+            return GetShippingGoodsBySql(queryString);
+        }
+
+        public ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
             const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Creater,CreatDate) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@Creater,@CreatDate)";
-
-            return ExecuteBatch(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
+            return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
-        public bool UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
-            {
-                return false;
-            }
-
             const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,Creater=@Creater,CreatDate=@CreatDate where SupplyBatchNo=@SupplyBatchNo";
-
-            return ExecuteBatch(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
+            return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
-        public bool DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
-            {
-                return false;
-            }
-
             const string sql = "delete from tb_ShippingGoods where SupplyBatchNo=@SupplyBatchNo";
-
-            return ExecuteBatch(shippingGoodsInfos, sql, info => new[]
+            return BuildParamterInfo(shippingGoodsInfos, sql, info => new[]
             {
                 new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.SupplyBatchNo) }
             });
         }
 
-        private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string sql, SqlParameter[] parameters)
+        private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string queryString)
         {
             List<ShippingGoodsInfo> result = new List<ShippingGoodsInfo>();
-
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
+            DataSet dataSet = Data.getDataSet(queryString);
+            if (dataSet.Tables.Count == 0)
             {
-                if (parameters != null)
-                {
-                    command.Parameters.AddRange(parameters);
-                }
+                return result;
+            }
 
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+            foreach (DataRow row in dataSet.Tables[0].Rows)
+            {
+                result.Add(new ShippingGoodsInfo
                 {
-                    while (reader.Read())
-                    {
-                        result.Add(new ShippingGoodsInfo
-                        {
-                            SupplierCode = ReadString(reader, "SupplierCode"),
-                            PartNo = ReadString(reader, "PartNo"),
-                            PartChineseName = ReadString(reader, "PartChineseName"),
-                            PartEnglishName = ReadString(reader, "PartEnglishName"),
-                            Quantity = ReadNullableInt(reader, "Quantity"),
-                            SupplyBatchNo = ReadString(reader, "SupplyBatchNo"),
-                            StackLayerCount = ReadNullableInt(reader, "StackLayerCount"),
-                            ProductionDate = ReadNullableDateTime(reader, "ProductionDate"),
-                            InspectionConfirmDate = ReadNullableDateTime(reader, "InspectionConfirmDate"),
-                            CartonNo = ReadString(reader, "CartonNo"),
-                            SingleBoxGrossWeight = ReadNullableDecimal(reader, "SingleBoxGrossWeight"),
-                            QrCode = ReadString(reader, "QrCode"),
-                            Creater = ReadString(reader, "Creater"),
-                            CreatDate = ReadNullableDateTime(reader, "CreatDate")
-                        });
-                    }
-                }
+                    SupplierCode = ReadString(row, "SupplierCode"),
+                    PartNo = ReadString(row, "PartNo"),
+                    PartChineseName = ReadString(row, "PartChineseName"),
+                    PartEnglishName = ReadString(row, "PartEnglishName"),
+                    Quantity = ReadNullableInt(row, "Quantity"),
+                    SupplyBatchNo = ReadString(row, "SupplyBatchNo"),
+                    StackLayerCount = ReadNullableInt(row, "StackLayerCount"),
+                    ProductionDate = ReadNullableDateTime(row, "ProductionDate"),
+                    InspectionConfirmDate = ReadNullableDateTime(row, "InspectionConfirmDate"),
+                    CartonNo = ReadString(row, "CartonNo"),
+                    SingleBoxGrossWeight = ReadNullableDecimal(row, "SingleBoxGrossWeight"),
+                    QrCode = ReadString(row, "QrCode"),
+                    Creater = ReadString(row, "Creater"),
+                    CreatDate = ReadNullableDateTime(row, "CreatDate")
+                });
             }
 
             return result;
         }
 
-        private static bool ExecuteBatch(List<ShippingGoodsInfo> shippingGoodsInfos, string sql, Func<ShippingGoodsInfo, SqlParameter[]> parameterBuilder)
+        private static ParamterInfo BuildParamterInfo(List<ShippingGoodsInfo> shippingGoodsInfos, string sql, Func<ShippingGoodsInfo, SqlParameter[]> parameterBuilder)
         {
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            ParamterInfo paramterInfo = new ParamterInfo
             {
-                connection.Open();
-                using (SqlTransaction transaction = connection.BeginTransaction())
-                {
-                    try
-                    {
-                        int affectedRows = 0;
-                        foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
-                        {
-                            using (SqlCommand command = new SqlCommand(sql, connection, transaction))
-                            {
-                                command.Parameters.AddRange(parameterBuilder(shippingGoodsInfo));
-                                affectedRows += command.ExecuteNonQuery();
-                            }
-                        }
+                Sql = sql,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList(),
+                AlPAR = new ArrayList(),
+                AlCOM = new ArrayList()
+            };
 
-                        transaction.Commit();
-                        return affectedRows > 0;
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
+            if (shippingGoodsInfos == null)
+            {
+                return paramterInfo;
             }
+
+            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
+            {
+                paramterInfo.AlSQL.Add(sql);
+                paramterInfo.AlPAR.Add(parameterBuilder(shippingGoodsInfo));
+                paramterInfo.AlCOM.Add(CommandType.Text);
+            }
+
+            return paramterInfo;
         }
 
         private static SqlParameter[] BuildInsertOrUpdateParameters(ShippingGoodsInfo info)
@@ -168,28 +167,29 @@ namespace XHS.MSSQL
             return value ?? DBNull.Value;
         }
 
-        private static string ReadString(SqlDataReader reader, string columnName)
+        private static string SafeSqlValue(string value)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            return (value ?? string.Empty).Replace("'", "''");
         }
 
-        private static int? ReadNullableInt(SqlDataReader reader, string columnName)
+        private static string ReadString(DataRow row, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? (int?)null : reader.GetInt32(ordinal);
+            return row.IsNull(columnName) ? null : row[columnName].ToString();
         }
 
-        private static decimal? ReadNullableDecimal(SqlDataReader reader, string columnName)
+        private static int? ReadNullableInt(DataRow row, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? (decimal?)null : reader.GetDecimal(ordinal);
+            return row.IsNull(columnName) ? (int?)null : Convert.ToInt32(row[columnName]);
         }
 
-        private static DateTime? ReadNullableDateTime(SqlDataReader reader, string columnName)
+        private static decimal? ReadNullableDecimal(DataRow row, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? (DateTime?)null : reader.GetDateTime(ordinal);
+            return row.IsNull(columnName) ? (decimal?)null : Convert.ToDecimal(row[columnName]);
+        }
+
+        private static DateTime? ReadNullableDateTime(DataRow row, string columnName)
+        {
+            return row.IsNull(columnName) ? (DateTime?)null : Convert.ToDateTime(row[columnName]);
         }
     }
 }

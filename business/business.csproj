@@ -63,6 +63,10 @@
     <Compile Include="util.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Model\Model.csproj">
+      <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
+      <Name>XHS.Model</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\BLL.Alert\BLL.Alert.csproj">
       <Project>{798b0758-0854-4a31-b65b-18f7034ef4c2}</Project>
       <Name>BLL.Alert</Name>

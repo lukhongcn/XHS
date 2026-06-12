@@ -1,5 +1,6 @@
-using System;
+ï»¿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using System.Web;
 using System.Web.SessionState;
@@ -8,7 +9,7 @@ using System.Web.UI.WebControls;
 using System.Web.UI.HtmlControls;
 
 using ModuleWorkFlow.BLL;
-using ModuleWorkFlow.Model;
+using XHS.Model;
 
 namespace ModuleWorkFlow.business
 {
@@ -17,7 +18,7 @@ namespace ModuleWorkFlow.business
 	/// </summary>
 	public class Common
 	{
-		#region ¡¼¡^dropdownlistºN¡¼¡¼¡¼¡¼¡¼¡¼¡¼®a£´¡¼¡¼¡¼¡¼¡¼¡¼¡¼¡¼¡¼¡¼
+		#region ï¿½ï¿½ï¿½^dropdownlistï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½aï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		public static void DDL_BindData_CustomerList(DropDownList DDL)
 		{
 			ModuleWorkFlow.BLL.Customer customer = new ModuleWorkFlow.BLL.Customer();
@@ -131,22 +132,7 @@ namespace ModuleWorkFlow.business
 			DDL.Items.Insert(0,li);
 		}
 
-		public static void DDL_BindData_PartLevel(DropDownList DDL)
-		{
-			DDL.Items.Clear();
-			ListItem li = new ListItem(lang.TXT_SELECTALLNAME,PartInfo.IMPORTANT_ALL.ToString());
-			DDL.Items.Insert(0,li);
-			li = new ListItem(PartInfo.IMPORTANT_1.ToString(),PartInfo.IMPORTANT_1.ToString());
-			DDL.Items.Insert(1,li);
-			li = new ListItem(PartInfo.IMPORTANT_2.ToString(),PartInfo.IMPORTANT_2.ToString());
-			DDL.Items.Insert(2,li);
-			li = new ListItem(PartInfo.IMPORTANT_3.ToString(),PartInfo.IMPORTANT_3.ToString());
-			DDL.Items.Insert(3,li);
-			li = new ListItem(PartInfo.IMPORTANT_4.ToString(),PartInfo.IMPORTANT_4.ToString());
-			DDL.Items.Insert(4,li);
-			li = new ListItem(PartInfo.IMPORTANT_5.ToString(),PartInfo.IMPORTANT_5.ToString());
-			DDL.Items.Insert(5,li);
-		}
+	
 
 		public static void DDL_BindData_EmailGroup(DropDownList DDL)
 		{
@@ -215,7 +201,7 @@ namespace ModuleWorkFlow.business
 			IList departments = department.GetAllDepartment();
 			ModuleWorkFlow.Model.DepartMentInfo dpmi = new ModuleWorkFlow.Model.DepartMentInfo();
 			dpmi.DepartmentId = 0;
-			dpmi.DepartmentName = "©Ò¦³";//¢s£V
+			dpmi.DepartmentName = "ï¿½Ò¦ï¿½";//ï¿½sï¿½V
 			departments.Insert(0,dpmi);
 			DDL.DataSource = departments;
 			DDL.DataBind();
@@ -247,11 +233,28 @@ namespace ModuleWorkFlow.business
             ArrayList alcom = new ArrayList();
             foreach (ParamterInfo pi in ilist)
             {
-                alsql.Add(pi.Sql);
-                alpars.Add(pi.Pars);
-                alcom.Add(pi.Type);
+                if (pi.AlSQL != null && pi.AlSQL.Count > 0)
+                {
+                    for (int i = 0; i < pi.AlSQL.Count; i++)
+                    {
+                        alsql.Add(pi.AlSQL[i]);
+                        alpars.Add(pi.AlPAR[i]);
+                        alcom.Add(pi.AlCOM[i]);
+                    }
+                }
+                else
+                {
+                    alsql.Add(pi.Sql);
+                    alpars.Add(pi.Pars);
+                    alcom.Add(pi.Type);
+                }
             }
             return Data.excuteTrans(alsql, alpars, alcom);
+        }
+
+        public static bool Save(List<ParamterInfo> ilist)
+        {
+            return Save((IList)ilist);
         }
 
         public static bool SingleSave(ParamterInfo pi)

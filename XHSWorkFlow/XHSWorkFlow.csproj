@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -112,6 +112,18 @@
     <Compile Include="middle.aspx.cs">
       <DependentUpon>middle.aspx</DependentUpon>
     </Compile>
+    <Compile Include="ShippingGoodsUpload.aspx.cs">
+      <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsUpload.aspx.designer.cs">
+      <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsList.aspx.cs">
+      <DependentUpon>ShippingGoodsList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsList.aspx.designer.cs">
+      <DependentUpon>ShippingGoodsList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -125,12 +137,18 @@
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
+    <Content Include="ShippingGoodsList.aspx" />
+    <Content Include="ShippingGoodsUpload.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BLL\XHS.BLL.csproj">
       <Project>{fb5d93c8-b96d-43f0-a6a6-7050f503606f}</Project>
       <Name>XHS.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Model\Model.csproj">
+      <Project>{731d059a-6ccf-46c2-93d8-e94ee4905933}</Project>
+      <Name>XHS.Model</Name>
     </ProjectReference>
     <ProjectReference Include="..\business\business.csproj">
       <Project>{d63a2045-57a0-460b-8781-fc60d6ef7b36}</Project>

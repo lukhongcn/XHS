@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Model;
+using XHS.Model;
 
 namespace XHS.IDAL
 {
@@ -10,12 +10,14 @@ namespace XHS.IDAL
     {
         List<ShippingGoodsInfo> GetShippingGoods();
 
-        List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo);
+        List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo);
 
-        bool InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
+        List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo);
 
-        bool UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
+        ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
 
-        bool DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
+        ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
+
+        ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
     }
 }

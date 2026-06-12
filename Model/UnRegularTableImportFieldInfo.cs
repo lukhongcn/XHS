@@ -1,4 +1,4 @@
-﻿namespace Model
+﻿namespace XHS.Model
 {
     /// <summary>
     /// 不规则表格导入字段配置。

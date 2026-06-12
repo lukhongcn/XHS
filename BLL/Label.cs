@@ -1,4 +1,4 @@
-﻿using Model.Label;
+﻿using XHS.Model.Label;
 using System;
 using System.Collections.Generic;
 using System.Reflection;

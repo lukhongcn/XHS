@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Model
+namespace XHS.Model
 {
     public class CheryScanDisplayRow
     {

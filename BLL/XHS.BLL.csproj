@@ -44,6 +44,12 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
+    <Reference Include="business">
+      <HintPath>..\business\bin\Debug\business.dll</HintPath>
+    </Reference>
+    <Reference Include="ModuleWorkFlow.Model">
+      <HintPath>..\business\bin\Debug\ModuleWorkFlow.Model.dll</HintPath>
+    </Reference>
     <Reference Include="NPOI">
       <HintPath>..\lib\NPOI\NPOI.dll</HintPath>
     </Reference>
@@ -70,7 +76,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
-      <Name>Model</Name>
+      <Name>XHS.Model</Name>
     </ProjectReference>
     <ProjectReference Include="..\XHS.DALFactory\XHS.DALFactory.csproj">
       <Project>{C961E696-6EA4-42E5-AFFC-B21673D07595}</Project>

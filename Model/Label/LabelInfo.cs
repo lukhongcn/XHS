@@ -1,4 +1,4 @@
-﻿namespace Model.Label
+﻿namespace XHS.Model.Label
 {
     /// <summary>
     /// 标签数据模型。

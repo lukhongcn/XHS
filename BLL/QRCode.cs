@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Model.Label;
+using XHS.Model.Label;
 
 namespace BLL
 {

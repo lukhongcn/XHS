@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
-using Model;
+using XHS.Model;
+using ModuleWorkFlow.business;
+using XHS.IDAL;
+using System.Collections;
 
 namespace BLL
 {
@@ -8,29 +11,45 @@ namespace BLL
     /// </summary>
     public class ShippingGoods
     {
+        private readonly IShippingGoods dal;
+
+        public ShippingGoods()
+        {
+            dal = XHS.DALFactory.ShippingGoods.Create();
+        }
+
         public List<ShippingGoodsInfo> GetShippingGoods()
         {
-            return XHS.DALFactory.ShippingGoods.Create().GetShippingGoods();
+            return dal.GetShippingGoods();
         }
 
-        public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo)
+        public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo)
         {
-            return XHS.DALFactory.ShippingGoods.Create().GetShippingGoodsBySupplyBatchNo(supplyBatchNo);
+            return dal.GetShippingGoods(partNo, partName, supplyBatchNo);
         }
 
-        public bool InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
         {
-            return XHS.DALFactory.ShippingGoods.Create().InsertShippingGoods(shippingGoodsInfos);
+            return dal.GetShippingGoodsBySupplyBatchNo(supplyBatchNo, cartonNo);
         }
 
-        public bool UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public string InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            return XHS.DALFactory.ShippingGoods.Create().UpdateShippingGoods(shippingGoodsInfos);
+            ParamterInfo paramterInfo = dal.InsertShippingGoods(shippingGoodsInfos);
+            IList source = new ArrayList();
+            source.Add(paramterInfo);
+
+            return Common.Save(source) ? string.Empty : "保存失败。";
         }
 
-        public bool DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            return XHS.DALFactory.ShippingGoods.Create().DeleteShippingGoods(shippingGoodsInfos);
+            return dal.UpdateShippingGoods(shippingGoodsInfos);
+        }
+
+        public ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            return dal.DeleteShippingGoods(shippingGoodsInfos);
         }
     }
 }

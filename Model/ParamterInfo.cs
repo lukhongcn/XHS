@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 
-namespace ModuleWorkFlow.Model
+namespace XHS.Model
 {
     public class ParamterInfo
     {

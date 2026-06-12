@@ -4,7 +4,7 @@ using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using Model;
+using XHS.Model;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using Utility;

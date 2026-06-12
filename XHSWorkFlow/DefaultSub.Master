@@ -1,0 +1,230 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="DefaultSub.master.cs" Inherits="ModuleWorkFlow.DefaultSub" %>
+
+<!DOCTYPE html>
+
+
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"  />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title><%=menuname %></title>
+
+
+   </head>
+     <style>
+        /* Custom styles for the date picker input */
+        /*.date-picker {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+            font-size: 16px;
+        }*/
+         .custom-height-width {
+            height: 25px; /* Set your desired height */
+            padding: 6px 12px; /* Adjust padding as necessary */
+            font-size: 14px; /* Adjust font size if needed */
+            width: 160px;
+        }
+
+          .custom-large-width {
+                height: 25px; /* Set your desired height */
+                padding: 6px 12px; /* Adjust padding as necessary */
+                font-size: 14px; /* Adjust font size if needed */
+                width: 220px;
+            }
+
+           .custom-full-width {
+                height: 25px; /* Set your desired height */
+                padding: 6px 12px; /* Adjust padding as necessary */
+                font-size: 14px; /* Adjust font size if needed */
+                width: 800px;
+            }
+
+           .custom-htight {
+               height: 20px; /* Set your desired height */
+              
+           }
+
+         .custom-number-width {
+            height: 25px; /* Set your desired height */
+            padding: 6px 12px; /* Adjust padding as necessary */
+            font-size: 14px; /* Adjust font size if needed */
+            width: 60px;
+        }
+
+        .custom-heighter-width {
+            height: 30px; /* Set your desired height */
+            padding: 6px 12px; /* Adjust padding as necessary */
+            font-size: 14px; /* Adjust font size if needed */
+            width: 160px;
+        }
+
+          .custom-heighter-small {
+              height: 30px; /* Set your desired height */
+              padding: 6px 12px; /* Adjust padding as necessary */
+              font-size: 14px; /* Adjust font size if needed */
+              width: 60px;
+          }
+        .custom-heighter-large {
+            height: 30px; /* Set your desired height */
+            padding: 6px 12px; /* Adjust padding as necessary */
+            font-size: 14px; /* Adjust font size if needed */
+            width: 225px;
+        }
+
+         .me-10 {
+            margin-right: 10px; /* Set your desired right margin */
+          }
+
+           .ml-10 {
+                 margin-left: 10px; /* Set your desired right margin */
+             }
+
+         table.treetable tbody tr td {
+             position: relative;
+             padding-left: 0px;
+             word-break: break-all;
+             word-wrap: break-word
+         }
+
+        table.treetable tbody tr td span.indenter {
+             position: relative;
+             left: 5px;
+             word-break: break-all;
+             word-wrap: break-word
+         }
+
+   .wrap-text {
+    word-wrap: break-word; /* Break long words */
+    overflow-wrap: break-word; /* Modern alternative for word-wrap */
+    white-space: normal; /* Allow wrapping */
+  
+    
+}
+
+         .xhs-message-modal-mask {
+             position: fixed;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             z-index: 9999;
+             display: none;
+             align-items: center;
+             justify-content: center;
+             background-color: rgba(0, 0, 0, 0.35);
+         }
+
+         .xhs-message-modal {
+             width: min(420px, calc(100% - 32px));
+             background-color: #fff;
+             border: 1px solid #c8c8c8;
+             border-radius: 6px;
+             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+         }
+
+         .xhs-message-modal-title {
+             padding: 12px 16px;
+             border-bottom: 1px solid #e5e5e5;
+             font-size: 16px;
+             font-weight: bold;
+         }
+
+         .xhs-message-modal-body {
+             max-height: 320px;
+             overflow: auto;
+             padding: 16px;
+             line-height: 1.6;
+             white-space: pre-wrap;
+         }
+
+         .xhs-message-modal-actions {
+             padding: 10px 16px 14px;
+             text-align: right;
+         }
+
+         .xhs-message-modal-actions button {
+             min-width: 72px;
+             height: 30px;
+         }
+
+
+    </style>
+
+<body>
+     <script>
+        
+             $(document).ready(function () {  
+                 // Initialize date-only picker  
+                 $('.date-picker').datetimepicker({  
+                     timepicker: false,  // Disable time picker for a date-only picker  
+                     format: 'Y-m-d'     // Date format  
+                 });  
+
+                 // Initialize date and time picker  
+                 $('.datetime-picker').datetimepicker({  
+                     format: 'Y-m-d H:i', // Date and time format  
+                     step: 30             // Step of minutes  
+                 });  
+
+                 // Initialize time-only picker  
+                 $('.time-picker').datetimepicker({  
+                     datepicker: false,  // Disable date picker for a time-only picker  
+                     format: 'H:i',      // Time format  
+                     step: 15            // Step of minutes  
+                 });  
+             });  
+        
+
+         function wrapText(text) {
+             return text.replace(/_/g, "<br />");
+         }
+
+         window.onload = function () {
+             getFocus();
+         };
+
+         function getFocus() {
+             $("#txt_partCount").focus()
+
+         }
+
+         function showMessageModal(message) {
+             var mask = document.getElementById("xhsMessageModalMask");
+             var body = document.getElementById("xhsMessageModalBody");
+
+             if (!mask || !body) {
+                 alert(message || "");
+                 return;
+             }
+
+             body.innerText = message || "";
+             mask.style.display = "flex";
+         }
+
+         function hideMessageModal() {
+             var mask = document.getElementById("xhsMessageModalMask");
+             if (mask) {
+                 mask.style.display = "none";
+             }
+         }
+     </script>
+    <form id="form1"   runat="server">
+        <div>
+            <asp:ContentPlaceHolder ID="contentHolder" runat="server">
+            </asp:ContentPlaceHolder>
+        </div>
+        <div id="xhsMessageModalMask" class="xhs-message-modal-mask">
+            <div class="xhs-message-modal" role="dialog" aria-modal="true" aria-labelledby="xhsMessageModalTitle">
+                <div id="xhsMessageModalTitle" class="xhs-message-modal-title">提示</div>
+                <div id="xhsMessageModalBody" class="xhs-message-modal-body"></div>
+                <div class="xhs-message-modal-actions">
+                    <button type="button" onclick="hideMessageModal();">确定</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <asp:ContentPlaceHolder ID="JSHolder" runat="server">
+   </asp:ContentPlaceHolder>
+</body>
+</html>

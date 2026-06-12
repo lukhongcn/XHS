@@ -4,7 +4,7 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.IO;
 using BLL;
-using Model;
+using XHS.Model;
 
 namespace XHS.Tests
 {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Model
+namespace XHS.Model
 {
     /// <summary>
     /// 出货货品信息。

@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XHSWorkFlow", "XHSWorkFlow\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheryCheckSystem.WinForms", "CheryCheckSystem.WinForms\CheryCheckSystem.WinForms.csproj", "{2DBBDA22-C924-40E8-9F5D-E2FE6CB0B03E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{731D059A-6CCF-46C2-93D8-E94EE4905933}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XHS.Model", "Model\Model.csproj", "{731D059A-6CCF-46C2-93D8-E94EE4905933}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheryPortHelp", "CheryPortHelp\CheryPortHelp.csproj", "{0567035C-F4A7-4386-B738-6A763F970BC8}"
 EndProject

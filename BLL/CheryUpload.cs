@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Web.Script.Serialization;
-using Model;
-using Model.Label;
+using XHS.Model;
+using XHS.Model.Label;
 
 namespace BLL
 {
