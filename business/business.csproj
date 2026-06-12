@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D63A2045-57A0-460B-8781-FC60D6EF7B36}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>business</RootNamespace>
+    <AssemblyName>business</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common.cs" />
+    <Compile Include="ConvertString.cs" />
+    <Compile Include="Employee.cs" />
+    <Compile Include="lang.cs" />
+    <Compile Include="Menu.cs" />
+    <Compile Include="milePart.cs" />
+    <Compile Include="Order.cs" />
+    <Compile Include="Part.cs" />
+    <Compile Include="PartData.cs" />
+    <Compile Include="PartProcess.cs" />
+    <Compile Include="Priority.cs" />
+    <Compile Include="Process.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Role.cs" />
+    <Compile Include="RoleProcess.cs" />
+    <Compile Include="Rpt_Discard.cs" />
+    <Compile Include="Rpt_DiscardInfo.cs" />
+    <Compile Include="util.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\BLL.Alert\BLL.Alert.csproj">
+      <Project>{798b0758-0854-4a31-b65b-18f7034ef4c2}</Project>
+      <Name>BLL.Alert</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\BLL.Outsource\BLL.Outsource.csproj">
+      <Project>{6c9b7512-a5b7-497d-b163-8bf49c900504}</Project>
+      <Name>BLL.Outsource</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\BLL.System\BLL.System.csproj">
+      <Project>{adb0a4a5-30c4-40a4-a9ed-137bc7a9ef58}</Project>
+      <Name>BLL.System</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\BLL\BLL.csproj">
+      <Project>{47bd34bd-0678-4ac5-aefe-020c468a4648}</Project>
+      <Name>BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\Model.System\Model.System.csproj">
+      <Project>{dbc55b97-7848-4446-bd2c-816807b982c7}</Project>
+      <Name>Model.System</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\Model\Model.csproj">
+      <Project>{967d5465-7e73-46c0-b3bd-a921a6b94c89}</Project>
+      <Name>Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\ModuleWorkFlow.BLL.Unnormal\ModuleWorkFlow.BLL.Unnormal.csproj">
+      <Project>{6faf5a68-2b63-49b4-af71-bcb051d0cbd7}</Project>
+      <Name>ModuleWorkFlow.BLL.Unnormal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\ModuleWorkFlow.Model.Order\ModuleWorkFlow.Model.NewOrder.csproj">
+      <Project>{caacffae-b3f0-405c-8c76-8fdd19a34f57}</Project>
+      <Name>ModuleWorkFlow.Model.NewOrder</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\ModuleWorkFlow.Model.Unnormal\ModuleWorkFlow.Model.Unnormal.csproj">
+      <Project>{121a7797-8b88-4d23-9603-31d32a6d4696}</Project>
+      <Name>ModuleWorkFlow.Model.Unnormal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\Utility\Utility.csproj">
+      <Project>{aa175b09-1316-4700-9e57-fb4ee7c16cb0}</Project>
+      <Name>Utility</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\new_xuxiang2018_zhengqin_twNJ\WebView\WebView.csproj">
+      <Project>{4c7eb345-42a6-4542-8432-2944d95cb2ca}</Project>
+      <Name>WebView</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
