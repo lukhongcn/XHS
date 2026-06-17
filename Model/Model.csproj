@@ -37,6 +37,7 @@
     <Compile Include="CheryScanDisplayRow.cs" />
     <Compile Include="CheryUploadInfo.cs" />
     <Compile Include="ShippingGoodsInfo.cs" />
+    <Compile Include="ShippingGoodsStatusInfo.cs" />
     <Compile Include="UnRegularTableImportFieldInfo.cs" />
     <Compile Include="Label\LabelInfo.cs" />
     <Compile Include="PackingDetailInfo.cs" />

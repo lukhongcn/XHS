@@ -35,6 +35,7 @@ namespace BLL
 
         public string InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
+            NormalizeShippingGoods(shippingGoodsInfos);
             ParamterInfo paramterInfo = dal.InsertShippingGoods(shippingGoodsInfos);
             IList source = new ArrayList();
             source.Add(paramterInfo);
@@ -44,12 +45,39 @@ namespace BLL
 
         public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
+            NormalizeShippingGoods(shippingGoodsInfos);
             return dal.UpdateShippingGoods(shippingGoodsInfos);
         }
 
         public ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             return dal.DeleteShippingGoods(shippingGoodsInfos);
+        }
+
+        private static void NormalizeShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            if (shippingGoodsInfos == null)
+            {
+                return;
+            }
+
+            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
+            {
+                if (shippingGoodsInfo == null)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(shippingGoodsInfo.Status))
+                {
+                    shippingGoodsInfo.Status = ShippingGoodsStatusInfo.UnPrinted;
+                }
+
+                if (!shippingGoodsInfo.PrintCount.HasValue)
+                {
+                    shippingGoodsInfo.PrintCount = 0;
+                }
+            }
         }
     }
 }

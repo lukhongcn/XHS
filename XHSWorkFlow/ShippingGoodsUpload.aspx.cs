@@ -5,6 +5,7 @@ using System.IO;
 using System.Web;
 using System.Web.UI;
 using BLL;
+using ModuleWorkFlow.BLL;
 using XHS.Model;
 
 namespace ModuleWorkFlow
@@ -14,14 +15,30 @@ namespace ModuleWorkFlow
     /// </summary>
     public partial class ShippingGoodsUpload : Page
     {
-        protected string menuname = "上传出货单";
+        protected string menuname = "";
+        private string menuid = "B01";
 
         private void Page_Load(object sender, EventArgs e)
         {
+            menuname = new PartTmenu().findbykey(menuid).Menuname;
+
             if (Master is DefaultSub master)
             {
                 master.Menuname = menuname;
             }
+
+            if (ModuleWorkFlow.BLL.Private.checkPrivate(this, menuid, "PEDIT"))
+            {
+                if (Session["userid"] == null)
+                {
+                    Response.Redirect("login.aspx");
+                }
+                else
+                {
+                    lab_UserName.Text = Session["userid"].ToString();
+                }
+            }
+        
         }
 
         protected void btn_upload_Click(object sender, EventArgs e)
@@ -29,9 +46,10 @@ namespace ModuleWorkFlow
             UploadShippingGoods();
         }
 
-        protected void lnkbutton_upload_Click(object sender, EventArgs e)
+        protected void lnk_view_Click(object sender, EventArgs e)
         {
-            UploadShippingGoods();
+            string url = $"ShippingGoodsList.aspx?supplyBatchNo={lab_supplyBatchNo.Text.Trim()}";
+            Response.Redirect (url);
         }
 
         private void UploadShippingGoods()
@@ -71,7 +89,25 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            string saveMessage = new ShippingGoods().InsertShippingGoods(shippingGoodsInfos);
+            DateTime uploadDate = DateTime.Now;
+            ShippingGoods shippingGoods = new ShippingGoods();
+            foreach(ShippingGoodsInfo sgi in shippingGoodsInfos)
+            {
+                List<ShippingGoodsInfo> duplicateShippingGoodsInfos = shippingGoods.GetShippingGoodsBySupplyBatchNo(sgi.SupplyBatchNo, sgi.CartonNo);
+                if (duplicateShippingGoodsInfos.Count > 0)
+                {
+                    ShowMessage(string.Format("供货批次号“{0}”下的纸箱编号“{1}”已存在，不允许重复上传。", sgi.SupplyBatchNo, sgi.CartonNo));
+                    return;
+                }
+
+                sgi.Status = ShippingGoodsStatusInfo.UnPrinted;
+                sgi.Creater = lab_UserName.Text.Trim();
+                sgi.CreatDate = uploadDate;
+                lab_supplyBatchNo.Text = sgi.SupplyBatchNo;
+
+
+            }
+            string saveMessage = shippingGoods.InsertShippingGoods(shippingGoodsInfos);
             ShowMessage(string.IsNullOrWhiteSpace(saveMessage)
                 ? string.Format("上传成功，已导入 {0} 条出货货品数据。", shippingGoodsInfos.Count)
                 : saveMessage);

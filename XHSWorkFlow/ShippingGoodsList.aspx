@@ -22,6 +22,9 @@
                     <div class="menubox">
                         <div class="mod1">
                             <ul>
+                                  <li class="btn13">
+                                            <asp:LinkButton ID="lnk_upload" runat="server" OnClick="lnk_upload_Click" ToolTip="上传">上传</asp:LinkButton>
+                                    </li>
                             </ul>
                         </div>
                         <div class="mod2">
@@ -68,6 +71,8 @@
                                 <asp:BoundColumn DataField="Quantity" HeaderText="数量"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="SupplyBatchNo" HeaderText="供货批次号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="CartonNo" HeaderText="纸箱编号"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="Status" HeaderText="状态"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="PrintCount" HeaderText="打印次数"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="SingleBoxGrossWeight" HeaderText="单箱毛重"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="ProductionDate" HeaderText="生产日期" DataFormatString="{0:yyyy-MM-dd}"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="InspectionConfirmDate" HeaderText="检验确认日期" DataFormatString="{0:yyyy-MM-dd}"></asp:BoundColumn>

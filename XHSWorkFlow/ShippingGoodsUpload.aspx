@@ -22,8 +22,8 @@
                     <div class="menubox">
                         <div class="mod1">
                             <ul>
-                                <li class="btn2">
-                                    <asp:LinkButton ID="lnkbutton_upload" runat="server" OnClick="lnkbutton_upload_Click" ToolTip="上传/upload">上传/upload</asp:LinkButton>
+                                <li class="btn5">
+                                    <asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton>
                                 </li>
                             </ul>
                         </div>
@@ -32,6 +32,9 @@
                 </div>
 
                 <div class="container mt-3 border border-primary">
+                    <asp:Label Runat="server" ID="lab_UserName" Visible="false" />
+                       <asp:Label Runat="server" ID="lab_supplyBatchNo" Visible="false" />
+                    
                     <div class="container mt-3 mb-3">
                         <asp:FileUpload ID="FileUploadShippingGoods" runat="server" Style="display: none;" />
                         <div id="dropArea" class="shipping-upload-drop border border-primary text-center">

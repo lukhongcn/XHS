@@ -23,4 +23,13 @@ public class ShippingGoodsUploadTests : PageTest
         await Expect(Page.GetByText("拖拉出货单到这里")).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Button, new() { Name = "上传" })).ToBeVisibleAsync();
     }
+
+    [Test]
+    public async Task ShippingGoodsListPageShowsStatusColumns()
+    {
+        await Page.GotoAsync($"{BaseUrl}/ShippingGoodsList.aspx");
+
+        await Expect(Page.GetByRole(AriaRole.Cell, new() { Name = "状态" })).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Cell, new() { Name = "打印次数" })).ToBeVisibleAsync();
+    }
 }

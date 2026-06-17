@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using BLL;
+using ModuleWorkFlow.BLL;
 using XHS.Model;
 
 namespace ModuleWorkFlow
@@ -12,18 +13,28 @@ namespace ModuleWorkFlow
     /// </summary>
     public partial class ShippingGoodsList : Page
     {
-        protected string menuname = "出货货品浏览";
-
+        protected string menuname = "";
+        private string menuid = "B01";
         private void Page_Load(object sender, EventArgs e)
         {
+            menuname = new PartTmenu().findbykey(menuid).Menuname;
             if (Master is DefaultSub master)
             {
                 master.Menuname = menuname;
             }
-
-            if (!IsPostBack)
+            if (ModuleWorkFlow.BLL.Private.checkPrivate(this, menuid, "PQUERY"))
             {
-                BindData();
+
+                if (!IsPostBack)
+                {
+                    string supplyBatchNo = Request.QueryString["supplyBatchNo"];
+                    if (!string.IsNullOrWhiteSpace(supplyBatchNo))
+                    {
+                        TextBox_SupplyBatchNo.Text = supplyBatchNo.Trim();
+                    }
+
+                    BindData();
+                }
             }
         }
 
@@ -36,6 +47,12 @@ namespace ModuleWorkFlow
         protected void lnkbutton_search_Click(object sender, EventArgs e)
         {
             Search();
+        }
+
+        protected void lnk_upload_Click(object sender, EventArgs e)
+        {
+            string url = "ShippingGoodsUpload.aspx";
+            Response.Redirect(url);
         }
 
         protected void MainDataGrid_PageIndexChanged(object source, DataGridPageChangedEventArgs e)

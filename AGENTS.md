@@ -9,6 +9,8 @@
 3. C# 类名、属性名和字段名统一使用 C# 命名风格，公共成员使用 PascalCase。
 4. 不允许使用硬编码，配置项、连接字符串和可变业务规则必须集中配置或统一管理。
 5. 所有 `aspx` 文件中的中文内容一律使用简体中文，文件保存格式统一为 UTF-8 with BOM。
+6. `aspx` 页面中的浏览按钮统一使用 `btn5` 样式，标准写法为 `<li class="btn5"><asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton></li>`。
+7. `aspx` 页面中的上传按钮统一使用 `btn13` 样式，对应图片资源为 `up.jpeg`，标准写法为 `<li class="btn13"><asp:LinkButton ID="lnkbutton_upload" runat="server" OnClick="lnkbutton_upload_Click" ToolTip="上传">上传</asp:LinkButton></li>`。
 
 ## 分层约束
 

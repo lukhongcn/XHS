@@ -8,6 +8,11 @@ namespace XHS.Model
     public class ShippingGoodsInfo
     {
         /// <summary>
+        /// 主键标识。
+        /// </summary>
+        public int? Id { get; set; }
+
+        /// <summary>
         /// 供应商代码。
         /// </summary>
         public string SupplierCode { get; set; }
@@ -66,6 +71,16 @@ namespace XHS.Model
         /// 标签二维码或唯一识别码。
         /// </summary>
         public string QrCode { get; set; }
+
+        /// <summary>
+        /// 当前状态。
+        /// </summary>
+        public string Status { get; set; }
+
+        /// <summary>
+        /// 打印次数。
+        /// </summary>
+        public int? PrintCount { get; set; }
 
         /// <summary>
         /// 创建人。
