@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using LabelHelp.Enums;
 using LabelHelp.Services;
-using Model.Label;
+using XHS.Model.Label;
 
 namespace LabelHelp
 {

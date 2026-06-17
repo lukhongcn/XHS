@@ -4,7 +4,7 @@ using LabelHelp.Config;
 using LabelHelp.Enums;
 using LabelHelp.Pdf;
 using LabelHelp.Printer;
-using Model.Label;
+using XHS.Model.Label;
 
 namespace LabelHelp.Services
 {

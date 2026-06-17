@@ -54,17 +54,17 @@
                            <HeaderStyle HorizontalAlign="Center" VerticalAlign="Middle" CssClass="table-primary" ></HeaderStyle>
                            <ItemStyle HorizontalAlign="Center" VerticalAlign="Middle" Wrap="true" CssClass="wrap-text"/>
                             <Columns>
-                                <asp:TemplateColumn>
+                                <asp:TemplateColumn HeaderStyle-Width="6%" ItemStyle-Width="6%">
                                     <ItemTemplate>
                                         <asp:CheckBox runat="server" ID="chk_datagrid" />
                                     </ItemTemplate>
                                 </asp:TemplateColumn>
-                               <asp:BoundColumn DataField="UserName" HeaderText="员工编号"></asp:BoundColumn>
-                                <asp:BoundColumn DataField="Name" HeaderText="员工姓名"></asp:BoundColumn>
-                                <asp:BoundColumn DataField="Password" HeaderText="密码"></asp:BoundColumn>
+                               <asp:BoundColumn DataField="UserName" HeaderText="员工编号" HeaderStyle-Width="16%" ItemStyle-Width="16%"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="Name" HeaderText="员工姓名" HeaderStyle-Width="14%" ItemStyle-Width="14%"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="Password" HeaderText="密码" HeaderStyle-Width="16%" ItemStyle-Width="16%"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="RoleName" HeaderText="角色" Visible="False"></asp:BoundColumn>
-                                <asp:BoundColumn DataField="Email" HeaderText="电子邮件"></asp:BoundColumn>
-                                <asp:TemplateColumn HeaderText="系统管理员">
+                                <asp:BoundColumn DataField="Email" HeaderText="电子邮箱" HeaderStyle-Width="30%" ItemStyle-Width="30%"></asp:BoundColumn>
+                                <asp:TemplateColumn HeaderText="系统管理员" HeaderStyle-Width="18%" ItemStyle-Width="18%">
                                     <ItemTemplate>
                                         <asp:Label ID="Label_IsAdmin" runat="server" Text='<%# DataBinder.Eval(Container, "DataItem.isadmin") %>'></asp:Label>
                                     </ItemTemplate>

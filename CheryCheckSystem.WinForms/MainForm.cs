@@ -1,5 +1,6 @@
 using System;
-using Model.Label;
+using XHS.Model;
+using XHS.Model.Label;
 using LabelHelp.Services;
 using LabelHelp.Enums;
 using System.Diagnostics;
@@ -10,7 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using CheryPortHelp;
-using Model;
+using XHS.Model;
 
 namespace CheryCheckSystem.WinForms
 {
@@ -689,7 +690,7 @@ namespace CheryCheckSystem.WinForms
             }
         }
 
-        private void AddUploadResultRow(LabelInfo labelInfo, Model.CheryUploadInfo uploadInfo, CheryPostResult postResult)
+        private void AddUploadResultRow(LabelInfo labelInfo, CheryUploadInfo uploadInfo, CheryPostResult postResult)
         {
             string uploadStatus = "上传成功";
             string returnCode = string.Empty;

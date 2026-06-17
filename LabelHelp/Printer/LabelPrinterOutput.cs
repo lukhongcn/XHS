@@ -1,6 +1,6 @@
 using LabelHelp.Config;
 using LabelHelp.Enums;
-using Model.Label;
+using XHS.Model.Label;
 
 namespace LabelHelp.Printer
 {

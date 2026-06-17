@@ -1,4 +1,4 @@
-<%@ Page language="c#" Codebehind="UserPasswordChange.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.admin.UserPasswordChange" MasterPageFile="~/DefaultSub.Master" %>
+﻿<%@ Page language="c#" Codebehind="UserPasswordChange.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.admin.UserPasswordChange" MasterPageFile="~/DefaultSub.Master" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="contentHolder" runat="server">
 <div id="Wrapper">
 <div id="Header"><div class="headbox">
@@ -7,7 +7,7 @@
 <img src="images/arrow.png" />
 <a href="#"><%=menuname %></a>
 </div>
-<div class="logout"><a href="../login.aspx" TARGET="_parent">登出</a>
+<div class="logout"><a href="../login.aspx" TARGET="_parent">退出登录</a>
 </div>
 <div class="clearbox"></div>
 </div>
@@ -38,7 +38,7 @@
     </div>
     <div class="row mb-3">
       <div class="col-lg-6 d-flex">
-        <asp:Label ID="label3" runat="server" CssClass="me-10">电子邮件</asp:Label>
+        <asp:Label ID="label3" runat="server" CssClass="me-10">电子邮箱</asp:Label>
         <asp:TextBox Runat="server" ID="txt_Email" CssClass="form-control custom-heighter-width text-start border-primary" />
       </div>
       <div class="col-lg-6 d-flex">

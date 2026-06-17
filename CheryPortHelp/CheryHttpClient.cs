@@ -1,7 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Text;
-using Model;
+using XHS.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 

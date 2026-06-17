@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using Model.Label;
+using XHS.Model.Label;
 using ZXing;
 using ZXing.Common;
 

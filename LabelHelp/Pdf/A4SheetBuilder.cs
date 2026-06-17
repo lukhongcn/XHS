@@ -6,7 +6,7 @@ using System.IO;
 using LabelHelp.Config;
 using LabelHelp.Enums;
 using LabelHelp.Rendering;
-using Model.Label;
+using XHS.Model.Label;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 
