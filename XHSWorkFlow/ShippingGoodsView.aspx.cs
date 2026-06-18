@@ -28,16 +28,16 @@ namespace ModuleWorkFlow
                 master.Menuname = menuname;
             }
 
-            if (!ModuleWorkFlow.BLL.Private.checkPrivate(this, MenuId, "PEDIT"))
+            if (!ModuleWorkFlow.BLL.Private.checkPrivate(this, MenuId, "PADD"))
             {
                 return;
             }
 
-            //if (Session["userid"] == null)
-            //{
-            //    Response.Redirect("login.aspx");
-            //    return;
-            //}
+            if (Session["userid"] == null)
+            {
+                Response.Redirect("login.aspx");
+                return;
+            }
 
             txt_barcode.Attributes["autocomplete"] = "off";
             txt_barcode.Attributes["onkeydown"] = "return shippingGoodsBarcodeKeyDown(event);";
@@ -68,25 +68,38 @@ namespace ModuleWorkFlow
         private void InitializePage()
         {
             txt_SupplierCode.Text = CheryPortConfig.SupplNo;
-            ApplyReadOnlyState();
+            txt_StackLayerCount.Text = "1";
+            ApplyBarcodeDrivenReadOnlyState();
         }
 
-        private void ApplyReadOnlyState()
+        private void ApplyBarcodeDrivenReadOnlyState()
         {
-            ApplyTextBoxReadOnly(txt_SupplierCode);
-            ApplyTextBoxReadOnly(txt_PartNo);
-            ApplyTextBoxReadOnly(txt_Quantity);
-            ApplyTextBoxReadOnly(txt_SupplyBatchNo);
-            ApplyTextBoxReadOnly(txt_StackLayerCount);
+            SetTextBoxReadOnly(txt_SupplierCode, true);
+            SetTextBoxReadOnly(txt_PartNo, true);
+            SetTextBoxReadOnly(txt_Quantity, true);
+            SetTextBoxReadOnly(txt_SupplyBatchNo, true);
+            SetTextBoxReadOnly(txt_StackLayerCount, false);
+            SetTextBoxReadOnly(txt_ProductionDate, false);
         }
 
-        private static void ApplyTextBoxReadOnly(TextBox textBox)
+        private static void SetTextBoxReadOnly(TextBox textBox, bool isReadOnly)
         {
-            textBox.ReadOnly = true;
-            string cssClass = textBox.CssClass ?? string.Empty;
-            if (!cssClass.Contains("shipping-goods-readonly"))
+            textBox.ReadOnly = isReadOnly;
+            string cssClass = (textBox.CssClass ?? string.Empty).Trim();
+            const string readOnlyClass = "shipping-goods-readonly";
+            bool hasReadOnlyClass = cssClass.Contains(readOnlyClass);
+            if (isReadOnly)
             {
-                textBox.CssClass = (cssClass + " shipping-goods-readonly").Trim();
+                if (!hasReadOnlyClass)
+                {
+                    textBox.CssClass = (cssClass + " " + readOnlyClass).Trim();
+                }
+                return;
+            }
+
+            if (hasReadOnlyClass)
+            {
+                textBox.CssClass = cssClass.Replace(readOnlyClass, string.Empty).Trim();
             }
         }
 
@@ -171,7 +184,7 @@ namespace ModuleWorkFlow
             txt_PartNo.Text = SafeValue(scannedShippingGoodsInfo.PartNo);
             txt_Quantity.Text = scannedShippingGoodsInfo.Quantity.HasValue ? scannedShippingGoodsInfo.Quantity.Value.ToString() : string.Empty;
             txt_SupplyBatchNo.Text = SafeValue(scannedShippingGoodsInfo.SupplyBatchNo);
-            txt_StackLayerCount.Text = scannedShippingGoodsInfo.StackLayerCount.HasValue ? scannedShippingGoodsInfo.StackLayerCount.Value.ToString() : string.Empty;
+            txt_StackLayerCount.Text = scannedShippingGoodsInfo.StackLayerCount.HasValue ? scannedShippingGoodsInfo.StackLayerCount.Value.ToString() : "1";
             txt_ProductionDate.Text = FormatDateTimeLocal(scannedShippingGoodsInfo.ProductionDate);
         }
 
@@ -180,10 +193,11 @@ namespace ModuleWorkFlow
             txt_PartNo.Text = string.Empty;
             txt_Quantity.Text = string.Empty;
             txt_SupplyBatchNo.Text = string.Empty;
-            txt_StackLayerCount.Text = string.Empty;
+            txt_StackLayerCount.Text = "1";
             txt_ProductionDate.Text = string.Empty;
             txt_BoxCount.Text = string.Empty;
             hid_QrCode.Value = string.Empty;
+            ApplyBarcodeDrivenReadOnlyState();
         }
 
         private void SaveShippingGoods()

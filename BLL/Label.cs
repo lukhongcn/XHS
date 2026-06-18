@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
-namespace BLL
+namespace XHS.BLL
 {
     public class Label
     {
@@ -214,3 +214,4 @@ namespace BLL
         }
     }
 }
+

@@ -27,7 +27,7 @@ namespace ModuleWorkFlow
                 master.Menuname = menuname;
             }
 
-            if (ModuleWorkFlow.BLL.Private.checkPrivate(this, menuid, "PEDIT"))
+            if (ModuleWorkFlow.BLL.Private.checkPrivate(this, menuid, "PADD"))
             {
                 if (Session["userid"] == null)
                 {

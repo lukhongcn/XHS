@@ -22,6 +22,7 @@
                     <div class="menubox">
                         <div class="mod1">
                             <ul>
+                           
                                 <li class="btn5">
                                     <asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton>
                                 </li>
@@ -51,18 +52,18 @@
                         <div class="row mb-3">
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_SupplierCode" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_SupplierCode">供应商代码</asp:Label>
-                                <asp:TextBox ID="txt_SupplierCode" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_SupplierCode" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_PartNo" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_PartNo">零件编号</asp:Label>
-                                <asp:TextBox ID="txt_PartNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_PartNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_PartChineseName" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_PartChineseName">零件中文名称</asp:Label>
-                                <asp:TextBox ID="txt_PartChineseName" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_PartChineseName" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_PartEnglishName" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_PartEnglishName">零件英文名称</asp:Label>
@@ -73,33 +74,33 @@
                         <div class="row mb-3">
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_Quantity" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_Quantity">数量</asp:Label>
-                                <asp:TextBox ID="txt_Quantity" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_Quantity" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_SupplyBatchNo" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_SupplyBatchNo">供货批次号</asp:Label>
-                                <asp:TextBox ID="txt_SupplyBatchNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_SupplyBatchNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_StackLayerCount" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_StackLayerCount">码放层数</asp:Label>
-                                <asp:TextBox ID="txt_StackLayerCount" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_StackLayerCount" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_BoxCount" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_BoxCount">纸箱数量</asp:Label>
-                                <asp:TextBox ID="txt_BoxCount" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_BoxCount" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_ProductionDate" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_ProductionDate">生产日期</asp:Label>
-                                <asp:TextBox ID="txt_ProductionDate" runat="server" TextMode="DateTimeLocal" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_ProductionDate" runat="server" TextMode="DateTimeLocal" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                             <div class="col-lg-6 d-flex">
                                 <asp:Label ID="Label_InspectionConfirmDate" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_InspectionConfirmDate">检验确认日期</asp:Label>
-                                <asp:TextBox ID="txt_InspectionConfirmDate" runat="server" TextMode="DateTimeLocal" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:TextBox ID="txt_InspectionConfirmDate" runat="server" TextMode="DateTimeLocal" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                         </div>
 
@@ -147,8 +148,12 @@
             width: 100%;
         }
 
+        .shipping-goods-required {
+            background-color: #fff59d !important;
+        }
+
         .shipping-goods-readonly {
-            background-color: #f3f3f3;
+            background-color: #f3f3f3 !important;
         }
     </style>
     <script type="text/javascript">

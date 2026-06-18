@@ -11,7 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using CheryPortHelp;
-using XHS.Model;
+using XHS.BLL;
 
 namespace CheryCheckSystem.WinForms
 {
@@ -21,7 +21,7 @@ namespace CheryCheckSystem.WinForms
         private readonly Dictionary<string, TextBox> _labelInfoTextBoxes = new Dictionary<string, TextBox>();
         private readonly Dictionary<string, DateTimeEditor> _labelInfoDateEditors = new Dictionary<string, DateTimeEditor>();
         private Panel pnlTop;
-        private Label lblScanCodeTitle;
+        private System.Windows.Forms.Label lblScanCodeTitle;
         private TextBox txtScanCode;
         private FlowLayoutPanel pnlButtons;
         private Button btnUpload;
@@ -47,7 +47,7 @@ namespace CheryCheckSystem.WinForms
         private void InitializeComponent()
         {
             pnlTop = new Panel();
-            lblScanCodeTitle = new Label();
+            lblScanCodeTitle = new System.Windows.Forms.Label();
             txtScanCode = new TextBox();
             pnlButtons = new FlowLayoutPanel();
             btnUpload = new Button();
@@ -259,7 +259,7 @@ namespace CheryCheckSystem.WinForms
             rowPanel.Margin = Padding.Empty;
             rowPanel.Padding = Padding.Empty;
 
-            var lblTitle = new Label();
+            var lblTitle = new System.Windows.Forms.Label();
             lblTitle.AutoSize = false;
             lblTitle.Location = new Point(0, 6);
             lblTitle.Size = new Size(220, 20);
@@ -284,7 +284,7 @@ namespace CheryCheckSystem.WinForms
 
         private void AddTextField(TableLayoutPanel container, int rowIndex, int columnIndex, string propertyName, string displayName)
         {
-            var lblTitle = new Label();
+            var lblTitle = new System.Windows.Forms.Label();
             lblTitle.AutoSize = false;
             lblTitle.Dock = DockStyle.Fill;
             lblTitle.TextAlign = ContentAlignment.MiddleLeft;
@@ -338,7 +338,7 @@ namespace CheryCheckSystem.WinForms
 
         private void AddDateField(TableLayoutPanel container, int rowIndex, int columnIndex, string propertyName, string displayName)
         {
-            var lblTitle = new Label();
+            var lblTitle = new System.Windows.Forms.Label();
             lblTitle.AutoSize = true;
             lblTitle.Anchor = AnchorStyles.Left;
             lblTitle.Text = displayName;
@@ -408,10 +408,10 @@ namespace CheryCheckSystem.WinForms
                 return;
             }
 
-            var qrCodeService = new BLL.QRCode();
+            var qrCodeService = new QRCode();
             List<QRCodeInfo> qrCodes = qrCodeService.GetPackingSlipCardQRCodeInfoList();
 
-            var labelService = new BLL.Label();
+            var labelService = new XHS.BLL.Label();
             LabelInfo labelInfo = labelService.GetLabelInfo(qrCodes, scanCode);
             ApplyLabelInfoDefaults(labelInfo);
 
@@ -598,13 +598,13 @@ namespace CheryCheckSystem.WinForms
                     return;
                 }
 
-                var qrCodeService = new BLL.QRCode();
-                var labelService = new BLL.Label();
+                var qrCodeService = new XHS.BLL.QRCode();
+                var labelService = new XHS.BLL.Label();
                 labelInfo.QrContent = labelService.GetQRCodeContents(
                     qrCodeService.GetOuterPackageQRCodeInfoList(),
                     labelInfo);
 
-                var uploadService = new BLL.CheryUpload();
+                var uploadService = new XHS.BLL.CheryUpload();
                 var uploadInfo = uploadService.CreateUploadInfo(labelInfo);
 
                 var request = CheryRequestBuilder.BuildCheckRecordRequest(uploadInfo);
@@ -653,13 +653,13 @@ namespace CheryCheckSystem.WinForms
                     return;
                 }
 
-                var qrCodeService = new BLL.QRCode();
-                var labelService = new BLL.Label();
+                var qrCodeService = new XHS.BLL.QRCode();
+                var labelService = new XHS.BLL.Label();
                 labelInfo.QrContent = labelService.GetQRCodeContents(
                     qrCodeService.GetOuterPackageQRCodeInfoList(),
                     labelInfo);
 
-                var uploadService = new BLL.CheryUpload();
+                var uploadService = new XHS.BLL.CheryUpload();
                 var uploadInfo = uploadService.CreateUploadInfo(labelInfo);
                 var request = CheryRequestBuilder.BuildCheckRecordRequest(uploadInfo);
 
@@ -773,8 +773,8 @@ namespace CheryCheckSystem.WinForms
                 }
 
                 // 外包装二维码内容统一由字段映射生成，避免再手工拼接。
-                var qrCodeService = new BLL.QRCode();
-                var labelService = new BLL.Label();
+                var qrCodeService = new XHS.BLL.QRCode();
+                var labelService = new XHS.BLL.Label();
                 List<QRCodeInfo> qrCodes = qrCodeService.GetOuterPackageQRCodeInfoList();
                 string qrContent = labelService.GetQRCodeContents(qrCodes, labelInfo);
                 labelInfo.QrContent = qrContent;
@@ -1065,8 +1065,8 @@ namespace CheryCheckSystem.WinForms
             private readonly NumericUpDown nudHour;
             private readonly NumericUpDown nudMinute;
             private readonly NumericUpDown nudSecond;
-            private readonly Label lblHourMinuteSep;
-            private readonly Label lblMinuteSecondSep;
+            private readonly System.Windows.Forms.Label lblHourMinuteSep;
+            private readonly System.Windows.Forms.Label lblMinuteSecondSep;
 
             public DateTimeEditor()
             {
@@ -1075,8 +1075,8 @@ namespace CheryCheckSystem.WinForms
                 nudHour = new NumericUpDown();
                 nudMinute = new NumericUpDown();
                 nudSecond = new NumericUpDown();
-                lblHourMinuteSep = new Label();
-                lblMinuteSecondSep = new Label();
+                lblHourMinuteSep = new System.Windows.Forms.Label();
+                lblMinuteSecondSep = new System.Windows.Forms.Label();
 
                 Height = 24;
 

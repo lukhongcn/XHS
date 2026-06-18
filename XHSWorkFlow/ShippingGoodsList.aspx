@@ -22,6 +22,7 @@
                     <div class="menubox">
                         <div class="mod1">
                             <ul>
+                                <li class="btn1"><a href="ShippingGoodsView.aspx" runat="server" title="新增/ add">新增/add</a></li>
                                   <li class="btn13">
                                             <asp:LinkButton ID="lnk_upload" runat="server" OnClick="lnk_upload_Click" ToolTip="上传">上传</asp:LinkButton>
                                     </li>

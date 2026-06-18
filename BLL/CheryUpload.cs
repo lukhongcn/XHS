@@ -4,7 +4,7 @@ using System.Web.Script.Serialization;
 using XHS.Model;
 using XHS.Model.Label;
 
-namespace BLL
+namespace XHS.BLL
 {
     public class CheryUpload
     {
@@ -174,3 +174,4 @@ namespace BLL
         }
     }
 }
+

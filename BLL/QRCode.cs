@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using XHS.Model;
 using XHS.Model.Label;
 
@@ -152,7 +153,8 @@ namespace XHS.BLL
                 return result;
             }
 
-            string[] segments = qrCodeContent.Split(new[] { '$' }, StringSplitOptions.RemoveEmptyEntries);
+            string normalizedContent = qrCodeContent.Trim();
+            string[] segments = normalizedContent.Split(new[] { '$' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string segment in segments)
             {
                 if (string.IsNullOrWhiteSpace(segment))
@@ -173,6 +175,28 @@ namespace XHS.BLL
                     qrFieldValue = segment.Substring(splitIndex + 1).Trim();
                 }
 
+                result[qrNumber] = qrFieldValue;
+            }
+
+            if (result.Count > 1)
+            {
+                return result;
+            }
+
+            result.Clear();
+            MatchCollection matches = Regex.Matches(normalizedContent, @"\d{2}#");
+            for (int i = 0; i < matches.Count; i++)
+            {
+                Match current = matches[i];
+                int valueStart = current.Index + current.Length;
+                int valueEnd = i + 1 < matches.Count ? matches[i + 1].Index : normalizedContent.Length;
+                if (valueEnd < valueStart)
+                {
+                    continue;
+                }
+
+                string qrNumber = current.Value.Trim();
+                string qrFieldValue = normalizedContent.Substring(valueStart, valueEnd - valueStart).Trim().TrimEnd('$');
                 result[qrNumber] = qrFieldValue;
             }
 
@@ -217,4 +241,5 @@ namespace XHS.BLL
         }
     }
 }
+
 
