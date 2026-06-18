@@ -36,6 +36,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AjaxControlToolkit">
+      <HintPath>bin\AjaxControlToolkit.dll</HintPath>
+    </Reference>
     <Reference Include="BLL, Version=1.0.9637.27680, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\BLL.dll</HintPath>
@@ -118,6 +121,12 @@
     <Compile Include="ShippingGoodsUpload.aspx.designer.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
     </Compile>
+    <Compile Include="ShippingGoodsView.aspx.cs">
+      <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsView.aspx.designer.cs">
+      <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ShippingGoodsList.aspx.cs">
       <DependentUpon>ShippingGoodsList.aspx</DependentUpon>
     </Compile>
@@ -139,12 +148,17 @@
     <Content Include="middle.aspx" />
     <Content Include="ShippingGoodsList.aspx" />
     <Content Include="ShippingGoodsUpload.aspx" />
+    <Content Include="ShippingGoodsView.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BLL\XHS.BLL.csproj">
       <Project>{fb5d93c8-b96d-43f0-a6a6-7050f503606f}</Project>
       <Name>XHS.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CheryPortHelp\CheryPortHelp.csproj">
+      <Project>{0567035c-f4a7-4386-b738-6a763f970bc8}</Project>
+      <Name>CheryPortHelp</Name>
     </ProjectReference>
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731d059a-6ccf-46c2-93d8-e94ee4905933}</Project>
@@ -199,3 +213,5 @@
     </VisualStudio>
   </ProjectExtensions>
 </Project>
+
+

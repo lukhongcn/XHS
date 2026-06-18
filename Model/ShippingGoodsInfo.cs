@@ -73,6 +73,11 @@ namespace XHS.Model
         public string QrCode { get; set; }
 
         /// <summary>
+        /// 外箱二维码原文。
+        /// </summary>
+        public string OutBoxQRCode { get; set; }
+
+        /// <summary>
         /// 当前状态。
         /// </summary>
         public string Status { get; set; }
@@ -93,3 +98,4 @@ namespace XHS.Model
         public DateTime? CreatDate { get; set; }
     }
 }
+

@@ -18,13 +18,13 @@ namespace XHS.MSSQL
 
         public List<ShippingGoodsInfo> GetShippingGoods()
         {
-            const string queryString = "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods" + ShippingGoodsOrderBy;
+            const string queryString = "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods" + ShippingGoodsOrderBy;
             return GetShippingGoodsBySql(queryString);
         }
 
         public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo)
         {
-            string queryString = "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods where 1=1";
+            string queryString = "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods where 1=1";
 
             if (!string.IsNullOrWhiteSpace(partNo))
             {
@@ -49,7 +49,7 @@ namespace XHS.MSSQL
         public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
         {
             string queryString = string.Format(
-                "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods where SupplyBatchNo='{0}'",
+                "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods where SupplyBatchNo='{0}'",
                 SafeSqlValue(supplyBatchNo));
 
             if (!string.IsNullOrWhiteSpace(cartonNo))
@@ -63,13 +63,13 @@ namespace XHS.MSSQL
 
         public ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,Status,PrintCount,Creater,CreatDate) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@Status,@PrintCount,@Creater,@CreatDate)";
+            const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@OutBoxQRCode,@Status,@PrintCount,@Creater,@CreatDate)";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
         public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate where SupplyBatchNo=@SupplyBatchNo and CartonNo=@CartonNo";
+            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate where SupplyBatchNo=@SupplyBatchNo and CartonNo=@CartonNo";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
@@ -109,6 +109,7 @@ namespace XHS.MSSQL
                     CartonNo = ReadString(row, "CartonNo"),
                     SingleBoxGrossWeight = ReadNullableDecimal(row, "SingleBoxGrossWeight"),
                     QrCode = ReadString(row, "QrCode"),
+                    OutBoxQRCode = ReadString(row, "OutBoxQRCode"),
                     Status = ReadString(row, "Status"),
                     PrintCount = ReadNullableInt(row, "PrintCount"),
                     Creater = ReadString(row, "Creater"),
@@ -161,6 +162,7 @@ namespace XHS.MSSQL
                 new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) },
                 new SqlParameter("@SingleBoxGrossWeight", SqlDbType.Decimal) { Precision = 18, Scale = 2, Value = ToDbValue(info.SingleBoxGrossWeight) },
                 new SqlParameter("@QrCode", SqlDbType.NVarChar, 200) { Value = ToDbValue(info.QrCode) },
+                new SqlParameter("@OutBoxQRCode", SqlDbType.NVarChar, 500) { Value = ToDbValue(info.OutBoxQRCode) },
                 new SqlParameter("@Status", SqlDbType.NVarChar, 20) { Value = ToDbValue(info.Status) },
                 new SqlParameter("@PrintCount", SqlDbType.Int) { Value = ToDbValue(info.PrintCount) },
                 new SqlParameter("@Creater", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.Creater) },
@@ -199,3 +201,4 @@ namespace XHS.MSSQL
         }
     }
 }
+

@@ -20,9 +20,16 @@ BEGIN
         [CartonNo] NVARCHAR(50) NULL,
         [SingleBoxGrossWeight] DECIMAL(18, 2) NULL,
         [QrCode] NVARCHAR(200) NULL,
+        [OutBoxQRCode] NVARCHAR(500) NULL,
         [Creater] NVARCHAR(50) NULL,
         [CreatDate] DATETIME NULL
     );
+END;
+
+IF COL_LENGTH('dbo.tb_ShippingGoods', 'OutBoxQRCode') IS NULL
+BEGIN
+    ALTER TABLE [dbo].[tb_ShippingGoods]
+    ADD [OutBoxQRCode] NVARCHAR(500) NULL;
 END;
 
 IF NOT EXISTS (
@@ -93,3 +100,4 @@ VALUES
 (N'ShippingGoods', N'检验确认日期', N'检验确认/日期', N'InspectionConfirmDate', 9, 0, 0, 1, 0, 100, N'tb_ShippingGoods'),
 (N'ShippingGoods', N'纸箱编号', N'纸箱编号', N'CartonNo', 10, 0, 0, 1, 1, 110, N'tb_ShippingGoods'),
 (N'ShippingGoods', N'单箱毛重', N'单箱毛重', N'SingleBoxGrossWeight', 11, 0, 0, 1, 0, 120, N'tb_ShippingGoods');
+
