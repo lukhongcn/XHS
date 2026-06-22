@@ -21,6 +21,8 @@ namespace LabelHelp.Services
             {
                 case LabelPrintMode.RollPdf:
                     return new A4SheetBuilder().GenerateA4Pdf(labelList, templateType, LabelPrintConfig.LoadRollPaper());
+                case LabelPrintMode.RollSinglePdf:
+                    return new LabelPdfBuilder().GenerateSingleLabelPdf(labelList[0], templateType, LabelPrintConfig.LoadRollPaper());
                 case LabelPrintMode.SinglePdf:
                     return new LabelPdfBuilder().GenerateSingleLabelPdf(labelList[0], templateType, LabelPrintConfig.Load());
                 case LabelPrintMode.LabelPrinter:

@@ -574,35 +574,43 @@ namespace CheryCheckSystem.WinForms
 
                 lblPageTitle.Text = "内箱标签打印";
                 grpList.Text = "内箱标签打印列表";
-                lblMessage.Text = "正在生成内箱标签PDF...";
+                lblMessage.Text = "正在生成内箱标签PDF并加入打印队列...";
 
                 LabelPrintService service = new LabelPrintService();
-                string pdfPath = service.Generate(
-                    labelInfos,
-                    LabelTemplateType.TableLabel,
-                    LabelPrintMode.RollPdf);
-
-                lblMessage.Text = "内箱标签卷纸PDF已生成：" + pdfPath;
-
-                TryOpenPdf(pdfPath);
-
                 string printerName = GetDefaultPrinterName();
-                service.Print(
-                    labelInfos,
-                    LabelTemplateType.TableLabel,
-                    LabelPrintMode.LabelPrinter,
-                    printerName);
+                List<string> pdfPaths = new List<string>();
+                for (int i = 0; i < labelInfos.Count; i++)
+                {
+                    LabelInfo currentLabel = labelInfos[i];
+                    string pdfPath = service.Generate(
+                        new List<LabelInfo> { currentLabel },
+                        LabelTemplateType.TableLabel,
+                        LabelPrintMode.RollSinglePdf);
+                    pdfPaths.Add(pdfPath);
+
+                    service.Print(
+                        new List<LabelInfo> { currentLabel },
+                        LabelTemplateType.TableLabel,
+                        LabelPrintMode.LabelPrinter,
+                        printerName);
+                }
+
+                string firstPdfPath = pdfPaths.Count > 0 ? pdfPaths[0] : string.Empty;
+                lblMessage.Text = "内箱标签PDF已生成并加入打印队列，共 " + pdfPaths.Count + " 个任务";
+
+                TryOpenPdf(firstPdfPath);
 
                 MessageBox.Show(
-                    "内箱标签卷纸PDF已生成：" + Environment.NewLine +
-                    pdfPath + Environment.NewLine + Environment.NewLine +
-                    "已调用标签打印流程。" + Environment.NewLine +
+                    "内箱标签已生成独立PDF并加入打印队列。" + Environment.NewLine +
+                    "PDF数量：" + pdfPaths.Count + Environment.NewLine +
+                    "首个PDF：" + (string.IsNullOrWhiteSpace(firstPdfPath) ? "未生成" : firstPdfPath) + Environment.NewLine + Environment.NewLine +
+                    "已加入打印队列任务数：" + pdfPaths.Count + Environment.NewLine +
                     "当前打印机：" + (string.IsNullOrWhiteSpace(printerName) ? "默认打印机未获取到" : printerName),
                     "内箱标签打印",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
 
-                lblMessage.Text = "内箱标签处理完成：" + pdfPath;
+                lblMessage.Text = "内箱标签处理完成，共 " + pdfPaths.Count + " 个PDF";
             }
             catch (Exception ex)
             {
