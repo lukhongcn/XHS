@@ -57,7 +57,7 @@ namespace LabelHelp.Rendering
             float width = config.LabelWidth;
             float height = config.LabelHeight;
 
-            float margin = 1f;
+            float margin = 0.2f;
             float tableX = x + margin;
             float tableY = y + margin;
             float tableWidth = width - margin * 2f;
@@ -82,7 +82,7 @@ namespace LabelHelp.Rendering
             using (Font titleFont = new Font(config.FontName, 9f, FontStyle.Bold, GraphicsUnit.Point))
             using (Font valueFont = new Font(config.FontName, 9.5f, FontStyle.Bold, GraphicsUnit.Point))
             using (Brush textBrush = new SolidBrush(Color.Black))
-            using (Brush backgroundBrush = new SolidBrush(Color.FromArgb(0, 176, 226)))
+            using (Brush backgroundBrush = new SolidBrush(Color.White))
             {
                 graphics.FillRectangle(backgroundBrush, x, y, width, height);
 

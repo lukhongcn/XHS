@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Windows.Forms;
 using BLL;
+using CheryPortHelp;
+using LabelHelp.Enums;
+using LabelHelp.Services;
 using XHS.Model;
+using XHS.Model.Label;
 
 namespace CheryCheckSystem.WinForms
 {
@@ -17,6 +23,7 @@ namespace CheryCheckSystem.WinForms
         private List<ShippingGoodsInfo> _shippingGoodsInfos = new List<ShippingGoodsInfo>();
         private int _currentPageIndex;
         private bool _isAllSelected;
+        private bool _isUpdatingHeaderCheckBox;
         private MenuStrip menuMain;
         private ToolStripMenuItem menuPrint;
         private ToolStripMenuItem menuPrintOuterBox;
@@ -37,6 +44,7 @@ namespace CheryCheckSystem.WinForms
         private Button btnSearch;
         private GroupBox grpList;
         private DataGridView dgvShippingGoods;
+        private CheckBox chkSelectAllHeader;
         private Panel pnlPager;
         private FlowLayoutPanel pnlPagerButtons;
         private Button btnPreviousPage;
@@ -74,6 +82,7 @@ namespace CheryCheckSystem.WinForms
             btnSearch = new Button();
             grpList = new GroupBox();
             dgvShippingGoods = new DataGridView();
+            chkSelectAllHeader = new CheckBox();
             pnlPager = new Panel();
             pnlPagerButtons = new FlowLayoutPanel();
             btnPreviousPage = new Button();
@@ -203,9 +212,12 @@ namespace CheryCheckSystem.WinForms
             dgvShippingGoods.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvShippingGoods.MultiSelect = false;
             dgvShippingGoods.DataSource = _bindingSource;
-            dgvShippingGoods.ColumnHeaderMouseClick += DgvShippingGoods_ColumnHeaderMouseClick;
             dgvShippingGoods.CurrentCellDirtyStateChanged += DgvShippingGoods_CurrentCellDirtyStateChanged;
             dgvShippingGoods.CellValueChanged += DgvShippingGoods_CellValueChanged;
+            dgvShippingGoods.DataBindingComplete += DgvShippingGoods_DataBindingComplete;
+            dgvShippingGoods.Scroll += DgvShippingGoods_Scroll;
+            dgvShippingGoods.ColumnWidthChanged += DgvShippingGoods_ColumnWidthChanged;
+            dgvShippingGoods.Resize += DgvShippingGoods_Resize;
 
             AddCheckBoxColumn();
             AddTextColumn("SupplierCode", "供应商代码");
@@ -252,6 +264,11 @@ namespace CheryCheckSystem.WinForms
             grpList.Controls.Add(dgvShippingGoods);
             grpList.Controls.Add(pnlPager);
 
+            chkSelectAllHeader.AutoSize = true;
+            chkSelectAllHeader.BackColor = Color.Transparent;
+            chkSelectAllHeader.CheckedChanged += ChkSelectAllHeader_CheckedChanged;
+            dgvShippingGoods.Controls.Add(chkSelectAllHeader);
+
             statusStrip.Items.Add(lblMessage);
             statusStrip.Dock = DockStyle.Bottom;
             lblMessage.Text = "就绪";
@@ -271,7 +288,7 @@ namespace CheryCheckSystem.WinForms
         {
             DataGridViewCheckBoxColumn column = new DataGridViewCheckBoxColumn();
             column.Name = SelectColumnName;
-            column.HeaderText = "全选";
+            column.HeaderText = string.Empty;
             column.Width = 55;
             column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             column.ReadOnly = false;
@@ -302,7 +319,7 @@ namespace CheryCheckSystem.WinForms
 
         private void MenuPrintInnerBox_Click(object sender, EventArgs e)
         {
-            SwitchPage("内箱标签打印");
+            PrintSelectedInnerBoxLabels();
         }
 
         private void MenuUpload_Click(object sender, EventArgs e)
@@ -395,6 +412,8 @@ namespace CheryCheckSystem.WinForms
                     row.Cells[SelectColumnName].Value = false;
                 }
             }
+
+            SyncHeaderCheckBox();
         }
 
         private void SetAllRowsSelected(bool isSelected)
@@ -408,17 +427,18 @@ namespace CheryCheckSystem.WinForms
             }
 
             _isAllSelected = isSelected;
+            SyncHeaderCheckBox();
             dgvShippingGoods.RefreshEdit();
         }
 
-        private void DgvShippingGoods_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        private void ChkSelectAllHeader_CheckedChanged(object sender, EventArgs e)
         {
-            if (e.ColumnIndex < 0 || dgvShippingGoods.Columns[e.ColumnIndex].Name != SelectColumnName)
+            if (_isUpdatingHeaderCheckBox)
             {
                 return;
             }
 
-            SetAllRowsSelected(!_isAllSelected);
+            SetAllRowsSelected(chkSelectAllHeader.Checked);
         }
 
         private void DgvShippingGoods_CurrentCellDirtyStateChanged(object sender, EventArgs e)
@@ -439,6 +459,58 @@ namespace CheryCheckSystem.WinForms
             _isAllSelected = dgvShippingGoods.Rows.Cast<DataGridViewRow>()
                 .Where(row => !row.IsNewRow)
                 .All(row => Convert.ToBoolean(row.Cells[SelectColumnName].Value ?? false));
+
+            SyncHeaderCheckBox();
+        }
+
+        private void DgvShippingGoods_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            UpdateHeaderCheckBoxLocation();
+            SyncHeaderCheckBox();
+        }
+
+        private void DgvShippingGoods_Scroll(object sender, ScrollEventArgs e)
+        {
+            UpdateHeaderCheckBoxLocation();
+        }
+
+        private void DgvShippingGoods_ColumnWidthChanged(object sender, DataGridViewColumnEventArgs e)
+        {
+            if (e.Column != null && e.Column.Name == SelectColumnName)
+            {
+                UpdateHeaderCheckBoxLocation();
+            }
+        }
+
+        private void DgvShippingGoods_Resize(object sender, EventArgs e)
+        {
+            UpdateHeaderCheckBoxLocation();
+        }
+
+        private void UpdateHeaderCheckBoxLocation()
+        {
+            if (!dgvShippingGoods.Columns.Contains(SelectColumnName))
+            {
+                return;
+            }
+
+            Rectangle headerCellRectangle = dgvShippingGoods.GetCellDisplayRectangle(
+                dgvShippingGoods.Columns[SelectColumnName].Index,
+                -1,
+                true);
+
+            int x = headerCellRectangle.X + (headerCellRectangle.Width - chkSelectAllHeader.Width) / 2;
+            int y = headerCellRectangle.Y + (headerCellRectangle.Height - chkSelectAllHeader.Height) / 2;
+            chkSelectAllHeader.Location = new Point(Math.Max(x, 0), Math.Max(y, 0));
+            chkSelectAllHeader.Visible = headerCellRectangle.Width > 0 && headerCellRectangle.Height > 0;
+        }
+
+        private void SyncHeaderCheckBox()
+        {
+            bool hasRows = dgvShippingGoods.Rows.Cast<DataGridViewRow>().Any(row => !row.IsNewRow);
+            _isUpdatingHeaderCheckBox = true;
+            chkSelectAllHeader.Checked = hasRows && _isAllSelected;
+            _isUpdatingHeaderCheckBox = false;
         }
 
         private void BtnPreviousPage_Click(object sender, EventArgs e)
@@ -462,6 +534,249 @@ namespace CheryCheckSystem.WinForms
 
             _currentPageIndex++;
             BindPage();
+        }
+
+        private void PrintSelectedInnerBoxLabels()
+        {
+            try
+            {
+                List<ShippingGoodsInfo> selectedItems = GetSelectedShippingGoodsInfos();
+                if (selectedItems.Count == 0)
+                {
+                    MessageBox.Show(
+                        "请先勾选要打印的标签数据。",
+                        "内箱标签打印",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    lblMessage.Text = "未选择需要打印的标签数据";
+                    return;
+                }
+
+                List<LabelInfo> labelInfos = new List<LabelInfo>();
+                for (int i = 0; i < selectedItems.Count; i++)
+                {
+                    ShippingGoodsInfo item = selectedItems[i];
+                    LabelInfo labelInfo = BuildLabelInfoFromShippingGoods(item);
+                    string validateMessage;
+                    if (!ValidateTableLabelInfo(labelInfo, out validateMessage))
+                    {
+                        MessageBox.Show(
+                            string.Format("第 {0} 条标签数据不完整：{1}", i + 1, validateMessage),
+                            "内箱标签打印",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        lblMessage.Text = "标签资料不完整，无法打印";
+                        return;
+                    }
+
+                    labelInfos.Add(labelInfo);
+                }
+
+                lblPageTitle.Text = "内箱标签打印";
+                grpList.Text = "内箱标签打印列表";
+                lblMessage.Text = "正在生成内箱标签PDF...";
+
+                LabelPrintService service = new LabelPrintService();
+                string pdfPath = service.Generate(
+                    labelInfos,
+                    LabelTemplateType.TableLabel,
+                    LabelPrintMode.RollPdf);
+
+                lblMessage.Text = "内箱标签卷纸PDF已生成：" + pdfPath;
+
+                TryOpenPdf(pdfPath);
+
+                string printerName = GetDefaultPrinterName();
+                service.Print(
+                    labelInfos,
+                    LabelTemplateType.TableLabel,
+                    LabelPrintMode.LabelPrinter,
+                    printerName);
+
+                MessageBox.Show(
+                    "内箱标签卷纸PDF已生成：" + Environment.NewLine +
+                    pdfPath + Environment.NewLine + Environment.NewLine +
+                    "已调用标签打印流程。" + Environment.NewLine +
+                    "当前打印机：" + (string.IsNullOrWhiteSpace(printerName) ? "默认打印机未获取到" : printerName),
+                    "内箱标签打印",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                lblMessage.Text = "内箱标签处理完成：" + pdfPath;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "内箱标签打印异常：" + ex.Message,
+                    "错误",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                lblMessage.Text = "内箱标签打印异常：" + ex.Message;
+            }
+        }
+
+        private List<ShippingGoodsInfo> GetSelectedShippingGoodsInfos()
+        {
+            return dgvShippingGoods.Rows
+                .Cast<DataGridViewRow>()
+                .Where(row => !row.IsNewRow && Convert.ToBoolean(row.Cells[SelectColumnName].Value ?? false))
+                .Select(row => row.DataBoundItem as ShippingGoodsInfo)
+                .Where(info => info != null)
+                .ToList();
+        }
+
+        private static LabelInfo BuildLabelInfoFromShippingGoods(ShippingGoodsInfo info)
+        {
+            LabelInfo labelInfo = new LabelInfo
+            {
+                BaseNo = CheryPortConfig.BaseNo,
+                DeliveryType = CheryPortConfig.DeliveryType,
+                PackageType = CheryPortConfig.PackageType.ToString(),
+                SupplierCode = GetPreferredSupplierCode(info),
+                PartNo = SafeValue(info == null ? null : info.PartNo),
+                PartName = SafeValue(info == null ? null : info.PartChineseName),
+                Qty = info != null && info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty,
+                LotNo = SafeValue(info == null ? null : info.SupplyBatchNo),
+                LayerCount = info != null && info.StackLayerCount.HasValue ? info.StackLayerCount.Value.ToString() : "1",
+                ProduceDate = FormatDate(info == null ? null : info.ProductionDate),
+                CheckConfirmDate = FormatDate(info == null ? null : info.InspectionConfirmDate),
+                PackageCode = SafeValue(info == null ? null : info.CartonNo),
+                BoxCount = "1"
+            };
+
+            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
+            {
+                labelInfo.CheckConfirmDate = labelInfo.ProduceDate;
+            }
+
+            XHS.BLL.Label labelService = new XHS.BLL.Label();
+            XHS.BLL.QRCode qrCodeService = new XHS.BLL.QRCode();
+            labelInfo.QrContent = labelService.GetQRCodeContents(
+                qrCodeService.GetOuterPackageQRCodeInfoList(),
+                labelInfo);
+
+            return labelInfo;
+        }
+
+        private static bool ValidateTableLabelInfo(LabelInfo labelInfo, out string message)
+        {
+            List<string> missingFields = new List<string>();
+
+            if (labelInfo == null)
+            {
+                message = "标签信息为空。";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(labelInfo.SupplierCode))
+            {
+                missingFields.Add("供应商代码");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PartNo))
+            {
+                missingFields.Add("零件号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PartName))
+            {
+                missingFields.Add("零件名称");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.Qty))
+            {
+                missingFields.Add("数量");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.LotNo))
+            {
+                missingFields.Add("供货批次号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.LayerCount))
+            {
+                missingFields.Add("码放层数");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.ProduceDate))
+            {
+                missingFields.Add("生产日期");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
+            {
+                missingFields.Add("检验确认日期");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.PackageCode))
+            {
+                missingFields.Add("纸箱编号");
+            }
+            if (string.IsNullOrWhiteSpace(labelInfo.QrContent))
+            {
+                missingFields.Add("二维码内容");
+            }
+
+            if (missingFields.Count > 0)
+            {
+                message = string.Join("、", missingFields);
+                return false;
+            }
+
+            message = string.Empty;
+            return true;
+        }
+
+        private static string GetPreferredSupplierCode(ShippingGoodsInfo info)
+        {
+            string supplierCode = SafeValue(info == null ? null : info.SupplierCode);
+            if (!string.IsNullOrWhiteSpace(supplierCode))
+            {
+                return supplierCode;
+            }
+
+            return CheryPortConfig.SupplNo;
+        }
+
+        private static string SafeValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string FormatDate(DateTime? value)
+        {
+            return value.HasValue ? value.Value.ToString("yyyy/M/d") : string.Empty;
+        }
+
+        private static void TryOpenPdf(string pdfPath)
+        {
+            if (string.IsNullOrWhiteSpace(pdfPath))
+            {
+                return;
+            }
+
+            try
+            {
+                Process.Start(pdfPath);
+            }
+            catch
+            {
+            }
+        }
+
+        private static string GetDefaultPrinterName()
+        {
+            try
+            {
+                foreach (string installedPrinter in PrinterSettings.InstalledPrinters)
+                {
+                    string safePrinterName = SafeValue(installedPrinter);
+                    if (string.Equals(safePrinterName, "DL-740C(NEW)", StringComparison.OrdinalIgnoreCase) ||
+                        safePrinterName.IndexOf("DL-740C", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return safePrinterName;
+                    }
+                }
+
+                PrinterSettings printerSettings = new PrinterSettings();
+                return SafeValue(printerSettings.PrinterName);
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
     }
 }

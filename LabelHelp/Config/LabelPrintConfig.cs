@@ -24,6 +24,10 @@ namespace LabelHelp.Config
         public float ValueFontSize { get; set; }
         public string TemplateFolder { get; set; }
         public string OutputFolder { get; set; }
+        public float PrintOffsetX { get; set; }
+        public float PrintOffsetY { get; set; }
+        public float PrintRenderWidth { get; set; }
+        public float PrintRenderHeight { get; set; }
 
         /// <summary>
         /// 从配置文件读取配置。如果配置不存在或格式错误，使用默认值。
@@ -47,6 +51,32 @@ namespace LabelHelp.Config
                 ValueFontSize = GetFloat("Label.ValueFontSize", 9f),
                 TemplateFolder = GetString("Label.TemplateFolder", "Templates"),
                 OutputFolder = GetString("Label.OutputFolder", "Output")
+            };
+        }
+
+        public static LabelPrintConfig LoadRollPaper()
+        {
+            return new LabelPrintConfig
+            {
+                LabelWidth = GetFloat("Label.Roll.Width", 100f),
+                LabelHeight = GetFloat("Label.Roll.Height", 150f),
+                A4PageWidth = GetFloat("Label.Roll.PageWidth", 100f),
+                A4PageHeight = GetFloat("Label.Roll.PageHeight", 150f),
+                A4MarginLeft = GetFloat("Label.Roll.MarginLeft", 0f),
+                A4MarginTop = GetFloat("Label.Roll.MarginTop", 0f),
+                A4Columns = GetInt("Label.Roll.Columns", 1),
+                A4Rows = GetInt("Label.Roll.Rows", 1),
+                A4ColumnGap = GetFloat("Label.Roll.ColumnGap", 0f),
+                A4RowGap = GetFloat("Label.Roll.RowGap", 0f),
+                FontName = GetString("Label.FontName", "Microsoft YaHei"),
+                TitleFontSize = GetFloat("Label.TitleFontSize", 8f),
+                ValueFontSize = GetFloat("Label.ValueFontSize", 9f),
+                TemplateFolder = GetString("Label.TemplateFolder", "Templates"),
+                OutputFolder = GetString("Label.OutputFolder", "Output"),
+                PrintOffsetX = GetFloat("Label.Roll.PrintOffsetX", -1.5f),
+                PrintOffsetY = GetFloat("Label.Roll.PrintOffsetY", 0f),
+                PrintRenderWidth = GetFloat("Label.Roll.PrintRenderWidth", 96f),
+                PrintRenderHeight = GetFloat("Label.Roll.PrintRenderHeight", 150f)
             };
         }
 
