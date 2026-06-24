@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -14,6 +14,33 @@ namespace CheryCheckSystem.PrintClient
         public List<PrintPendingRecord> FetchPendingRecords(string apiBaseUrl, string pendingApiPath, string machineId)
         {
             string requestUrl = BuildPendingUrl(apiBaseUrl, pendingApiPath, machineId);
+            using (WebClient webClient = CreateWebClient())
+            {
+                string responseText = webClient.DownloadString(requestUrl);
+                PrintPendingApiResponse response = _serializer.Deserialize<PrintPendingApiResponse>(responseText);
+                if (response == null)
+                {
+                    throw new InvalidOperationException("接口返回为空。");
+                }
+
+                if (!response.success)
+                {
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(response.message)
+                        ? "接口返回失败。"
+                        : response.message);
+                }
+
+                return response.data ?? new List<PrintPendingRecord>();
+            }
+        }
+
+        public List<PrintPendingRecord> FetchPendingRecordsByFullUrl(string requestUrl)
+        {
+            if (string.IsNullOrWhiteSpace(requestUrl))
+            {
+                throw new InvalidOperationException("未配置待打印接口完整地址。");
+            }
+
             using (WebClient webClient = CreateWebClient())
             {
                 string responseText = webClient.DownloadString(requestUrl);
