@@ -16,6 +16,14 @@ namespace XHSWorkFlow
             {
                 Context.RewritePath("~/api/print/pending.ashx");
             }
+            else if (string.Equals(requestPath, "~/api/print/complete", StringComparison.OrdinalIgnoreCase))
+            {
+                Context.RewritePath("~/api/print/complete.ashx");
+            }
+            else if (string.Equals(requestPath, "~/api/print/pending-labels", StringComparison.OrdinalIgnoreCase))
+            {
+                Context.RewritePath("~/api/print/pending-labels.ashx");
+            }
         }
     }
 }

@@ -118,6 +118,12 @@
     <Compile Include="api\print\pending.ashx.cs">
       <DependentUpon>pending.ashx</DependentUpon>
     </Compile>
+    <Compile Include="api\print\complete.ashx.cs">
+      <DependentUpon>complete.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="api\print\pending-labels.ashx.cs">
+      <DependentUpon>pending-labels.ashx</DependentUpon>
+    </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
     </Compile>
@@ -156,6 +162,8 @@
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
     <Content Include="api\print\pending.ashx" />
+    <Content Include="api\print\complete.ashx" />
+    <Content Include="api\print\pending-labels.ashx" />
     <Content Include="ShippingGoodsList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
     <Content Include="ShippingGoodsUpload.aspx" />

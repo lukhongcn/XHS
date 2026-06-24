@@ -22,6 +22,7 @@
                     <div class="menubox">
                         <div class="mod2">
                             <ul>
+                                <li class="btn8"><asp:LinkButton ID="lnkbutton_search" runat="server" ToolTip="搜索/search" OnClick="lnkbutton_search_Click">搜索/search</asp:LinkButton></li>
                                 <li class="btn9"><asp:LinkButton ID="lnkbutton_print" runat="server" ToolTip="打印/print" OnClick="lnkbutton_print_Click" OnClientClick="return preparePrintClientId();">打印/print</asp:LinkButton></li>
                             </ul>
                         </div>
@@ -53,7 +54,6 @@
                         <div class="row mb-3">
                             <div class="col-lg-3 d-flex align-items-center">
                                 <asp:CheckBox ID="CheckBox_ShowAll" runat="server" AutoPostBack="true" Text="全部列出" OnCheckedChanged="CheckBox_ShowAll_CheckedChanged" />
-                                <asp:Button ID="Button_Search" runat="server" Text="搜索" CssClass="btn btn-primary btn-sm ml-10" OnClick="Button_Search_Click" />
                             </div>
                         </div>
                     </div>

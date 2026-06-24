@@ -7,7 +7,9 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using BLL;
 using CheryPortHelp;
+using LabelHelp.Config;
 using LabelHelp.Enums;
+using LabelHelp.Pdf;
 using LabelHelp.Services;
 using ModuleWorkFlow.BLL;
 using XHS.BLL;
@@ -45,7 +47,7 @@ namespace ModuleWorkFlow
             }
         }
 
-        protected void Button_Search_Click(object sender, EventArgs e)
+        protected void lnkbutton_search_Click(object sender, EventArgs e)
         {
             Search();
         }
@@ -228,7 +230,6 @@ namespace ModuleWorkFlow
 
         private string GenerateSinglePdf(LabelInfo labelInfo)
         {
-            LabelPrintService service = new LabelPrintService();
             string outputFolderConfig = ConfigurationManager.AppSettings["PrintRecord.LabelOutputFolder"];
             string physicalOutputFolder = Server.MapPath(string.IsNullOrWhiteSpace(outputFolderConfig) ? "~/labeloutput" : outputFolderConfig.Trim());
             if (!Directory.Exists(physicalOutputFolder))
@@ -236,29 +237,32 @@ namespace ModuleWorkFlow
                 Directory.CreateDirectory(physicalOutputFolder);
             }
 
-            string originalCurrentDirectory = Directory.GetCurrentDirectory();
-            Directory.SetCurrentDirectory(physicalOutputFolder);
-            try
-            {
-                return service.Generate(new List<LabelInfo> { labelInfo }, LabelTemplateType.TableLabel, LabelPrintMode.RollSinglePdf);
-            }
-            finally
-            {
-                Directory.SetCurrentDirectory(originalCurrentDirectory);
-            }
+            LabelPrintConfig config = LabelPrintConfig.LoadRollPaper();
+            config.OutputFolder = physicalOutputFolder;
+
+            return new LabelPdfBuilder().GenerateSingleLabelPdf(labelInfo, LabelTemplateType.TableLabel, config);
         }
 
         private string BuildPdfDownloadUrl(string pdfPhysicalPath)
         {
-            string outputFolderConfig = ConfigurationManager.AppSettings["PrintRecord.LabelOutputFolder"];
-            string relativeRoot = string.IsNullOrWhiteSpace(outputFolderConfig) ? "~/labeloutput" : outputFolderConfig.Trim();
-            string normalizedRoot = relativeRoot.Replace("~", string.Empty).Replace("\\", "/").Trim();
-            if (!normalizedRoot.StartsWith("/", StringComparison.Ordinal))
+            string applicationRootPath = Server.MapPath("~");
+            string fullPdfPath = Path.GetFullPath(pdfPhysicalPath);
+            string fullRootPath = Path.GetFullPath(applicationRootPath);
+            if (!fullRootPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
             {
-                normalizedRoot = "/" + normalizedRoot.TrimStart('/');
+                fullRootPath += Path.DirectorySeparatorChar;
             }
 
-            return normalizedRoot.TrimEnd('/') + "/" + Path.GetFileName(pdfPhysicalPath);
+            if (!fullPdfPath.StartsWith(fullRootPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return "/labeloutput/" + Path.GetFileName(pdfPhysicalPath);
+            }
+
+            string relativePath = fullPdfPath.Substring(fullRootPath.Length)
+                .Replace(Path.DirectorySeparatorChar, '/')
+                .Replace(Path.AltDirectorySeparatorChar, '/');
+
+            return "/" + relativePath.TrimStart('/');
         }
 
         #region Web Form Designer generated code

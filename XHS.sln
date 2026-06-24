@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XHS.IDAL", "XHS.IDAL\XHS.ID
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XHS.Tests", "XHS.Tests\XHS.Tests.csproj", "{6452992E-8DFF-4220-BC48-F6509F5E9083}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheryCheckSystem.PrintClient", "CheryCheckSystem.WinForms\CheryCheckSystem.PrintClient.csproj", "{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -181,6 +183,18 @@ Global
 		{6452992E-8DFF-4220-BC48-F6509F5E9083}.Release|x64.Build.0 = Release|Any CPU
 		{6452992E-8DFF-4220-BC48-F6509F5E9083}.Release|x86.ActiveCfg = Release|Any CPU
 		{6452992E-8DFF-4220-BC48-F6509F5E9083}.Release|x86.Build.0 = Release|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Debug|x64.Build.0 = Debug|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Debug|x86.Build.0 = Debug|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Release|x64.ActiveCfg = Release|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Release|x64.Build.0 = Release|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Release|x86.ActiveCfg = Release|Any CPU
+		{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

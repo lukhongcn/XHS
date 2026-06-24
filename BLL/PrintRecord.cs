@@ -33,6 +33,11 @@ namespace XHS.BLL
             return dal.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, printType);
         }
 
+        public List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId)
+        {
+            return dal.GetPrintRecordsByTaskId(taskId);
+        }
+
         public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount)
         {
             return dal.LockPendingPrintRecords(machineId, maxCount);
@@ -65,6 +70,46 @@ namespace XHS.BLL
             source.Add(paramterInfo);
 
             return Common.Save(source) ? string.Empty : "保存失败。";
+        }
+
+        public string CompletePrintRecordByTaskId(System.Guid taskId, string printUser)
+        {
+            List<PrintRecordInfo> printRecordInfos = dal.GetPrintRecordsByTaskId(taskId);
+            if (printRecordInfos == null || printRecordInfos.Count == 0)
+            {
+                return "未找到对应的打印记录。";
+            }
+
+            System.DateTime now = System.DateTime.Now;
+            string safePrintUser = string.IsNullOrWhiteSpace(printUser) ? string.Empty : printUser.Trim();
+            foreach (PrintRecordInfo printRecordInfo in printRecordInfos)
+            {
+                if (printRecordInfo == null)
+                {
+                    continue;
+                }
+
+                printRecordInfo.Status = PrintRecordStatusInfo.Completed;
+                printRecordInfo.PrintCount = 1;
+                printRecordInfo.PrintUser = safePrintUser;
+                printRecordInfo.PrintTime = now;
+                if (string.IsNullOrWhiteSpace(printRecordInfo.FirstPrintUser))
+                {
+                    printRecordInfo.FirstPrintUser = safePrintUser;
+                }
+                if (!printRecordInfo.FirstPrintTime.HasValue)
+                {
+                    printRecordInfo.FirstPrintTime = now;
+                }
+
+                printRecordInfo.LastPrintUser = safePrintUser;
+                printRecordInfo.LastPrintTime = now;
+                printRecordInfo.UpdateUser = safePrintUser;
+                printRecordInfo.UpdateTime = now;
+                printRecordInfo.LockTime = null;
+            }
+
+            return UpdatePrintRecord(printRecordInfos);
         }
 
         private static void NormalizePrintRecords(List<PrintRecordInfo> printRecordInfos)

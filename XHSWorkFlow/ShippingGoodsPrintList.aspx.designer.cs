@@ -11,6 +11,8 @@ namespace ModuleWorkFlow
 {
     public partial class ShippingGoodsPrintList
     {
+        protected global::System.Web.UI.WebControls.LinkButton lnkbutton_search;
+
         protected global::System.Web.UI.WebControls.LinkButton lnkbutton_print;
 
         protected global::System.Web.UI.WebControls.TextBox TextBox_PartNo;
@@ -22,8 +24,6 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.DropDownList DropDownList_PrinterName;
 
         protected global::System.Web.UI.WebControls.CheckBox CheckBox_ShowAll;
-
-        protected global::System.Web.UI.WebControls.Button Button_Search;
 
         protected global::System.Web.UI.WebControls.DataGrid MainDataGrid;
 

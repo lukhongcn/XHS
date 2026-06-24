@@ -65,6 +65,17 @@ namespace XHS.MSSQL
             return GetPrintRecordsBySql(queryString);
         }
 
+        public List<PrintRecordInfo> GetPrintRecordsByTaskId(Guid taskId)
+        {
+            string queryString = string.Format(
+                "select {0} from tb_PrintRecord where TaskId='{1}'",
+                PrintRecordSelectColumns,
+                taskId);
+
+            queryString += PrintRecordOrderBy;
+            return GetPrintRecordsBySql(queryString);
+        }
+
         public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount)
         {
             if (string.IsNullOrWhiteSpace(machineId) || maxCount <= 0)

@@ -61,6 +61,18 @@ namespace XHS.MSSQL
             return GetShippingGoodsBySql(queryString);
         }
 
+        public List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo)
+        {
+            string queryString = string.Format(
+                "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate from tb_ShippingGoods where SupplyBatchNo='{0}' and PartNo='{1}' and CartonNo='{2}'",
+                SafeSqlValue(supplyBatchNo),
+                SafeSqlValue(partNo),
+                SafeSqlValue(cartonNo));
+
+            queryString += ShippingGoodsOrderBy;
+            return GetShippingGoodsBySql(queryString);
+        }
+
         public ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@OutBoxQRCode,@Status,@PrintCount,@Creater,@CreatDate)";
@@ -69,7 +81,7 @@ namespace XHS.MSSQL
 
         public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate where SupplyBatchNo=@SupplyBatchNo and CartonNo=@CartonNo";
+            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 

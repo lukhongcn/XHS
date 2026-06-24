@@ -14,6 +14,8 @@ namespace XHS.IDAL
 
         List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string printType);
 
+        List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId);
+
         List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount);
 
         ParamterInfo InsertPrintRecord(List<PrintRecordInfo> printRecordInfos);
