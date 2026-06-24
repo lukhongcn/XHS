@@ -67,6 +67,8 @@
     <Compile Include="CheryUpload.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Label.cs" />
+    <Compile Include="PrintRecord.cs" />
+    <Compile Include="ShippingGoodsLabelBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QRCode.cs" />
     <Compile Include="ShippingGoods.cs" />
@@ -77,6 +79,10 @@
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
       <Name>XHS.Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CheryPortHelp\CheryPortHelp.csproj">
+      <Project>{0567035C-F4A7-4386-B738-6A763F970BC8}</Project>
+      <Name>CheryPortHelp</Name>
     </ProjectReference>
     <ProjectReference Include="..\XHS.DALFactory\XHS.DALFactory.csproj">
       <Project>{C961E696-6EA4-42E5-AFFC-B21673D07595}</Project>

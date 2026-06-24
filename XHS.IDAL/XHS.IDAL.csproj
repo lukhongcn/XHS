@@ -47,6 +47,7 @@
     <Reference Include="System.Xml"/>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IPrintRecord.cs" />
     <Compile Include="IShippingGoods.cs" />
     <Compile Include="IUnRegularTableImportField.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

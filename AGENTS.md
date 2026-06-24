@@ -12,6 +12,7 @@
 6. `aspx` 页面中的浏览按钮统一使用 `btn5` 样式，标准写法为 `<li class="btn5"><asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton></li>`。
 7. `aspx` 页面中的上传按钮统一使用 `btn13` 样式，对应图片资源为 `up.jpeg`，标准写法为 `<li class="btn13"><asp:LinkButton ID="lnkbutton_upload" runat="server" OnClick="lnkbutton_upload_Click" ToolTip="上传">上传</asp:LinkButton></li>`。
 8. `aspx` 页面中的保存按钮统一使用 `btn3` 样式，并放入 `mod2` 区域，标准写法为 `<li class="btn3"><asp:LinkButton ID="lnkbutton_save" runat="server" ToolTip="保存/save" OnClick="lnkbutton_save_Click">保存/save</asp:LinkButton></li>`。
+9. 完成任务后需要发送 beep 提示音。
 
 ## 分层约束
 

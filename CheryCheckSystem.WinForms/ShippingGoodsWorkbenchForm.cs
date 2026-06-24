@@ -9,6 +9,7 @@ using BLL;
 using CheryPortHelp;
 using LabelHelp.Enums;
 using LabelHelp.Services;
+using XHS.BLL;
 using XHS.Model;
 using XHS.Model.Label;
 
@@ -552,25 +553,7 @@ namespace CheryCheckSystem.WinForms
                     return;
                 }
 
-                List<LabelInfo> labelInfos = new List<LabelInfo>();
-                for (int i = 0; i < selectedItems.Count; i++)
-                {
-                    ShippingGoodsInfo item = selectedItems[i];
-                    LabelInfo labelInfo = BuildLabelInfoFromShippingGoods(item);
-                    string validateMessage;
-                    if (!ValidateTableLabelInfo(labelInfo, out validateMessage))
-                    {
-                        MessageBox.Show(
-                            string.Format("第 {0} 条标签数据不完整：{1}", i + 1, validateMessage),
-                            "内箱标签打印",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Warning);
-                        lblMessage.Text = "标签资料不完整，无法打印";
-                        return;
-                    }
-
-                    labelInfos.Add(labelInfo);
-                }
+                List<LabelInfo> labelInfos = ShippingGoodsLabelBuilder.BuildOuterBoxLabelInfos(selectedItems);
 
                 lblPageTitle.Text = "内箱标签打印";
                 grpList.Text = "内箱标签打印列表";
@@ -633,119 +616,9 @@ namespace CheryCheckSystem.WinForms
                 .ToList();
         }
 
-        private static LabelInfo BuildLabelInfoFromShippingGoods(ShippingGoodsInfo info)
-        {
-            LabelInfo labelInfo = new LabelInfo
-            {
-                BaseNo = CheryPortConfig.BaseNo,
-                DeliveryType = CheryPortConfig.DeliveryType,
-                PackageType = CheryPortConfig.PackageType.ToString(),
-                SupplierCode = GetPreferredSupplierCode(info),
-                PartNo = SafeValue(info == null ? null : info.PartNo),
-                PartName = SafeValue(info == null ? null : info.PartChineseName),
-                Qty = info != null && info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty,
-                LotNo = SafeValue(info == null ? null : info.SupplyBatchNo),
-                LayerCount = info != null && info.StackLayerCount.HasValue ? info.StackLayerCount.Value.ToString() : "1",
-                ProduceDate = FormatDate(info == null ? null : info.ProductionDate),
-                CheckConfirmDate = FormatDate(info == null ? null : info.InspectionConfirmDate),
-                PackageCode = SafeValue(info == null ? null : info.CartonNo),
-                BoxCount = "1"
-            };
-
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
-            {
-                labelInfo.CheckConfirmDate = labelInfo.ProduceDate;
-            }
-
-            XHS.BLL.Label labelService = new XHS.BLL.Label();
-            XHS.BLL.QRCode qrCodeService = new XHS.BLL.QRCode();
-            labelInfo.QrContent = labelService.GetQRCodeContents(
-                qrCodeService.GetOuterPackageQRCodeInfoList(),
-                labelInfo);
-
-            return labelInfo;
-        }
-
-        private static bool ValidateTableLabelInfo(LabelInfo labelInfo, out string message)
-        {
-            List<string> missingFields = new List<string>();
-
-            if (labelInfo == null)
-            {
-                message = "标签信息为空。";
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(labelInfo.SupplierCode))
-            {
-                missingFields.Add("供应商代码");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.PartNo))
-            {
-                missingFields.Add("零件号");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.PartName))
-            {
-                missingFields.Add("零件名称");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.Qty))
-            {
-                missingFields.Add("数量");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.LotNo))
-            {
-                missingFields.Add("供货批次号");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.LayerCount))
-            {
-                missingFields.Add("码放层数");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.ProduceDate))
-            {
-                missingFields.Add("生产日期");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.CheckConfirmDate))
-            {
-                missingFields.Add("检验确认日期");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.PackageCode))
-            {
-                missingFields.Add("纸箱编号");
-            }
-            if (string.IsNullOrWhiteSpace(labelInfo.QrContent))
-            {
-                missingFields.Add("二维码内容");
-            }
-
-            if (missingFields.Count > 0)
-            {
-                message = string.Join("、", missingFields);
-                return false;
-            }
-
-            message = string.Empty;
-            return true;
-        }
-
-        private static string GetPreferredSupplierCode(ShippingGoodsInfo info)
-        {
-            string supplierCode = SafeValue(info == null ? null : info.SupplierCode);
-            if (!string.IsNullOrWhiteSpace(supplierCode))
-            {
-                return supplierCode;
-            }
-
-            return CheryPortConfig.SupplNo;
-        }
-
         private static string SafeValue(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
-        }
-
-        private static string FormatDate(DateTime? value)
-        {
-            return value.HasValue ? value.Value.ToString("yyyy/M/d") : string.Empty;
         }
 
         private static void TryOpenPdf(string pdfPath)

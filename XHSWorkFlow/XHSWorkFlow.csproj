@@ -115,11 +115,20 @@
     <Compile Include="middle.aspx.cs">
       <DependentUpon>middle.aspx</DependentUpon>
     </Compile>
+    <Compile Include="api\print\pending.ashx.cs">
+      <DependentUpon>pending.ashx</DependentUpon>
+    </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.designer.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsPrintList.aspx.cs">
+      <DependentUpon>ShippingGoodsPrintList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsPrintList.aspx.designer.cs">
+      <DependentUpon>ShippingGoodsPrintList.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsView.aspx.cs">
       <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
@@ -146,7 +155,9 @@
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
+    <Content Include="api\print\pending.ashx" />
     <Content Include="ShippingGoodsList.aspx" />
+    <Content Include="ShippingGoodsPrintList.aspx" />
     <Content Include="ShippingGoodsUpload.aspx" />
     <Content Include="ShippingGoodsView.aspx" />
     <Content Include="Web.config" />
@@ -159,6 +170,10 @@
     <ProjectReference Include="..\CheryPortHelp\CheryPortHelp.csproj">
       <Project>{0567035c-f4a7-4386-b738-6a763f970bc8}</Project>
       <Name>CheryPortHelp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LabelHelp\LabelHelp.csproj">
+      <Project>{ED812210-62AB-4107-8D77-EDBAAABEFFE3}</Project>
+      <Name>LabelHelp</Name>
     </ProjectReference>
     <ProjectReference Include="..\Model\Model.csproj">
       <Project>{731d059a-6ccf-46c2-93d8-e94ee4905933}</Project>
