@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using CheryPortHelp;
 using XHS.Model;
@@ -146,7 +146,7 @@ namespace XHS.BLL
 
         private static string FormatDate(DateTime? value)
         {
-            return value.HasValue ? value.Value.ToString("yyyy/M/d") : string.Empty;
+            return value.HasValue ? value.Value.ToString("yyyyMMdd") : string.Empty;
         }
     }
 }

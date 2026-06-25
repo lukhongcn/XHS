@@ -18,7 +18,7 @@ namespace XHS.BLL
         /// 18#/23# -> 供货批次号
         /// 19# -> 码放层数
         /// 20# -> 生产日期
-        /// 22# -> 纸箱编号
+        /// 31#/22# -> 纸箱编号
         /// </summary>
         public ShippingGoodsInfo ParseShippingGoodsInfo(string qrCodeContent)
         {
@@ -34,7 +34,9 @@ namespace XHS.BLL
             shippingGoodsInfo.SupplyBatchNo = GetFirstNonEmpty(
                 GetValue(qrValueMap, "18#"),
                 GetValue(qrValueMap, "23#"));
-            shippingGoodsInfo.CartonNo = GetValue(qrValueMap, "22#");
+            shippingGoodsInfo.CartonNo = GetFirstNonEmpty(
+                GetValue(qrValueMap, "31#"),
+                GetValue(qrValueMap, "22#"));
 
             int quantity;
             if (int.TryParse(GetValue(qrValueMap, "17#"), out quantity))
@@ -140,6 +142,11 @@ namespace XHS.BLL
                 {
                     QRNumber = "20#",
                     QRField = nameof(LabelInfo.ProduceDate)
+                },
+                new QRCodeInfo
+                {
+                    QRNumber = "31#",
+                    QRField = nameof(LabelInfo.PackageCode)
                 }
             };
         }

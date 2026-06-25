@@ -15,7 +15,7 @@ namespace CheryCheckSystem.PrintClient
 
         public PrintClientService()
         {
-            ServiceName = "XHSPrintClientService";
+            ServiceName = "PrintService";
             CanStop = true;
             CanPauseAndContinue = false;
             AutoLog = true;

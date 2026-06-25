@@ -4,21 +4,22 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>CheryCheckSystem.PrintClient</RootNamespace>
-    <AssemblyName>PrintService</AssemblyName>
+    <ProjectGuid>{8FD5E011-4145-4971-A985-AD19FD7B0E35}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>PrintServiceInstaller</RootNamespace>
+    <AssemblyName>PrintServiceInstaller</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\PrintClient\Debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -26,45 +27,40 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\PrintClient\Release\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PrintClientService.cs" />
-    <Compile Include="PrintClientFileLogger.cs" />
-    <Compile Include="PrintClientPrinterResolver.cs" />
-    <Compile Include="PrintClientProgram.cs" />
-    <Compile Include="PrintClientSettings.cs" />
-    <Compile Include="PrintClientWorker.cs" />
-    <Compile Include="PrintPendingApiClient.cs" />
-    <Compile Include="PrintPendingApiResponse.cs" />
-    <Compile Include="PrintPendingRecord.cs" />
-    <Compile Include="PdfShellPrintService.cs" />
-    <Compile Include="PrintClient.Properties\AssemblyInfo.cs" />
+    <Compile Include="InstallerForm.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LabelHelp\LabelHelp.csproj">
-      <Project>{ED812210-62AB-4107-8D77-EDBAAABEFFE3}</Project>
-      <Name>LabelHelp</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Model\Model.csproj">
-      <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
-      <Name>XHS.Model</Name>
+    <ProjectReference Include="..\CheryCheckSystem.WinForms\CheryCheckSystem.PrintClient.csproj">
+      <Project>{D69535D7-1C6F-4E48-8F7F-2E1E56A52491}</Project>
+      <Name>CheryCheckSystem.PrintClient</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+  <Target Name="CopyPrintServiceFiles" AfterTargets="Build">
+    <ItemGroup>
+      <PrintServiceFiles Include="..\CheryCheckSystem.WinForms\bin\PrintClient\$(Configuration)\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PrintServiceFiles)" DestinationFiles="@(PrintServiceFiles->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
