@@ -6,11 +6,9 @@ using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using BLL;
-using CheryPortHelp;
 using LabelHelp.Config;
 using LabelHelp.Enums;
 using LabelHelp.Pdf;
-using LabelHelp.Services;
 using ModuleWorkFlow.BLL;
 using XHS.BLL;
 using XHS.Model;
@@ -19,13 +17,16 @@ using XHS.Model.Label;
 namespace ModuleWorkFlow
 {
     /// <summary>
-    /// 出货货品打印列表页面。
+    /// 出货货品补打列表页面。
     /// </summary>
-    public partial class ShippingGoodsPrintList : Page
+    public partial class ShippingGoodsREPrintList : Page
     {
-        private const string MenuId = "B011";
+        private const string MenuId = "B02";
         private const string PrintTypeOuterBox = "KD标签";
+        private const string ReprintReasonControlId = "DropDownList_ReprintReason";
+        private const string RowIdControlId = "hid_row_id";
         protected string menuname = "";
+        private List<ReprintReasonInfo> reprintReasonInfos;
 
         private void Page_Load(object sender, EventArgs e)
         {
@@ -70,53 +71,69 @@ namespace ModuleWorkFlow
             BindData();
         }
 
+        protected void MainDataGrid_ItemDataBound(object sender, DataGridItemEventArgs e)
+        {
+            if (e.Item.ItemType == ListItemType.Header)
+            {
+                DropDownList headerDropDownList = e.Item.FindControl("DropDownList_HeaderReprintReason") as DropDownList;
+                if (headerDropDownList != null)
+                {
+                    BindReprintReasonDropDownList(headerDropDownList);
+                    headerDropDownList.Attributes["onchange"] = "applyHeaderReprintReason(this);";
+                }
+
+                return;
+            }
+
+            if (e.Item.ItemType != ListItemType.Item && e.Item.ItemType != ListItemType.AlternatingItem)
+            {
+                return;
+            }
+
+            DropDownList dropDownList = e.Item.FindControl(ReprintReasonControlId) as DropDownList;
+            if (dropDownList != null)
+            {
+                BindReprintReasonDropDownList(dropDownList);
+            }
+        }
+
         protected void lnkbutton_print_Click(object sender, EventArgs e)
         {
             try
             {
-                List<ShippingGoodsInfo> selectedInfos = GetSelectedShippingGoodsInfos();
+                List<ReprintShippingGoodsInfo> selectedInfos = GetSelectedShippingGoodsInfos();
                 if (selectedInfos.Count == 0)
                 {
-                    Label_Message.Text = "请先勾选需要打印的数据。";
+                    Label_Message.Text = "请先勾选需要补打的数据。";
                     return;
+                }
+
+                foreach (ReprintShippingGoodsInfo selectedInfo in selectedInfos)
+                {
+                    if (!selectedInfo.ReprintReasonsId.HasValue)
+                    {
+                        Label_Message.Text = "补打时必须选择补打原因。";
+                        return;
+                    }
                 }
 
                 string clientId = (hid_ClientId.Value ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(clientId))
                 {
-                    Label_Message.Text = "未生成客户端任务号，请重新点击打印。";
-                    return;
-                }
-
-                List<string> duplicateMessages = new List<string>();
-                foreach (ShippingGoodsInfo shippingGoodsInfo in selectedInfos)
-                {
-                    List<PrintRecordInfo> duplicateInfos = GetDuplicatePrintRecords(
-                        shippingGoodsInfo.SupplyBatchNo,
-                        shippingGoodsInfo.PartNo,
-                        shippingGoodsInfo.CartonNo,
-                        PrintTypeOuterBox);
-
-                    if (duplicateInfos.Count > 0)
-                    {
-                        duplicateMessages.Add(string.Format("{0}/{1}/{2}", shippingGoodsInfo.SupplyBatchNo, shippingGoodsInfo.PartNo, shippingGoodsInfo.CartonNo));
-                    }
-                }
-
-                if (duplicateMessages.Count > 0)
-                {
-                    Label_Message.Text = "以下数据已存在打印任务，不能重复加入：" + string.Join("；", duplicateMessages.ToArray());
+                    Label_Message.Text = "未生成客户端任务号，请重新点击补打。";
                     return;
                 }
 
                 DateTime now = DateTime.Now;
                 string currentUser = Session["userid"] == null ? string.Empty : Session["userid"].ToString().Trim();
                 string machineId = DropDownList_PrinterName.SelectedValue.Trim();
-                List<LabelInfo> labelInfos = ShippingGoodsLabelBuilder.BuildOuterBoxLabelInfos(selectedInfos);
+                List<ShippingGoodsInfo> shippingGoodsInfos = selectedInfos.Select(item => item.ShippingGoodsInfo).ToList();
+                List<LabelInfo> labelInfos = ShippingGoodsLabelBuilder.BuildOuterBoxLabelInfos(shippingGoodsInfos);
                 List<PrintRecordInfo> printRecordInfos = new List<PrintRecordInfo>();
                 for (int i = 0; i < selectedInfos.Count; i++)
                 {
-                    ShippingGoodsInfo info = selectedInfos[i];
+                    ReprintShippingGoodsInfo selectedInfo = selectedInfos[i];
+                    ShippingGoodsInfo info = selectedInfo.ShippingGoodsInfo;
                     LabelInfo labelInfo = labelInfos[i];
                     string pdfPhysicalPath = GenerateSinglePdf(labelInfo);
                     string pdfDownloadUrl = BuildPdfDownloadUrl(pdfPhysicalPath);
@@ -134,9 +151,11 @@ namespace ModuleWorkFlow
                         PdfDownloadPath = pdfDownloadUrl,
                         LocalPath = pdfPhysicalPath,
                         Status = PrintRecordStatusInfo.Pending,
-                        PrintCount = 0,
+                        PrintCount = info.PrintCount ?? 0,
                         PrintUser = currentUser,
                         PrintTime = now,
+                        ReprintReason = selectedInfo.ReprintReason,
+                        ReprintReasonsId = selectedInfo.ReprintReasonsId,
                         CreateUser = currentUser,
                         CreateTime = now
                     });
@@ -145,7 +164,7 @@ namespace ModuleWorkFlow
                 string saveMessage = InsertPrintRecords(printRecordInfos);
                 if (string.IsNullOrWhiteSpace(saveMessage))
                 {
-                    Label_Message.Text = string.Format("已生成 {0} 个独立 PDF 并加入 {0} 条待打印记录，ClientId：{1}。", printRecordInfos.Count, clientId);
+                    Label_Message.Text = string.Format("已生成 {0} 个独立 PDF 并加入 {0} 条补打记录，ClientId：{1}。", printRecordInfos.Count, clientId);
                     hid_ClientId.Value = string.Empty;
                     return;
                 }
@@ -185,16 +204,16 @@ namespace ModuleWorkFlow
             if (updateMessage)
             {
                 Label_Message.Text = CheckBox_ShowAll.Checked
-                    ? string.Format("共查询到 {0} 条打印次数为 0 的出货货品数据，当前显示全部。", shippingGoodsInfos.Count)
-                    : string.Format("共查询到 {0} 条打印次数为 0 的出货货品数据。", shippingGoodsInfos.Count);
+                    ? string.Format("共查询到 {0} 条打印次数大于 0 的出货货品数据，当前显示全部。", shippingGoodsInfos.Count)
+                    : string.Format("共查询到 {0} 条打印次数大于 0 的出货货品数据。", shippingGoodsInfos.Count);
             }
         }
 
-        private List<ShippingGoodsInfo> GetSelectedShippingGoodsInfos()
+        private List<ReprintShippingGoodsInfo> GetSelectedShippingGoodsInfos()
         {
             List<ShippingGoodsInfo> currentShippingGoodsInfos = GetPrintableShippingGoodsInfos();
 
-            List<ShippingGoodsInfo> selectedInfos = new List<ShippingGoodsInfo>();
+            List<ReprintShippingGoodsInfo> selectedInfos = new List<ReprintShippingGoodsInfo>();
             foreach (DataGridItem item in MainDataGrid.Items)
             {
                 CheckBox checkBox = item.FindControl("chk_datagrid") as CheckBox;
@@ -204,16 +223,24 @@ namespace ModuleWorkFlow
                 }
 
                 long id;
-                if (!long.TryParse(item.Cells[1].Text.Trim(), out id))
+                if (!TryGetRowId(item, out id))
                 {
                     continue;
                 }
 
                 ShippingGoodsInfo shippingGoodsInfo = currentShippingGoodsInfos.Find(info => info != null && info.Id.HasValue && info.Id.Value == id);
-                if (shippingGoodsInfo != null)
+                if (shippingGoodsInfo == null)
                 {
-                    selectedInfos.Add(shippingGoodsInfo);
+                    continue;
                 }
+
+                ReprintReasonInfo reprintReasonInfo = GetSelectedReprintReasonInfo(item);
+                selectedInfos.Add(new ReprintShippingGoodsInfo
+                {
+                    ShippingGoodsInfo = shippingGoodsInfo,
+                    ReprintReasonsId = reprintReasonInfo == null ? (int?)null : reprintReasonInfo.Id,
+                    ReprintReason = reprintReasonInfo == null ? string.Empty : SafeValue(reprintReasonInfo.ReasonName)
+                });
             }
 
             return selectedInfos;
@@ -226,60 +253,16 @@ namespace ModuleWorkFlow
                 TextBox_PartName.Text.Trim(),
                 TextBox_SupplyBatchNo.Text.Trim());
 
-            HashSet<string> existingPrintRecordKeys = GetExistingPrintRecordKeys();
             return shippingGoodsInfos
                 .Where(item => item != null &&
-                    (!item.PrintCount.HasValue || item.PrintCount.Value == 0) &&
-                    !existingPrintRecordKeys.Contains(BuildPrintRecordKey(
-                        item.SupplyBatchNo,
-                        item.PartNo,
-                        item.CartonNo,
-                        item.PrintCount)))
+                    item.PrintCount.HasValue &&
+                    item.PrintCount.Value > 0)
                 .ToList();
-        }
-
-        private HashSet<string> GetExistingPrintRecordKeys()
-        {
-            XHS.BLL.PrintRecord printrecord = new XHS.BLL.PrintRecord();
-            List<PrintRecordInfo> printRecordInfos = printrecord.GetPrintRecords(
-                TextBox_SupplyBatchNo.Text.Trim(),
-                TextBox_PartNo.Text.Trim(),
-                string.Empty,
-                string.Empty);
-
-            HashSet<string> keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (PrintRecordInfo printRecordInfo in printRecordInfos.Where(item => item != null))
-            {
-                keys.Add(BuildPrintRecordKey(
-                    printRecordInfo.SupplyBatchNo,
-                    printRecordInfo.PartNo,
-                    printRecordInfo.CartonNo,
-                    printRecordInfo.PrintCount));
-            }
-
-            return keys;
-        }
-
-        private static string BuildPrintRecordKey(string supplyBatchNo, string partNo, string cartonNo, int? printCount)
-        {
-            return string.Join("|", new[]
-            {
-                SafeValue(supplyBatchNo),
-                SafeValue(partNo),
-                SafeValue(cartonNo),
-                (printCount ?? 0).ToString()
-            });
         }
 
         private static string SafeValue(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
-        }
-
-        private static List<PrintRecordInfo> GetDuplicatePrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType)
-        {
-            XHS.BLL.PrintRecord printrecord = new XHS.BLL.PrintRecord();
-            return printrecord.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, printType);
         }
 
         private static string InsertPrintRecords(List<PrintRecordInfo> printRecordInfos)
@@ -323,6 +306,64 @@ namespace ModuleWorkFlow
                 .Replace(Path.AltDirectorySeparatorChar, '/');
 
             return "/" + relativePath.TrimStart('/');
+        }
+
+        private void BindReprintReasonDropDownList(DropDownList dropDownList)
+        {
+            dropDownList.Items.Clear();
+            dropDownList.Items.Add(new ListItem("请选择", string.Empty));
+            foreach (ReprintReasonInfo reprintReasonInfo in GetReprintReasonInfos())
+            {
+                if (reprintReasonInfo == null || !reprintReasonInfo.Id.HasValue)
+                {
+                    continue;
+                }
+
+                dropDownList.Items.Add(new ListItem(SafeValue(reprintReasonInfo.ReasonName), reprintReasonInfo.Id.Value.ToString()));
+            }
+        }
+
+        private ReprintReasonInfo GetSelectedReprintReasonInfo(DataGridItem item)
+        {
+            DropDownList dropDownList = item.FindControl(ReprintReasonControlId) as DropDownList;
+            int reprintReasonsId;
+            if (dropDownList == null || !int.TryParse(dropDownList.SelectedValue, out reprintReasonsId))
+            {
+                return null;
+            }
+
+            return GetReprintReasonInfos().FirstOrDefault(info => info != null && info.Id.HasValue && info.Id.Value == reprintReasonsId);
+        }
+
+        private static bool TryGetRowId(DataGridItem item, out long id)
+        {
+            id = 0;
+            HiddenField hiddenField = item.FindControl(RowIdControlId) as HiddenField;
+            if (hiddenField == null)
+            {
+                return false;
+            }
+
+            return long.TryParse(SafeValue(hiddenField.Value), out id);
+        }
+
+        private List<ReprintReasonInfo> GetReprintReasonInfos()
+        {
+            if (reprintReasonInfos == null)
+            {
+                reprintReasonInfos = new ReprintReason().GetEnabledReprintReasons();
+            }
+
+            return reprintReasonInfos ?? new List<ReprintReasonInfo>();
+        }
+
+        private class ReprintShippingGoodsInfo
+        {
+            public ShippingGoodsInfo ShippingGoodsInfo { get; set; }
+
+            public int? ReprintReasonsId { get; set; }
+
+            public string ReprintReason { get; set; }
         }
 
         #region Web Form Designer generated code

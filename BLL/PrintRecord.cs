@@ -81,7 +81,6 @@ namespace XHS.BLL
             }
 
             System.DateTime now = System.DateTime.Now;
-            string safePrintUser = string.IsNullOrWhiteSpace(printUser) ? string.Empty : printUser.Trim();
             foreach (PrintRecordInfo printRecordInfo in printRecordInfos)
             {
                 if (printRecordInfo == null)
@@ -89,8 +88,12 @@ namespace XHS.BLL
                     continue;
                 }
 
+                string safePrintUser = string.IsNullOrWhiteSpace(printUser)
+                    ? GetPersistedPrintUser(printRecordInfo)
+                    : printUser.Trim();
+
                 printRecordInfo.Status = PrintRecordStatusInfo.Completed;
-                printRecordInfo.PrintCount = 1;
+                printRecordInfo.PrintCount = (printRecordInfo.PrintCount ?? 0) + 1;
                 printRecordInfo.PrintUser = safePrintUser;
                 printRecordInfo.PrintTime = now;
                 if (string.IsNullOrWhiteSpace(printRecordInfo.FirstPrintUser))
@@ -110,6 +113,26 @@ namespace XHS.BLL
             }
 
             return UpdatePrintRecord(printRecordInfos);
+        }
+
+        private static string GetPersistedPrintUser(PrintRecordInfo printRecordInfo)
+        {
+            if (printRecordInfo == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(printRecordInfo.PrintUser))
+            {
+                return printRecordInfo.PrintUser.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(printRecordInfo.CreateUser))
+            {
+                return printRecordInfo.CreateUser.Trim();
+            }
+
+            return string.Empty;
         }
 
         private static void NormalizePrintRecords(List<PrintRecordInfo> printRecordInfos)

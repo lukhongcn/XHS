@@ -68,6 +68,27 @@ BEGIN
     ADD [ColumnIndex] INT NULL;
 END;
 
+IF OBJECT_ID(N'[dbo].[tb_PrintRecord]', N'U') IS NOT NULL
+   AND COL_LENGTH('dbo.tb_PrintRecord', 'ReprintReasonsId') IS NULL
+BEGIN
+    ALTER TABLE [dbo].[tb_PrintRecord]
+    ADD [ReprintReasonsId] INT NULL;
+END;
+
+IF OBJECT_ID(N'[dbo].[tb_PrintRecord]', N'U') IS NOT NULL
+   AND OBJECT_ID(N'[dbo].[tb_ReprintReason]', N'U') IS NOT NULL
+   AND NOT EXISTS (
+       SELECT 1
+       FROM sys.foreign_keys
+       WHERE name = N'FK_tb_PrintRecord_tb_ReprintReason'
+         AND parent_object_id = OBJECT_ID(N'[dbo].[tb_PrintRecord]')
+   )
+BEGIN
+    ALTER TABLE [dbo].[tb_PrintRecord]
+    ADD CONSTRAINT [FK_tb_PrintRecord_tb_ReprintReason]
+    FOREIGN KEY ([ReprintReasonsId]) REFERENCES [dbo].[tb_ReprintReason]([Id]);
+END;
+
 GO
 
 DELETE FROM [dbo].[tb_UnRegularTableImportField]

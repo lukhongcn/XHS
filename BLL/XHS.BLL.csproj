@@ -68,6 +68,7 @@
     <Compile Include="Class1.cs" />
     <Compile Include="Label.cs" />
     <Compile Include="PrintRecord.cs" />
+    <Compile Include="ReprintReason.cs" />
     <Compile Include="ShippingGoodsLabelBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QRCode.cs" />

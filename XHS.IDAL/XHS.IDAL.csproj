@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IPrintRecord.cs" />
+    <Compile Include="IReprintReason.cs" />
     <Compile Include="IShippingGoods.cs" />
     <Compile Include="IUnRegularTableImportField.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

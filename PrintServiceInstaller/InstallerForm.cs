@@ -50,6 +50,9 @@ namespace PrintServiceInstaller
         private string _lastUpdatePackageLength;
         private string _latestUpdatePackageLastModified;
         private string _latestUpdatePackageLength;
+        private bool _isBusy;
+        private bool _serviceInstalled;
+        private ServiceControllerStatus? _serviceStatus;
 
         public InstallerForm()
         {
@@ -346,14 +349,8 @@ namespace PrintServiceInstaller
 
         private void SetBusy(bool busy)
         {
-            btnInstall.Enabled = !busy;
-            btnSaveUrl.Enabled = !busy;
-            btnUninstall.Enabled = !busy;
-            btnStartService.Enabled = !busy;
-            btnStopService.Enabled = !busy;
-            btnUpdate.Enabled = !busy;
-            btnRefresh.Enabled = !busy;
-            btnOpenLogFolder.Enabled = !busy;
+            _isBusy = busy;
+            UpdateButtonStates();
             Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
         }
 
@@ -903,13 +900,37 @@ namespace PrintServiceInstaller
             {
                 using (ServiceController controller = new ServiceController(ServiceName))
                 {
+                    _serviceInstalled = true;
+                    _serviceStatus = controller.Status;
                     lblStatus.Text = "服务状态：" + TranslateStatus(controller.Status);
                 }
             }
             catch
             {
+                _serviceInstalled = false;
+                _serviceStatus = null;
                 lblStatus.Text = "服务状态：未安装";
             }
+
+            UpdateButtonStates();
+        }
+
+        private void UpdateButtonStates()
+        {
+            if (btnInstall == null)
+            {
+                return;
+            }
+
+            bool canOperate = !_isBusy;
+            btnInstall.Enabled = canOperate && !_serviceInstalled;
+            btnSaveUrl.Enabled = canOperate;
+            btnUninstall.Enabled = canOperate && _serviceInstalled;
+            btnStartService.Enabled = canOperate && _serviceInstalled && _serviceStatus != ServiceControllerStatus.Running;
+            btnStopService.Enabled = canOperate && _serviceInstalled && _serviceStatus == ServiceControllerStatus.Running;
+            btnUpdate.Enabled = canOperate && _serviceInstalled;
+            btnRefresh.Enabled = canOperate;
+            btnOpenLogFolder.Enabled = canOperate;
         }
 
         private string TranslateStatus(ServiceControllerStatus status)

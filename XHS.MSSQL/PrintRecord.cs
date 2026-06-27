@@ -14,7 +14,7 @@ namespace XHS.MSSQL
     /// </summary>
     public class PrintRecord : IPrintRecord
     {
-        private const string PrintRecordSelectColumns = "Id,SupplyBatchNo,PartNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime";
+        private const string PrintRecordSelectColumns = "Id,SupplyBatchNo,PartNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,ReprintReasonsId,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime";
         private const string PrintRecordOrderBy = " order by CreateTime desc, Id desc";
 
         public List<PrintRecordInfo> GetPrintRecords()
@@ -107,13 +107,13 @@ namespace XHS.MSSQL
 
         public ParamterInfo InsertPrintRecord(List<PrintRecordInfo> printRecordInfos)
         {
-            const string sql = "insert into tb_PrintRecord (SupplyBatchNo,PartNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@TaskId,@ClientId,@MachineId,@PrintType,@PdfUrl,@PdfDownLoadUrl,@PdfDownloadPath,@LocalPath,@Status,@PrintCount,@PrintUser,@PrintTime,@FirstPrintUser,@FirstPrintTime,@LastPrintUser,@LastPrintTime,@ReprintReason,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime,@LockTime)";
+            const string sql = "insert into tb_PrintRecord (SupplyBatchNo,PartNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,ReprintReasonsId,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@TaskId,@ClientId,@MachineId,@PrintType,@PdfUrl,@PdfDownLoadUrl,@PdfDownloadPath,@LocalPath,@Status,@PrintCount,@PrintUser,@PrintTime,@FirstPrintUser,@FirstPrintTime,@LastPrintUser,@LastPrintTime,@ReprintReason,@ReprintReasonsId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime,@LockTime)";
             return BuildParamterInfo(printRecordInfos, sql, BuildInsertOrUpdateParameters);
         }
 
         public ParamterInfo UpdatePrintRecord(List<PrintRecordInfo> printRecordInfos)
         {
-            const string sql = "update tb_PrintRecord set TaskId=@TaskId,ClientId=@ClientId,MachineId=@MachineId,PdfUrl=@PdfUrl,PdfDownLoadUrl=@PdfDownLoadUrl,PdfDownloadPath=@PdfDownloadPath,LocalPath=@LocalPath,Status=@Status,PrintCount=@PrintCount,PrintUser=@PrintUser,PrintTime=@PrintTime,FirstPrintUser=@FirstPrintUser,FirstPrintTime=@FirstPrintTime,LastPrintUser=@LastPrintUser,LastPrintTime=@LastPrintTime,ReprintReason=@ReprintReason,CreateUser=@CreateUser,CreateTime=@CreateTime,UpdateUser=@UpdateUser,UpdateTime=@UpdateTime,LockTime=@LockTime where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and PrintType=@PrintType";
+            const string sql = "update tb_PrintRecord set TaskId=@TaskId,ClientId=@ClientId,MachineId=@MachineId,PdfUrl=@PdfUrl,PdfDownLoadUrl=@PdfDownLoadUrl,PdfDownloadPath=@PdfDownloadPath,LocalPath=@LocalPath,Status=@Status,PrintCount=@PrintCount,PrintUser=@PrintUser,PrintTime=@PrintTime,FirstPrintUser=@FirstPrintUser,FirstPrintTime=@FirstPrintTime,LastPrintUser=@LastPrintUser,LastPrintTime=@LastPrintTime,ReprintReason=@ReprintReason,ReprintReasonsId=@ReprintReasonsId,CreateUser=@CreateUser,CreateTime=@CreateTime,UpdateUser=@UpdateUser,UpdateTime=@UpdateTime,LockTime=@LockTime where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and PrintType=@PrintType";
             return BuildParamterInfo(printRecordInfos, sql, BuildInsertOrUpdateParameters);
         }
 
@@ -168,6 +168,7 @@ namespace XHS.MSSQL
                     LastPrintUser = ReadString(row, "LastPrintUser"),
                     LastPrintTime = ReadNullableDateTime(row, "LastPrintTime"),
                     ReprintReason = ReadString(row, "ReprintReason"),
+                    ReprintReasonsId = ReadNullableInt(row, "ReprintReasonsId"),
                     CreateUser = ReadString(row, "CreateUser"),
                     CreateTime = ReadNullableDateTime(row, "CreateTime"),
                     UpdateUser = ReadString(row, "UpdateUser"),
@@ -229,6 +230,7 @@ namespace XHS.MSSQL
                 new SqlParameter("@LastPrintUser", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.LastPrintUser) },
                 new SqlParameter("@LastPrintTime", SqlDbType.DateTime) { Value = ToDbValue(info.LastPrintTime) },
                 new SqlParameter("@ReprintReason", SqlDbType.NVarChar, 200) { Value = ToDbValue(info.ReprintReason) },
+                new SqlParameter("@ReprintReasonsId", SqlDbType.Int) { Value = ToDbValue(info.ReprintReasonsId) },
                 new SqlParameter("@CreateUser", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CreateUser) },
                 new SqlParameter("@CreateTime", SqlDbType.DateTime) { Value = ToDbValue(info.CreateTime) },
                 new SqlParameter("@UpdateUser", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.UpdateUser) },

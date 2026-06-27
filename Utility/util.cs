@@ -1014,6 +1014,12 @@ namespace Utility
                     " was encountered while inserting the data.");
                 Log.WriteLog("log.txt", "An exception of type " + e.GetType() +
                     " was encountered while inserting the data.");
+                Log.WriteLog("log.txt", "Exception message: " + e.Message);
+                if (e.InnerException != null)
+                {
+                    Log.WriteLog("log.txt", "Inner exception: " + e.InnerException.Message);
+                }
+                Log.WriteLog("log.txt", "Stack trace: " + e.StackTrace);
                 Console.WriteLine("Neither record was written to database.");
                 return false;
             }

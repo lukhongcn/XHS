@@ -49,6 +49,8 @@ namespace XHS.Model
 
         public string ReprintReason { get; set; }
 
+        public int? ReprintReasonsId { get; set; }
+
         public string CreateUser { get; set; }
 
         public DateTime? CreateTime { get; set; }

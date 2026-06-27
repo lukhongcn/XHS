@@ -38,6 +38,7 @@
     <Compile Include="CheryUploadInfo.cs" />
     <Compile Include="PrintRecordInfo.cs" />
     <Compile Include="PrintRecordStatusInfo.cs" />
+    <Compile Include="ReprintReasonInfo.cs" />
     <Compile Include="ShippingGoodsInfo.cs" />
     <Compile Include="ShippingGoodsStatusInfo.cs" />
     <Compile Include="UnRegularTableImportFieldInfo.cs" />

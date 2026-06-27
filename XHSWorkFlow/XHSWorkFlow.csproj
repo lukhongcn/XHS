@@ -124,6 +124,9 @@
     <Compile Include="api\print\pending-labels.ashx.cs">
       <DependentUpon>pending-labels.ashx</DependentUpon>
     </Compile>
+    <Compile Include="NoPrivateMsg.aspx.cs">
+      <DependentUpon>NoPrivateMsg.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
     </Compile>
@@ -135,6 +138,12 @@
     </Compile>
     <Compile Include="ShippingGoodsPrintList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsPrintList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsREPrintList.aspx.cs">
+      <DependentUpon>ShippingGoodsREPrintList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsREPrintList.aspx.designer.cs">
+      <DependentUpon>ShippingGoodsREPrintList.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsView.aspx.cs">
       <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
@@ -164,8 +173,10 @@
     <Content Include="api\print\pending.ashx" />
     <Content Include="api\print\complete.ashx" />
     <Content Include="api\print\pending-labels.ashx" />
+    <Content Include="NoPrivateMsg.aspx" />
     <Content Include="ShippingGoodsList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
+    <Content Include="ShippingGoodsREPrintList.aspx" />
     <Content Include="ShippingGoodsUpload.aspx" />
     <Content Include="ShippingGoodsView.aspx" />
     <Content Include="Web.config" />
@@ -206,6 +217,7 @@
       <DependentUpon>UserPrivilegeList.aspx.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\newLeft.aspx.resx" />
+    <EmbeddedResource Include="NoPrivateMsg.aspx.resx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="DefaultSub.Master" />
@@ -236,5 +248,3 @@
     </VisualStudio>
   </ProjectExtensions>
 </Project>
-
-
