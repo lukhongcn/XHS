@@ -129,6 +129,7 @@ namespace ModuleWorkFlow
                 string machineId = DropDownList_PrinterName.SelectedValue.Trim();
                 List<ShippingGoodsInfo> shippingGoodsInfos = selectedInfos.Select(item => item.ShippingGoodsInfo).ToList();
                 List<LabelInfo> labelInfos = ShippingGoodsLabelBuilder.BuildOuterBoxLabelInfos(shippingGoodsInfos);
+                Dictionary<string, int> nextPrintCounts = BuildNextPrintCounts(selectedInfos);
                 List<PrintRecordInfo> printRecordInfos = new List<PrintRecordInfo>();
                 for (int i = 0; i < selectedInfos.Count; i++)
                 {
@@ -137,6 +138,8 @@ namespace ModuleWorkFlow
                     LabelInfo labelInfo = labelInfos[i];
                     string pdfPhysicalPath = GenerateSinglePdf(labelInfo);
                     string pdfDownloadUrl = BuildPdfDownloadUrl(pdfPhysicalPath);
+                    string businessKey = BuildBusinessKey(info.SupplyBatchNo, info.PartNo, info.CartonNo);
+                    int nextPrintCount = nextPrintCounts[businessKey];
 
                     printRecordInfos.Add(new PrintRecordInfo
                     {
@@ -151,7 +154,7 @@ namespace ModuleWorkFlow
                         PdfDownloadPath = pdfDownloadUrl,
                         LocalPath = pdfPhysicalPath,
                         Status = PrintRecordStatusInfo.Pending,
-                        PrintCount = info.PrintCount ?? 0,
+                        PrintCount = nextPrintCount,
                         PrintUser = currentUser,
                         PrintTime = now,
                         ReprintReason = selectedInfo.ReprintReason,
@@ -159,6 +162,8 @@ namespace ModuleWorkFlow
                         CreateUser = currentUser,
                         CreateTime = now
                     });
+
+                    nextPrintCounts[businessKey] = nextPrintCount + 1;
                 }
 
                 string saveMessage = InsertPrintRecords(printRecordInfos);
@@ -196,7 +201,7 @@ namespace ModuleWorkFlow
 
         private void BindData(bool updateMessage)
         {
-            List<ShippingGoodsInfo> shippingGoodsInfos = GetPrintableShippingGoodsInfos();
+            List<ShippingGoodsInfo> shippingGoodsInfos = GetPrintableShippingGoodsInfos(true);
 
             MainDataGrid.AllowPaging = !CheckBox_ShowAll.Checked;
             MainDataGrid.DataSource = shippingGoodsInfos;
@@ -211,7 +216,7 @@ namespace ModuleWorkFlow
 
         private List<ReprintShippingGoodsInfo> GetSelectedShippingGoodsInfos()
         {
-            List<ShippingGoodsInfo> currentShippingGoodsInfos = GetPrintableShippingGoodsInfos();
+            List<ShippingGoodsInfo> currentShippingGoodsInfos = GetPrintableShippingGoodsInfos(false);
 
             List<ReprintShippingGoodsInfo> selectedInfos = new List<ReprintShippingGoodsInfo>();
             foreach (DataGridItem item in MainDataGrid.Items)
@@ -246,23 +251,128 @@ namespace ModuleWorkFlow
             return selectedInfos;
         }
 
-        private List<ShippingGoodsInfo> GetPrintableShippingGoodsInfos()
+        private List<ShippingGoodsInfo> GetPrintableShippingGoodsInfos(bool includePendingPrintCounts)
         {
             List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
                 TextBox_PartNo.Text.Trim(),
                 TextBox_PartName.Text.Trim(),
                 TextBox_SupplyBatchNo.Text.Trim());
 
-            return shippingGoodsInfos
+            List<ShippingGoodsInfo> result = shippingGoodsInfos
                 .Where(item => item != null &&
                     item.PrintCount.HasValue &&
                     item.PrintCount.Value > 0)
                 .ToList();
+
+            if (includePendingPrintCounts)
+            {
+                ApplyPendingPrintCounts(result);
+            }
+
+            return result;
+        }
+
+        private void ApplyPendingPrintCounts(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
+            {
+                return;
+            }
+
+            Dictionary<string, int> pendingPrintCounts = GetPendingPrintCounts();
+            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
+            {
+                if (shippingGoodsInfo == null)
+                {
+                    continue;
+                }
+
+                int pendingCount;
+                if (!pendingPrintCounts.TryGetValue(BuildBusinessKey(
+                    shippingGoodsInfo.SupplyBatchNo,
+                    shippingGoodsInfo.PartNo,
+                    shippingGoodsInfo.CartonNo), out pendingCount))
+                {
+                    continue;
+                }
+
+                shippingGoodsInfo.PrintCount = (shippingGoodsInfo.PrintCount ?? 0) + pendingCount;
+            }
+        }
+
+        private Dictionary<string, int> GetPendingPrintCounts()
+        {
+            XHS.BLL.PrintRecord printRecordService = new XHS.BLL.PrintRecord();
+            List<PrintRecordInfo> printRecordInfos = printRecordService.GetPrintRecords(
+                TextBox_SupplyBatchNo.Text.Trim(),
+                TextBox_PartNo.Text.Trim(),
+                string.Empty,
+                PrintTypeOuterBox);
+
+            return printRecordInfos
+                .Where(item => item != null && item.Status.HasValue && item.Status.Value == PrintRecordStatusInfo.Pending)
+                .GroupBy(item => BuildBusinessKey(item.SupplyBatchNo, item.PartNo, item.CartonNo), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private Dictionary<string, int> BuildNextPrintCounts(List<ReprintShippingGoodsInfo> selectedInfos)
+        {
+            Dictionary<string, int> nextPrintCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (selectedInfos == null || selectedInfos.Count == 0)
+            {
+                return nextPrintCounts;
+            }
+
+            XHS.BLL.PrintRecord printRecordService = new XHS.BLL.PrintRecord();
+            foreach (ReprintShippingGoodsInfo selectedInfo in selectedInfos)
+            {
+                if (selectedInfo == null || selectedInfo.ShippingGoodsInfo == null)
+                {
+                    continue;
+                }
+
+                ShippingGoodsInfo shippingGoodsInfo = selectedInfo.ShippingGoodsInfo;
+                string businessKey = BuildBusinessKey(
+                    shippingGoodsInfo.SupplyBatchNo,
+                    shippingGoodsInfo.PartNo,
+                    shippingGoodsInfo.CartonNo);
+                if (nextPrintCounts.ContainsKey(businessKey))
+                {
+                    continue;
+                }
+
+                List<PrintRecordInfo> existedPrintRecords = printRecordService.GetPrintRecordsByBusinessKey(
+                    SafeValue(shippingGoodsInfo.SupplyBatchNo),
+                    SafeValue(shippingGoodsInfo.PartNo),
+                    SafeValue(shippingGoodsInfo.CartonNo),
+                    PrintTypeOuterBox);
+                int maxPrintCount = existedPrintRecords == null
+                    ? 0
+                    : existedPrintRecords
+                        .Where(item => item != null && item.PrintCount.HasValue)
+                        .Select(item => item.PrintCount.Value)
+                        .DefaultIfEmpty(0)
+                        .Max();
+
+                nextPrintCounts[businessKey] = maxPrintCount + 1;
+            }
+
+            return nextPrintCounts;
         }
 
         private static string SafeValue(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string BuildBusinessKey(string supplyBatchNo, string partNo, string cartonNo)
+        {
+            return string.Join("|", new[]
+            {
+                SafeValue(supplyBatchNo),
+                SafeValue(partNo),
+                SafeValue(cartonNo)
+            });
         }
 
         private static string InsertPrintRecords(List<PrintRecordInfo> printRecordInfos)
