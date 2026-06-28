@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using Utility;
 using XHS.Model;
 using XHS.IDAL;
 
@@ -12,8 +13,6 @@ namespace XHS.MSSQL
     /// </summary>
     public class UnRegularTableImportField : IUnRegularTableImportField
     {
-        private const string ConnectionString = "server=.;Pooling=false;database=XHS;uid=sa;pwd=MES2016mj";
-
         public List<UnRegularTableImportFieldInfo> GetUnRegularTableImportFieldByTemplateCode(string templateCode)
         {
             const string sql = "select TemplateCode,ColumnName,ExtractKeyword,FieldProperty,RowIndex,ColumnIndex,OffsetRow,OffsetColumn,IsRequired,SortNo,Comment from tb_UnRegularTableImportField where TemplateCode=@TemplateCode order by SortNo";
@@ -23,33 +22,28 @@ namespace XHS.MSSQL
             };
 
             List<UnRegularTableImportFieldInfo> result = new List<UnRegularTableImportFieldInfo>();
-
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
+            DataSet dataSet = Data.getDataSet(sql, parameters);
+            if (dataSet == null || dataSet.Tables.Count == 0)
             {
-                command.Parameters.AddRange(parameters);
-                connection.Open();
+                return result;
+            }
 
-                using (SqlDataReader reader = command.ExecuteReader())
+            foreach (DataRow row in dataSet.Tables[0].Rows)
+            {
+                result.Add(new UnRegularTableImportFieldInfo
                 {
-                    while (reader.Read())
-                    {
-                        result.Add(new UnRegularTableImportFieldInfo
-                        {
-                            TemplateCode = ReadString(reader, "TemplateCode"),
-                            ColumnName = ReadString(reader, "ColumnName"),
-                            ExtractKeyword = ReadString(reader, "ExtractKeyword"),
-                            FieldProperty = ReadString(reader, "FieldProperty"),
-                            RowIndex = ReadNullableInt(reader, "RowIndex"),
-                            ColumnIndex = ReadNullableInt(reader, "ColumnIndex"),
-                            OffsetRow = ReadNullableInt(reader, "OffsetRow"),
-                            OffsetColumn = ReadNullableInt(reader, "OffsetColumn"),
-                            IsRequired = ReadNullableBoolean(reader, "IsRequired"),
-                            SortNo = ReadNullableInt(reader, "SortNo"),
-                            Comment = ReadString(reader, "Comment")
-                        });
-                    }
-                }
+                    TemplateCode = ReadString(row, "TemplateCode"),
+                    ColumnName = ReadString(row, "ColumnName"),
+                    ExtractKeyword = ReadString(row, "ExtractKeyword"),
+                    FieldProperty = ReadString(row, "FieldProperty"),
+                    RowIndex = ReadNullableInt(row, "RowIndex"),
+                    ColumnIndex = ReadNullableInt(row, "ColumnIndex"),
+                    OffsetRow = ReadNullableInt(row, "OffsetRow"),
+                    OffsetColumn = ReadNullableInt(row, "OffsetColumn"),
+                    IsRequired = ReadNullableBoolean(row, "IsRequired"),
+                    SortNo = ReadNullableInt(row, "SortNo"),
+                    Comment = ReadString(row, "Comment")
+                });
             }
 
             return result;
@@ -60,22 +54,19 @@ namespace XHS.MSSQL
             return value ?? DBNull.Value;
         }
 
-        private static string ReadString(SqlDataReader reader, string columnName)
+        private static string ReadString(DataRow row, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            return row.IsNull(columnName) ? null : row[columnName].ToString();
         }
 
-        private static int? ReadNullableInt(SqlDataReader reader, string columnName)
+        private static int? ReadNullableInt(DataRow row, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? (int?)null : reader.GetInt32(ordinal);
+            return row.IsNull(columnName) ? (int?)null : Convert.ToInt32(row[columnName]);
         }
 
-        private static bool? ReadNullableBoolean(SqlDataReader reader, string columnName)
+        private static bool? ReadNullableBoolean(DataRow row, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? (bool?)null : reader.GetBoolean(ordinal);
+            return row.IsNull(columnName) ? (bool?)null : Convert.ToBoolean(row[columnName]);
         }
     }
 }

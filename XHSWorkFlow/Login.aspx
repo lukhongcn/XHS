@@ -20,19 +20,19 @@
 			<tr align="center" valign="middle">
              <td colspan="2" ><img src="images/wtclogo.png" width="198" height="65" align="left"></td></tr>
 				<tr align="center" valign="middle">
-					<td colspan="2"><DIV align="center" class="mainTitle" ><B>系統登入</B></DIV>
+					<td colspan="2"><DIV align="center" class="mainTitle" ><B>系统登录</B></DIV>
 					</td>
 				</tr>
 				<tr>
-					<td align="right" class="mainTitle" >員工編號</td>
+					<td align="right" class="mainTitle" >员工编号</td>
 					<td width="40"  ><asp:TextBox ID="TextBox_UserName" Runat="server"></asp:TextBox></td>
 				</tr>
 				<tr>
-					<td align="right" class="mainTitle" >密碼</td>
+					<td align="right" class="mainTitle" >密码</td>
 					<td><INPUT type="password" name="HTML_Password" runat="server" id="HTML_Password"></td>
 				</tr>
 				<tr>
-					<td colspan="2" align="center" style="WIDTH: 373px"><asp:Button ID="Button_Login" Runat="server" Text="登入"></asp:Button>&nbsp;&nbsp;<INPUT type="reset" value="重設"></td>
+					<td colspan="2" align="center" style="WIDTH: 373px"><asp:Button ID="Button_Login" Runat="server" Text="登录"></asp:Button>&nbsp;&nbsp;<INPUT type="reset" value="重设"></td>
 				</tr>
 				<TR>
 					<td>

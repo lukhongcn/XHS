@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using BLL;
@@ -55,10 +56,86 @@ namespace ModuleWorkFlow
             Response.Redirect(url);
         }
 
+        protected void lnkbutton_edit_Click(object sender, EventArgs e)
+        {
+            ShippingGoodsInfo shippingGoodsInfo;
+            if (!TryGetSingleSelectedShippingGoods(out shippingGoodsInfo))
+            {
+                return;
+            }
+
+            Response.Redirect(string.Format("ShippingGoodsView.aspx?id={0}", shippingGoodsInfo.Id));
+        }
+
+        protected void lnkbutton_upload_edit_Click(object sender, EventArgs e)
+        {
+            ShippingGoodsInfo shippingGoodsInfo;
+            if (!TryGetSingleSelectedShippingGoods(out shippingGoodsInfo))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(shippingGoodsInfo.SupplyBatchNo))
+            {
+                Label_Message.Text = "所选出货货品数据缺少供货批次号，无法执行上传修改。";
+                return;
+            }
+
+            string url = string.Format(
+                "ShippingGoodsUpload.aspx?func=edit&supplyBatchNo={0}",
+                HttpUtility.UrlEncode(shippingGoodsInfo.SupplyBatchNo.Trim()));
+            Response.Redirect(url);
+        }
+
         protected void MainDataGrid_PageIndexChanged(object source, DataGridPageChangedEventArgs e)
         {
             MainDataGrid.CurrentPageIndex = e.NewPageIndex;
             BindData();
+        }
+
+        protected void MainDataGrid_ItemDataBound(object sender, DataGridItemEventArgs e)
+        {
+            if (e.Item.ItemType != ListItemType.Item && e.Item.ItemType != ListItemType.AlternatingItem)
+            {
+                return;
+            }
+
+            ShippingGoodsInfo shippingGoodsInfo = e.Item.DataItem as ShippingGoodsInfo;
+            if (shippingGoodsInfo == null)
+            {
+                return;
+            }
+
+            HyperLink hyperLinkPrintCount = e.Item.FindControl("HyperLink_PrintCount") as HyperLink;
+            Label labelPrintCount = e.Item.FindControl("Label_PrintCount") as Label;
+            if (hyperLinkPrintCount == null || labelPrintCount == null)
+            {
+                return;
+            }
+
+            string printCountText = shippingGoodsInfo.PrintCount.HasValue
+                ? shippingGoodsInfo.PrintCount.Value.ToString()
+                : "0";
+
+            if (!shippingGoodsInfo.PrintCount.HasValue || shippingGoodsInfo.PrintCount.Value <= 0)
+            {
+                hyperLinkPrintCount.Visible = false;
+                labelPrintCount.Text = printCountText;
+                labelPrintCount.Visible = true;
+                return;
+            }
+
+            string url = string.Format(
+                "api/print/record-detail.ashx?supplyBatchNo={0}&partNo={1}&cartonNo={2}",
+                HttpUtility.UrlEncode((shippingGoodsInfo.SupplyBatchNo ?? string.Empty).Trim()),
+                HttpUtility.UrlEncode((shippingGoodsInfo.PartNo ?? string.Empty).Trim()),
+                HttpUtility.UrlEncode((shippingGoodsInfo.CartonNo ?? string.Empty).Trim()));
+
+            hyperLinkPrintCount.Text = printCountText;
+            hyperLinkPrintCount.NavigateUrl = "javascript:void(0);";
+            hyperLinkPrintCount.Attributes["class"] = "print-record-link";
+            hyperLinkPrintCount.Attributes["onclick"] = string.Format("return openPrintRecordModal('{0}');", url);
+            labelPrintCount.Visible = false;
         }
 
         private void BindData()
@@ -68,9 +145,59 @@ namespace ModuleWorkFlow
                 TextBox_PartName.Text.Trim(),
                 TextBox_SupplyBatchNo.Text.Trim());
 
+            MainDataGrid.DataKeyField = "Id";
             MainDataGrid.DataSource = shippingGoodsInfos;
             MainDataGrid.DataBind();
             Label_Message.Text = string.Format("共查询到 {0} 条出货货品数据。", shippingGoodsInfos.Count);
+        }
+
+        private bool TryGetSingleSelectedShippingGoods(out ShippingGoodsInfo shippingGoodsInfo)
+        {
+            shippingGoodsInfo = null;
+            int selectedCount = 0;
+            int selectedId = 0;
+
+            foreach (DataGridItem item in MainDataGrid.Items)
+            {
+                if (item.ItemType != ListItemType.Item && item.ItemType != ListItemType.AlternatingItem)
+                {
+                    continue;
+                }
+
+                CheckBox checkBox = item.FindControl("chk_datagrid") as CheckBox;
+                if (checkBox == null || !checkBox.Checked)
+                {
+                    continue;
+                }
+
+                selectedCount++;
+                object dataKey = MainDataGrid.DataKeys[item.ItemIndex];
+                if (dataKey != null)
+                {
+                    int.TryParse(dataKey.ToString(), out selectedId);
+                }
+            }
+
+            if (selectedCount == 0)
+            {
+                Label_Message.Text = "请选择一条出货货品数据。";
+                return false;
+            }
+
+            if (selectedCount > 1)
+            {
+                Label_Message.Text = "只能选择一条出货货品数据。";
+                return false;
+            }
+
+            shippingGoodsInfo = new ShippingGoods().GetShippingGoods().Find(item => item != null && item.Id == selectedId);
+            if (shippingGoodsInfo == null)
+            {
+                Label_Message.Text = "未找到所选的出货货品数据。";
+                return false;
+            }
+
+            return true;
         }
 
         #region Web Form Designer generated code

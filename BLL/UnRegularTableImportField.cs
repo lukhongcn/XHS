@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using XHS.IDAL;
 using XHS.Model;
 
 namespace BLL
@@ -8,9 +9,16 @@ namespace BLL
     /// </summary>
     public class UnRegularTableImportField
     {
+        private readonly IUnRegularTableImportField dal;
+
+        public UnRegularTableImportField()
+        {
+            dal = XHS.DALFactory.UnRegularTableImportField.Create();
+        }
+
         public List<UnRegularTableImportFieldInfo> GetUnRegularTableImportFieldByTemplateCode(string templateCode)
         {
-            return XHS.DALFactory.UnRegularTableImportField.Create().GetUnRegularTableImportFieldByTemplateCode(templateCode);
+            return dal.GetUnRegularTableImportFieldByTemplateCode(templateCode);
         }
     }
 }

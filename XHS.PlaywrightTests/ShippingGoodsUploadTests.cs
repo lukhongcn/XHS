@@ -29,6 +29,8 @@ public class ShippingGoodsUploadTests : PageTest
     {
         await Page.GotoAsync($"{BaseUrl}/ShippingGoodsList.aspx");
 
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "编辑/edit" })).ToBeVisibleAsync();
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "上传修改" })).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Cell, new() { Name = "状态" })).ToBeVisibleAsync();
         await Expect(Page.GetByRole(AriaRole.Cell, new() { Name = "打印次数" })).ToBeVisibleAsync();
     }

@@ -11,8 +11,10 @@
 5. 所有 `aspx` 文件中的中文内容一律使用简体中文，文件保存格式统一为 UTF-8 with BOM。
 6. `aspx` 页面中的浏览按钮统一使用 `btn5` 样式，标准写法为 `<li class="btn5"><asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton></li>`。
 7. `aspx` 页面中的上传按钮统一使用 `btn13` 样式，对应图片资源为 `up.jpeg`，标准写法为 `<li class="btn13"><asp:LinkButton ID="lnkbutton_upload" runat="server" OnClick="lnkbutton_upload_Click" ToolTip="上传">上传</asp:LinkButton></li>`。
-8. `aspx` 页面中的保存按钮统一使用 `btn3` 样式，并放入 `mod2` 区域，标准写法为 `<li class="btn3"><asp:LinkButton ID="lnkbutton_save" runat="server" ToolTip="保存/save" OnClick="lnkbutton_save_Click">保存/save</asp:LinkButton></li>`。
-9. 完成任务后需要发送 beep 提示音。
+8. `aspx` 页面中的编辑按钮统一使用 `btn2` 样式，并放入 `mod1` 区域，标准写法为 `<li class="btn2"><asp:LinkButton ID="lnkbutton_edit" runat="server" OnClick="lnkbutton_edit_Click" ToolTip="编辑/edit">编辑/edit</asp:LinkButton></li>`。
+9. `aspx` 页面中的上传修改按钮统一使用 `btn14` 样式，对应图片资源为 `up-edit.jpeg`，标准写法为 `<li class="btn14"><asp:LinkButton ID="lnkbutton_upload_edit" runat="server" OnClick="lnkbutton_upload_edit_Click" ToolTip="上传修改">上传修改</asp:LinkButton></li>`。
+10. `aspx` 页面中的保存按钮统一使用 `btn3` 样式，并放入 `mod2` 区域，标准写法为 `<li class="btn3"><asp:LinkButton ID="lnkbutton_save" runat="server" ToolTip="保存/save" OnClick="lnkbutton_save_Click">保存/save</asp:LinkButton></li>`。
+11. 完成任务后需要发送 beep 提示音。
 
 ## 分层约束
 

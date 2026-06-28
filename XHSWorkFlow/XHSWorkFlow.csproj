@@ -124,6 +124,9 @@
     <Compile Include="api\print\pending-labels.ashx.cs">
       <DependentUpon>pending-labels.ashx</DependentUpon>
     </Compile>
+    <Compile Include="api\print\record-detail.ashx.cs">
+      <DependentUpon>record-detail.ashx</DependentUpon>
+    </Compile>
     <Compile Include="NoPrivateMsg.aspx.cs">
       <DependentUpon>NoPrivateMsg.aspx</DependentUpon>
     </Compile>
@@ -138,6 +141,12 @@
     </Compile>
     <Compile Include="ShippingGoodsPrintList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsPrintList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PrintRecordList.aspx.cs">
+      <DependentUpon>PrintRecordList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PrintRecordList.aspx.designer.cs">
+      <DependentUpon>PrintRecordList.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsREPrintList.aspx.cs">
       <DependentUpon>ShippingGoodsREPrintList.aspx</DependentUpon>
@@ -173,8 +182,10 @@
     <Content Include="api\print\pending.ashx" />
     <Content Include="api\print\complete.ashx" />
     <Content Include="api\print\pending-labels.ashx" />
+    <Content Include="api\print\record-detail.ashx" />
     <Content Include="NoPrivateMsg.aspx" />
     <Content Include="ShippingGoodsList.aspx" />
+    <Content Include="PrintRecordList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
     <Content Include="ShippingGoodsREPrintList.aspx" />
     <Content Include="ShippingGoodsUpload.aspx" />

@@ -37,4 +37,27 @@ public class ShippingGoodsPrintListTests : PageTest
         await Expect(Page.GetByLabel("批次")).ToBeVisibleAsync();
         await Expect(Page.GetByText("补打原因")).ToBeVisibleAsync();
     }
+
+    [Test]
+    public async Task PrintRecordListPageCanOpen()
+    {
+        await Page.GotoAsync($"{BaseUrl}/PrintRecordList.aspx");
+
+        await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "搜索/search" })).ToBeVisibleAsync();
+        await Expect(Page.GetByLabel("批次")).ToBeVisibleAsync();
+        await Expect(Page.GetByLabel("零件编号")).ToBeVisibleAsync();
+        await Expect(Page.GetByLabel("纸箱编号")).ToBeVisibleAsync();
+        await Expect(Page.GetByLabel("打印类型")).ToBeVisibleAsync();
+        await Expect(Page.GetByText("最新补打原因")).ToBeVisibleAsync();
+    }
+
+    [Test]
+    public async Task ShippingGoodsListPageContainsPrintRecordModal()
+    {
+        await Page.GotoAsync($"{BaseUrl}/ShippingGoodsList.aspx");
+
+        await Expect(Page.Locator("#printRecordModal")).ToBeHiddenAsync();
+        await Expect(Page.Locator("#printRecordModalOverlay")).ToBeHiddenAsync();
+        await Expect(Page.Locator("#printRecordModalFrame")).ToHaveAttributeAsync("src", "about:blank");
+    }
 }

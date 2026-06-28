@@ -38,6 +38,7 @@ namespace ModuleWorkFlow
 
             if (!IsPostBack)
             {
+                InitializeFiltersFromQueryString();
                 BindData();
             }
         }
@@ -100,6 +101,33 @@ namespace ModuleWorkFlow
         {
             MainDataGrid.CurrentPageIndex = 0;
             BindData();
+        }
+
+        private void InitializeFiltersFromQueryString()
+        {
+            string supplyBatchNo = Request.QueryString["supplyBatchNo"];
+            if (!string.IsNullOrWhiteSpace(supplyBatchNo))
+            {
+                TextBox_SupplyBatchNo.Text = supplyBatchNo.Trim();
+            }
+
+            string partNo = Request.QueryString["partNo"];
+            if (!string.IsNullOrWhiteSpace(partNo))
+            {
+                TextBox_PartNo.Text = partNo.Trim();
+            }
+
+            string cartonNo = Request.QueryString["cartonNo"];
+            if (!string.IsNullOrWhiteSpace(cartonNo))
+            {
+                TextBox_CartonNo.Text = cartonNo.Trim();
+            }
+
+            string printType = Request.QueryString["printType"];
+            if (!string.IsNullOrWhiteSpace(printType))
+            {
+                TextBox_PrintType.Text = printType.Trim();
+            }
         }
 
         private void BindData()

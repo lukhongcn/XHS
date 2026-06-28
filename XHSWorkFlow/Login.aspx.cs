@@ -117,8 +117,8 @@ namespace ModuleWorkFlow
 			string username = TextBox_UserName.Text ;
 			string password = HTML_Password.Value ;
 	
-			if (checkReg() == true)
-			{
+			//if (checkReg() == true)
+			//{
 				if (CheckLogin(username,password) == true)
 				{
                     if (Request.Params["ReturnUrl"] != null)
@@ -147,12 +147,12 @@ namespace ModuleWorkFlow
 					Label_Message.Text = Lang.TXT_LOGINFAILED;
 					HTML_Password.Value = "";
 				}
-			}
-			else
-			{
-                Label_Message.Text = Lang.TXT_NOREGISTED + "<a href='Regno/RegnoHelp.aspx' target=blank>請點擊註冊</a>";
-				HTML_Password.Value = "";
-			}
+			//}
+			//else
+			//{
+   //             Label_Message.Text = Lang.TXT_NOREGISTED + "<a href='Regno/RegnoHelp.aspx' target=blank>请点击注册</a>";
+			//	HTML_Password.Value = "";
+			//}
 		}
 		
 		private bool checkReg()
