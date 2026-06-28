@@ -86,6 +86,12 @@ namespace BLL
             DateTime uploadDate = DateTime.Now;
             IList source = new ArrayList();
             Dictionary<string, List<ShippingGoodsInfo>> groupedUploadInfos = new Dictionary<string, List<ShippingGoodsInfo>>(StringComparer.OrdinalIgnoreCase);
+            List<ShippingGoodsInfo> existingBatchShippingGoodsInfos = dal.GetShippingGoodsBySupplyBatchNo(supplyBatchNo, string.Empty);
+
+            if (existingBatchShippingGoodsInfos == null || existingBatchShippingGoodsInfos.Count == 0)
+            {
+                return string.Format("批次“{0}”不存在，请使用新增方法。", supplyBatchNo);
+            }
 
             foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
             {
@@ -110,7 +116,6 @@ namespace BLL
                 groupedUploadInfos[groupKey].Add(shippingGoodsInfo);
             }
 
-            bool hasExistingShippingGoods = false;
             foreach (KeyValuePair<string, List<ShippingGoodsInfo>> entry in groupedUploadInfos)
             {
                 ShippingGoodsInfo firstUploadShippingGoodsInfo = entry.Value[0];
@@ -119,7 +124,6 @@ namespace BLL
                 List<ShippingGoodsInfo> existingPartShippingGoodsInfos = dal.GetShippingGoods(currentPartNo, string.Empty, currentSupplyBatchNo);
                 if (existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Count > 0)
                 {
-                    hasExistingShippingGoods = true;
                     foreach (ShippingGoodsInfo existingShippingGoodsInfo in existingPartShippingGoodsInfos)
                     {
                         if ((existingShippingGoodsInfo.PrintCount ?? 0) > 0)
@@ -144,11 +148,6 @@ namespace BLL
                 }
 
                 source.Add(BuildInsertShippingGoods(entry.Value));
-            }
-
-            if (!hasExistingShippingGoods)
-            {
-                return string.Format("批次“{0}”不存在，请使用新增方法。", supplyBatchNo);
             }
 
             return Common.Save(source) ? string.Empty : "保存失败。";
