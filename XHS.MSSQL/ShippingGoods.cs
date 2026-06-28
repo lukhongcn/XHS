@@ -95,6 +95,17 @@ namespace XHS.MSSQL
             });
         }
 
+        public ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            const string sql = "delete from tb_ShippingGoods where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
+            return BuildParamterInfo(shippingGoodsInfos, sql, info => new[]
+            {
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.SupplyBatchNo) },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PartNo) },
+                new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) }
+            });
+        }
+
         private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string queryString)
         {
             List<ShippingGoodsInfo> result = new List<ShippingGoodsInfo>();

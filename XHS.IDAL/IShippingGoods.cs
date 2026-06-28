@@ -21,5 +21,7 @@ namespace XHS.IDAL
         ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
 
         ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
+
+        ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos);
     }
 }

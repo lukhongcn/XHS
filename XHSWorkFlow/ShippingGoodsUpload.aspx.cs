@@ -27,7 +27,10 @@ namespace ModuleWorkFlow
                 master.Menuname = menuname;
             }
 
-            if (ModuleWorkFlow.BLL.Private.checkPrivate(this, menuid, "PADD"))
+            SaveRequestParameters();
+
+            string privateCode = IsUpdateMode() ? "PEDIT" : "PADD";
+            if (ModuleWorkFlow.BLL.Private.checkPrivate(this, menuid, privateCode))
             {
                 if (Session["userid"] == null)
                 {
@@ -38,7 +41,11 @@ namespace ModuleWorkFlow
                     lab_UserName.Text = Session["userid"].ToString();
                 }
             }
-        
+
+            if (!IsPostBack)
+            {
+                InitializeUploadMode();
+            }
         }
 
         protected void btn_upload_Click(object sender, EventArgs e)
@@ -89,6 +96,12 @@ namespace ModuleWorkFlow
                 return;
             }
 
+            if (IsUpdateMode())
+            {
+                UpdateShippingGoodsByUpload(shippingGoodsInfos);
+                return;
+            }
+
             DateTime uploadDate = DateTime.Now;
             ShippingGoods shippingGoods = new ShippingGoods();
             foreach(ShippingGoodsInfo sgi in shippingGoodsInfos)
@@ -111,6 +124,63 @@ namespace ModuleWorkFlow
             ShowMessage(string.IsNullOrWhiteSpace(saveMessage)
                 ? string.Format("上传成功，已导入 {0} 条出货货品数据。", shippingGoodsInfos.Count)
                 : saveMessage);
+        }
+
+        private void InitializeUploadMode()
+        {
+            if (!IsUpdateMode())
+            {
+                return;
+            }
+
+            string supplyBatchNo = GetTargetSupplyBatchNo();
+            lab_supplyBatchNo.Text = supplyBatchNo;
+            btn_upload.Text = "上传修改";
+            Label_Message.Text = string.IsNullOrWhiteSpace(supplyBatchNo)
+                ? "当前为上传修改模式，请从列表页选择需要修改的批次后进入。"
+                : string.Format("当前为上传修改模式，目标批次：{0}。", supplyBatchNo);
+        }
+
+        private void SaveRequestParameters()
+        {
+            string supplyBatchNo = Request.QueryString["supplyBatchNo"];
+            if (!string.IsNullOrWhiteSpace(supplyBatchNo))
+            {
+                lab_supplyBatchNo.Text = supplyBatchNo.Trim();
+            }
+        }
+
+        private void UpdateShippingGoodsByUpload(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            string targetSupplyBatchNo = GetTargetSupplyBatchNo();
+            if (string.IsNullOrWhiteSpace(targetSupplyBatchNo))
+            {
+                ShowMessage("上传修改模式缺少供货批次号，请从列表页选择一条记录后进入。");
+                return;
+            }
+
+            ShippingGoods shippingGoods = new ShippingGoods();
+            string saveMessage = shippingGoods.SaveUploadEditShippingGoods(targetSupplyBatchNo, lab_UserName.Text.Trim(), shippingGoodsInfos);
+            ShowMessage(string.IsNullOrWhiteSpace(saveMessage)
+                ? string.Format("上传修改成功，已处理 {0} 条出货货品数据。", shippingGoodsInfos.Count)
+                : saveMessage);
+        }
+
+        private bool IsUpdateMode()
+        {
+            return string.Equals(Request.QueryString["mode"], "update", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(Request.QueryString["func"], "edit", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string GetTargetSupplyBatchNo()
+        {
+            if (!string.IsNullOrWhiteSpace(lab_supplyBatchNo.Text))
+            {
+                return lab_supplyBatchNo.Text.Trim();
+            }
+
+            string supplyBatchNo = Request.QueryString["supplyBatchNo"];
+            return string.IsNullOrWhiteSpace(supplyBatchNo) ? string.Empty : supplyBatchNo.Trim();
         }
 
         private string GetUploadPath()
