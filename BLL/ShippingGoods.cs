@@ -122,6 +122,9 @@ namespace BLL
                 string currentSupplyBatchNo = (firstUploadShippingGoodsInfo.SupplyBatchNo ?? string.Empty).Trim();
                 string currentPartNo = (firstUploadShippingGoodsInfo.PartNo ?? string.Empty).Trim();
                 List<ShippingGoodsInfo> existingPartShippingGoodsInfos = dal.GetShippingGoods(currentPartNo, string.Empty, currentSupplyBatchNo);
+                ShippingGoodsInfo firstExistingShippingGoodsInfo = existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Count > 0
+                    ? existingPartShippingGoodsInfos[0]
+                    : null;
                 if (existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Count > 0)
                 {
                     foreach (ShippingGoodsInfo existingShippingGoodsInfo in existingPartShippingGoodsInfos)
@@ -143,13 +146,81 @@ namespace BLL
                     uploadShippingGoodsInfo.OutBoxQRCode = null;
                     uploadShippingGoodsInfo.Status = ShippingGoodsStatusInfo.UnPrinted;
                     uploadShippingGoodsInfo.PrintCount = 0;
-                    uploadShippingGoodsInfo.Creater = creater;
-                    uploadShippingGoodsInfo.CreatDate = uploadDate;
+                    uploadShippingGoodsInfo.Creater = firstExistingShippingGoodsInfo == null ||
+                        string.IsNullOrWhiteSpace(firstExistingShippingGoodsInfo.Creater)
+                        ? creater
+                        : firstExistingShippingGoodsInfo.Creater;
+                    uploadShippingGoodsInfo.CreatDate = firstExistingShippingGoodsInfo == null ||
+                        !firstExistingShippingGoodsInfo.CreatDate.HasValue
+                        ? uploadDate
+                        : firstExistingShippingGoodsInfo.CreatDate;
                 }
 
                 source.Add(BuildInsertShippingGoods(entry.Value));
             }
 
+            return Common.Save(source) ? string.Empty : "保存失败。";
+        }
+
+        public string SaveViewEditShippingGoods(string supplyBatchNo, string partNo, List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo))
+            {
+                return "编辑模式缺少供货批次号或零件编号。";
+            }
+
+            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
+            {
+                return "没有可保存的出货货品数据。";
+            }
+
+            string normalizedSupplyBatchNo = supplyBatchNo.Trim();
+            string normalizedPartNo = partNo.Trim();
+            List<ShippingGoodsInfo> existingPartShippingGoodsInfos = dal.GetShippingGoods(normalizedPartNo, string.Empty, normalizedSupplyBatchNo);
+            if (existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Count > 0)
+            {
+                foreach (ShippingGoodsInfo existingShippingGoodsInfo in existingPartShippingGoodsInfos)
+                {
+                    if ((existingShippingGoodsInfo.PrintCount ?? 0) > 0)
+                    {
+                        return string.Format("批次“{0}”下零件编号“{1}”已有打印记录，不允许修改。", normalizedSupplyBatchNo, normalizedPartNo);
+                    }
+                }
+            }
+
+            ShippingGoodsInfo firstExistingShippingGoodsInfo = existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Count > 0
+                ? existingPartShippingGoodsInfos[0]
+                : null;
+            IList source = new ArrayList();
+            if (existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Count > 0)
+            {
+                source.Add(dal.DeleteShippingGoodsByBusinessKey(existingPartShippingGoodsInfos));
+            }
+
+            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
+            {
+                if (shippingGoodsInfo == null)
+                {
+                    continue;
+                }
+
+                shippingGoodsInfo.Id = null;
+                shippingGoodsInfo.SupplyBatchNo = normalizedSupplyBatchNo;
+                shippingGoodsInfo.PartNo = normalizedPartNo;
+                shippingGoodsInfo.QrCode = null;
+                shippingGoodsInfo.Status = ShippingGoodsStatusInfo.UnPrinted;
+                shippingGoodsInfo.PrintCount = 0;
+                shippingGoodsInfo.Creater = firstExistingShippingGoodsInfo == null ||
+                    string.IsNullOrWhiteSpace(firstExistingShippingGoodsInfo.Creater)
+                    ? shippingGoodsInfo.Creater
+                    : firstExistingShippingGoodsInfo.Creater;
+                shippingGoodsInfo.CreatDate = firstExistingShippingGoodsInfo != null &&
+                    firstExistingShippingGoodsInfo.CreatDate.HasValue
+                    ? firstExistingShippingGoodsInfo.CreatDate
+                    : shippingGoodsInfo.CreatDate;
+            }
+
+            source.Add(BuildInsertShippingGoods(shippingGoodsInfos));
             return Common.Save(source) ? string.Empty : "保存失败。";
         }
 

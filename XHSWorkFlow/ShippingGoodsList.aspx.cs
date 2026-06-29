@@ -64,7 +64,17 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            Response.Redirect(string.Format("ShippingGoodsView.aspx?id={0}", shippingGoodsInfo.Id));
+            if (string.IsNullOrWhiteSpace(shippingGoodsInfo.SupplyBatchNo))
+            {
+                Label_Message.Text = "所选出货货品数据缺少供货批次号，无法执行编辑。";
+                return;
+            }
+
+            string url = string.Format(
+                "ShippingGoodsView.aspx?func=edit&id={0}&supplyBatchNo={1}",
+                shippingGoodsInfo.Id,
+                HttpUtility.UrlEncode(shippingGoodsInfo.SupplyBatchNo.Trim()));
+            Response.Redirect(url);
         }
 
         protected void lnkbutton_upload_edit_Click(object sender, EventArgs e)
@@ -180,24 +190,34 @@ namespace ModuleWorkFlow
 
             if (selectedCount == 0)
             {
-                Label_Message.Text = "请选择一条出货货品数据。";
+                ShowMessage("请选择一条出货货品数据。");
                 return false;
             }
 
             if (selectedCount > 1)
             {
-                Label_Message.Text = "只能选择一条出货货品数据。";
+                ShowMessage("只能选择一条出货货品数据。");
                 return false;
             }
 
             shippingGoodsInfo = new ShippingGoods().GetShippingGoods().Find(item => item != null && item.Id == selectedId);
             if (shippingGoodsInfo == null)
             {
-                Label_Message.Text = "未找到所选的出货货品数据。";
+                ShowMessage("未找到所选的出货货品数据。");
                 return false;
             }
 
             return true;
+        }
+
+        private void ShowMessage(string message)
+        {
+            Label_Message.Text = message;
+
+            string script = string.Format(
+                "showMessageModal('{0}');",
+                HttpUtility.JavaScriptStringEncode(message ?? string.Empty));
+            ClientScript.RegisterStartupScript(GetType(), "ShippingGoodsListMessage", script, true);
         }
 
         #region Web Form Designer generated code
