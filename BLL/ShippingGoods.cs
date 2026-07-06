@@ -29,6 +29,11 @@ namespace BLL
             return dal.GetShippingGoods(partNo, partName, supplyBatchNo);
         }
 
+        public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus)
+        {
+            return dal.GetShippingGoods(partNo, partName, supplyBatchNo, closeStatus);
+        }
+
         public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
         {
             return dal.GetShippingGoodsBySupplyBatchNo(supplyBatchNo, cartonNo);
@@ -61,6 +66,20 @@ namespace BLL
             return dal.UpdateShippingGoods(shippingGoodsInfos);
         }
 
+        public string UpdateShippingGoodsClose(List<ShippingGoodsInfo> shippingGoodsInfos)
+        {
+            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
+            {
+                return "没有可结案的出货货品数据。";
+            }
+
+            ParamterInfo paramterInfo = dal.UpdateShippingGoodsClose(shippingGoodsInfos);
+            IList source = new ArrayList();
+            source.Add(paramterInfo);
+
+            return Common.Save(source) ? string.Empty : "保存失败。";
+        }
+
         public ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             return dal.DeleteShippingGoods(shippingGoodsInfos);
@@ -69,6 +88,46 @@ namespace BLL
         public ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             return dal.DeleteShippingGoodsByBusinessKey(shippingGoodsInfos);
+        }
+
+        public string SaveDeleteShippingGoods(string supplyBatchNo, string partNo)
+        {
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo))
+            {
+                return "删除模式缺少供货批次号或零件编号。";
+            }
+
+            string normalizedSupplyBatchNo = supplyBatchNo.Trim();
+            string normalizedPartNo = partNo.Trim();
+            List<ShippingGoodsInfo> existingPartShippingGoodsInfos = dal.GetShippingGoods(normalizedPartNo, string.Empty, normalizedSupplyBatchNo);
+            if (existingPartShippingGoodsInfos == null || existingPartShippingGoodsInfos.Count == 0)
+            {
+                return string.Format("未找到批次“{0}”下零件编号“{1}”的出货货品数据。", normalizedSupplyBatchNo, normalizedPartNo);
+            }
+
+            foreach (ShippingGoodsInfo existingShippingGoodsInfo in existingPartShippingGoodsInfos)
+            {
+                if (existingShippingGoodsInfo == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(existingShippingGoodsInfo.Status, ShippingGoodsStatusInfo.Closed, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!string.Equals(existingShippingGoodsInfo.Status, ShippingGoodsStatusInfo.UnPrinted, StringComparison.OrdinalIgnoreCase))
+                {
+                    return string.Format("批次“{0}”下零件编号“{1}”的状态不是未打印，不允许删除。", normalizedSupplyBatchNo, normalizedPartNo);
+                }
+            }
+
+            ParamterInfo paramterInfo = dal.DeleteShippingGoodsByBusinessKey(existingPartShippingGoodsInfos);
+            IList source = new ArrayList();
+            source.Add(paramterInfo);
+
+            return Common.Save(source) ? string.Empty : "保存失败。";
         }
 
         public string SaveUploadEditShippingGoods(string supplyBatchNo, string creater, List<ShippingGoodsInfo> shippingGoodsInfos)

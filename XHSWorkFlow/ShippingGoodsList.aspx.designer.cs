@@ -42,6 +42,15 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.LinkButton lnkbutton_upload_edit;
 
         /// <summary>
+        /// lnkbutton_delete control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton lnkbutton_delete;
+
+        /// <summary>
         /// lnkbutton_search control.
         /// </summary>
         /// <remarks>
@@ -76,6 +85,15 @@ namespace ModuleWorkFlow
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox TextBox_SupplyBatchNo;
+
+        /// <summary>
+        /// DropDownList_CloseStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList DropDownList_CloseStatus;
 
         /// <summary>
         /// MainDataGrid control.

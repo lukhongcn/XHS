@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -46,6 +47,36 @@ namespace ModuleWorkFlow
         }
 
         protected void lnkbutton_search_Click(object sender, EventArgs e)
+        {
+            Search();
+        }
+
+        protected void lnkbutton_delete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TextBox_SupplyBatchNo.Text) || string.IsNullOrWhiteSpace(TextBox_PartNo.Text))
+            {
+                ShowMessage("请输入供货批次号和零件编号后再删除。");
+                return;
+            }
+
+            List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
+                TextBox_PartNo.Text.Trim(),
+                string.Empty,
+                TextBox_SupplyBatchNo.Text.Trim());
+            string message = new ShippingGoods().SaveDeleteShippingGoods(
+                TextBox_SupplyBatchNo.Text.Trim(),
+                TextBox_PartNo.Text.Trim());
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                BindData();
+                ShowMessage(string.Format("已删除批次“{0}”下零件编号“{1}”的 {2} 条出货货品数据。", TextBox_SupplyBatchNo.Text.Trim(), TextBox_PartNo.Text.Trim(), shippingGoodsInfos.Count));
+                return;
+            }
+
+            ShowMessage(message);
+        }
+
+        protected void DropDownList_CloseStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
             Search();
         }
@@ -153,7 +184,8 @@ namespace ModuleWorkFlow
             List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
                 TextBox_PartNo.Text.Trim(),
                 TextBox_PartName.Text.Trim(),
-                TextBox_SupplyBatchNo.Text.Trim());
+                TextBox_SupplyBatchNo.Text.Trim(),
+                DropDownList_CloseStatus.SelectedValue);
 
             MainDataGrid.DataKeyField = "Id";
             MainDataGrid.DataSource = shippingGoodsInfos;
@@ -164,8 +196,33 @@ namespace ModuleWorkFlow
         private bool TryGetSingleSelectedShippingGoods(out ShippingGoodsInfo shippingGoodsInfo)
         {
             shippingGoodsInfo = null;
-            int selectedCount = 0;
-            int selectedId = 0;
+            List<ShippingGoodsInfo> selectedShippingGoodsInfos = GetSelectedShippingGoods();
+            int selectedCount = selectedShippingGoodsInfos.Count;
+
+            if (selectedCount == 0)
+            {
+                ShowMessage("请选择一条出货货品数据。");
+                return false;
+            }
+
+            if (selectedCount > 1)
+            {
+                ShowMessage("只能选择一条出货货品数据。");
+                return false;
+            }
+
+            shippingGoodsInfo = selectedShippingGoodsInfos[0];
+            return true;
+        }
+
+        private List<ShippingGoodsInfo> GetSelectedShippingGoods()
+        {
+            List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
+                TextBox_PartNo.Text.Trim(),
+                TextBox_PartName.Text.Trim(),
+                TextBox_SupplyBatchNo.Text.Trim(),
+                DropDownList_CloseStatus.SelectedValue);
+            List<ShippingGoodsInfo> selectedShippingGoodsInfos = new List<ShippingGoodsInfo>();
 
             foreach (DataGridItem item in MainDataGrid.Items)
             {
@@ -180,34 +237,26 @@ namespace ModuleWorkFlow
                     continue;
                 }
 
-                selectedCount++;
                 object dataKey = MainDataGrid.DataKeys[item.ItemIndex];
-                if (dataKey != null)
+                if (dataKey == null)
                 {
-                    int.TryParse(dataKey.ToString(), out selectedId);
+                    continue;
+                }
+
+                int selectedId;
+                if (!int.TryParse(dataKey.ToString(), out selectedId))
+                {
+                    continue;
+                }
+
+                ShippingGoodsInfo selectedShippingGoodsInfo = shippingGoodsInfos.FirstOrDefault(current => current != null && current.Id == selectedId);
+                if (selectedShippingGoodsInfo != null)
+                {
+                    selectedShippingGoodsInfos.Add(selectedShippingGoodsInfo);
                 }
             }
 
-            if (selectedCount == 0)
-            {
-                ShowMessage("请选择一条出货货品数据。");
-                return false;
-            }
-
-            if (selectedCount > 1)
-            {
-                ShowMessage("只能选择一条出货货品数据。");
-                return false;
-            }
-
-            shippingGoodsInfo = new ShippingGoods().GetShippingGoods().Find(item => item != null && item.Id == selectedId);
-            if (shippingGoodsInfo == null)
-            {
-                ShowMessage("未找到所选的出货货品数据。");
-                return false;
-            }
-
-            return true;
+            return selectedShippingGoodsInfos;
         }
 
         private void ShowMessage(string message)
