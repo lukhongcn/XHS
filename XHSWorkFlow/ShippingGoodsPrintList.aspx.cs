@@ -185,8 +185,8 @@ namespace ModuleWorkFlow
             if (updateMessage)
             {
                 Label_Message.Text = CheckBox_ShowAll.Checked
-                    ? string.Format("共查询到 {0} 条打印次数为 0 的出货货品数据，当前显示全部。", shippingGoodsInfos.Count)
-                    : string.Format("共查询到 {0} 条打印次数为 0 的出货货品数据。", shippingGoodsInfos.Count);
+                    ? string.Format("共查询到 {0} 条未结案且打印次数为 0 的出货货品数据，当前显示全部。", shippingGoodsInfos.Count)
+                    : string.Format("共查询到 {0} 条未结案且打印次数为 0 的出货货品数据。", shippingGoodsInfos.Count);
             }
         }
 
@@ -224,7 +224,8 @@ namespace ModuleWorkFlow
             List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
                 TextBox_PartNo.Text.Trim(),
                 TextBox_PartName.Text.Trim(),
-                TextBox_SupplyBatchNo.Text.Trim());
+                TextBox_SupplyBatchNo.Text.Trim(),
+                "未结案");
 
             HashSet<string> existingPrintRecordKeys = GetExistingPrintRecordKeys();
             return shippingGoodsInfos
