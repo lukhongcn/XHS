@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Printing;
 using LabelHelp.Config;
@@ -82,7 +82,11 @@ namespace LabelHelp.Printer
         {
             int width = MmToHundredthsOfInch(config.LabelWidth);
             int height = MmToHundredthsOfInch(config.LabelHeight);
-            return new PaperSize("Custom_100x150mm", width, height);
+            string paperName = string.Format(
+                "Custom_{0}x{1}mm",
+                Math.Round(config.LabelWidth),
+                Math.Round(config.LabelHeight));
+            return new PaperSize(paperName, width, height);
         }
 
         private static int MmToHundredthsOfInch(float millimeter)
