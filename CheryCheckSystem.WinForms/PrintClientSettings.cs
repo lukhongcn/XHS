@@ -9,10 +9,12 @@ namespace CheryCheckSystem.PrintClient
         public string PendingApiPath { get; private set; }
         public string ApiBaseUrl { get; private set; }
         public string CompleteApiUrl { get; private set; }
+        public string FailApiUrl { get; private set; }
         public string MachineId { get; private set; }
         public string PrinterName { get; private set; }
         public int PollIntervalSeconds { get; private set; }
         public int PrintPauseMilliseconds { get; private set; }
+        public int LockTimeoutMinutes { get; private set; }
         public string LogFolder { get; private set; }
 
         public static PrintClientSettings Load()
@@ -23,10 +25,12 @@ namespace CheryCheckSystem.PrintClient
                 PendingApiPath = GetSetting("PrintClient.PendingApiPath", "/api/print/pending-labels"),
                 ApiBaseUrl = GetSetting("PrintClient.ApiBaseUrl", "http://localhost:55426"),
                 CompleteApiUrl = GetSetting("PrintClient.CompleteApiUrl", "http://localhost:55426/api/print/complete"),
+                FailApiUrl = GetSetting("PrintClient.FailApiUrl", "http://localhost:55426/api/print/fail"),
                 MachineId = GetSetting("PrintClient.MachineId", "PRT-01"),
                 PrinterName = GetSetting("PrintClient.PrinterName", string.Empty),
                 PollIntervalSeconds = GetIntSetting("PrintClient.PollIntervalSeconds", 10, 1, 3600),
                 PrintPauseMilliseconds = GetIntSetting("PrintClient.PrintPauseMilliseconds", 1500, 0, 60000),
+                LockTimeoutMinutes = GetIntSetting("PrintClient.LockTimeoutMinutes", 3, 1, 60),
                 LogFolder = GetSetting("PrintClient.LogFolder", @"C:\CheryMES\PrintService\logs")
             };
         }

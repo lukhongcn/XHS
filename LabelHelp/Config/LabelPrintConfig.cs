@@ -1,4 +1,4 @@
-using System.Configuration;
+﻿using System.Configuration;
 
 namespace LabelHelp.Config
 {
@@ -28,6 +28,9 @@ namespace LabelHelp.Config
         public float PrintOffsetY { get; set; }
         public float PrintRenderWidth { get; set; }
         public float PrintRenderHeight { get; set; }
+        public float TableLeftColumnRatio { get; set; }
+        public float TableMiddleColumnRatio { get; set; }
+        public float TableQrColumnRatio { get; set; }
 
         /// <summary>
         /// 从配置文件读取配置。如果配置不存在或格式错误，使用默认值。
@@ -50,7 +53,10 @@ namespace LabelHelp.Config
                 TitleFontSize = GetFloat("Label.TitleFontSize", 8f),
                 ValueFontSize = GetFloat("Label.ValueFontSize", 9f),
                 TemplateFolder = GetString("Label.TemplateFolder", "Templates"),
-                OutputFolder = GetString("Label.OutputFolder", "Output")
+                OutputFolder = GetString("Label.OutputFolder", "Output"),
+                TableLeftColumnRatio = GetFloat("Label.Table.LeftColumnRatio", 0.26f),
+                TableMiddleColumnRatio = GetFloat("Label.Table.MiddleColumnRatio", 0.42f),
+                TableQrColumnRatio = GetFloat("Label.Table.QrColumnRatio", 0.32f)
             };
         }
 
@@ -76,7 +82,10 @@ namespace LabelHelp.Config
                 PrintOffsetX = GetFloat("Label.Roll.PrintOffsetX", -1.5f),
                 PrintOffsetY = GetFloat("Label.Roll.PrintOffsetY", 0f),
                 PrintRenderWidth = GetFloat("Label.Roll.PrintRenderWidth", 96f),
-                PrintRenderHeight = GetFloat("Label.Roll.PrintRenderHeight", 150f)
+                PrintRenderHeight = GetFloat("Label.Roll.PrintRenderHeight", 150f),
+                TableLeftColumnRatio = GetFloat("Label.Table.LeftColumnRatio", 0.26f),
+                TableMiddleColumnRatio = GetFloat("Label.Table.MiddleColumnRatio", 0.42f),
+                TableQrColumnRatio = GetFloat("Label.Table.QrColumnRatio", 0.32f)
             };
         }
 

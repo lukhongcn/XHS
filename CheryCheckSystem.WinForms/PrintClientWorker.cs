@@ -60,14 +60,14 @@ namespace CheryCheckSystem.PrintClient
         {
             if (!string.IsNullOrWhiteSpace(_settings.PendingApiUrl))
             {
-                string requestUrl = _apiClient.BuildPendingUrlFromTemplate(_settings.PendingApiUrl, _settings.MachineId);
+                string requestUrl = _apiClient.BuildPendingUrlFromTemplate(_settings.PendingApiUrl, _settings.MachineId, _settings.LockTimeoutMinutes);
                 WriteLog("开始调用接口：" + requestUrl);
                 return _apiClient.FetchPendingRecordsByFullUrl(requestUrl);
             }
 
-            string builtUrl = _apiClient.BuildPendingUrl(_settings.ApiBaseUrl, _settings.PendingApiPath, _settings.MachineId);
+            string builtUrl = _apiClient.BuildPendingUrl(_settings.ApiBaseUrl, _settings.PendingApiPath, _settings.MachineId, _settings.LockTimeoutMinutes);
             WriteLog("开始调用接口：" + builtUrl);
-            return _apiClient.FetchPendingRecords(_settings.ApiBaseUrl, _settings.PendingApiPath, _settings.MachineId);
+            return _apiClient.FetchPendingRecords(_settings.ApiBaseUrl, _settings.PendingApiPath, _settings.MachineId, _settings.LockTimeoutMinutes);
         }
 
         private void ProcessRecords(IEnumerable<PrintPendingRecord> records)
@@ -110,6 +110,15 @@ namespace CheryCheckSystem.PrintClient
                 {
                     failedCount++;
                     WriteLog("单条处理失败：" + ex.Message);
+                    try
+                    {
+                        _apiClient.FailPrint(_settings.FailApiUrl, SafeValue(record.taskId), ex.ToString());
+                        WriteLog("记录 " + (record.id.HasValue ? record.id.Value.ToString() : "0") + " 已释放锁并标记为失败。");
+                    }
+                    catch (Exception releaseException)
+                    {
+                        WriteLog("记录失败状态回写失败，任务仍可能被锁定：" + releaseException.Message);
+                    }
                 }
             }
 

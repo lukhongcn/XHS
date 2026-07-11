@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using ModuleWorkFlow.business;
 using XHS.IDAL;
@@ -28,6 +28,11 @@ namespace XHS.BLL
             return dal.GetPrintRecords(supplyBatchNo, partNo, cartonNo, printType);
         }
 
+        public List<PrintRecordInfo> GetPrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType, string closeStatus)
+        {
+            return dal.GetPrintRecords(supplyBatchNo, partNo, cartonNo, printType, closeStatus);
+        }
+
         public List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string printType)
         {
             return dal.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, printType);
@@ -38,9 +43,14 @@ namespace XHS.BLL
             return dal.GetPrintRecordsByTaskId(taskId);
         }
 
+        public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes)
+        {
+            return dal.LockPendingPrintRecords(machineId, maxCount, lockTimeoutMinutes);
+        }
+
         public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount)
         {
-            return dal.LockPendingPrintRecords(machineId, maxCount);
+            return LockPendingPrintRecords(machineId, maxCount, 3);
         }
 
         public string InsertPrintRecord(List<PrintRecordInfo> printRecordInfos)
@@ -110,6 +120,33 @@ namespace XHS.BLL
                 printRecordInfo.UpdateUser = safePrintUser;
                 printRecordInfo.UpdateTime = now;
                 printRecordInfo.LockTime = null;
+            }
+
+            return UpdatePrintRecord(printRecordInfos);
+        }
+
+        public string FailPrintRecordByTaskId(System.Guid taskId, string failureMessage)
+        {
+            List<PrintRecordInfo> printRecordInfos = dal.GetPrintRecordsByTaskId(taskId);
+            if (printRecordInfos == null || printRecordInfos.Count == 0)
+            {
+                return "未找到对应的打印记录。";
+            }
+
+            System.DateTime now = System.DateTime.Now;
+            foreach (PrintRecordInfo printRecordInfo in printRecordInfos)
+            {
+                if (printRecordInfo == null)
+                {
+                    continue;
+                }
+
+                printRecordInfo.Status = PrintRecordStatusInfo.Failed;
+                printRecordInfo.LockTime = null;
+                printRecordInfo.UpdateUser = string.IsNullOrWhiteSpace(printRecordInfo.PrintUser)
+                    ? printRecordInfo.CreateUser
+                    : printRecordInfo.PrintUser;
+                printRecordInfo.UpdateTime = now;
             }
 
             return UpdatePrintRecord(printRecordInfos);

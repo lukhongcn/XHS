@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using XHS.Model;
 
 namespace XHS.IDAL
@@ -12,11 +12,13 @@ namespace XHS.IDAL
 
         List<PrintRecordInfo> GetPrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType);
 
+        List<PrintRecordInfo> GetPrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType, string closeStatus);
+
         List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string printType);
 
         List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId);
 
-        List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount);
+        List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes);
 
         ParamterInfo InsertPrintRecord(List<PrintRecordInfo> printRecordInfos);
 

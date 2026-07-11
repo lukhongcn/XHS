@@ -70,6 +70,7 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="WebView, Version=1.0.9637.27691, Culture=neutral, processorArchitecture=MSIL">
@@ -121,6 +122,9 @@
     <Compile Include="api\print\complete.ashx.cs">
       <DependentUpon>complete.ashx</DependentUpon>
     </Compile>
+    <Compile Include="api\print\fail.ashx.cs">
+      <DependentUpon>fail.ashx</DependentUpon>
+    </Compile>
     <Compile Include="api\print\pending-labels.ashx.cs">
       <DependentUpon>pending-labels.ashx</DependentUpon>
     </Compile>
@@ -154,6 +158,12 @@
     <Compile Include="ShippingGoodsREPrintList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsREPrintList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="ShippingGoodsClose.aspx.cs">
+      <DependentUpon>ShippingGoodsClose.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ShippingGoodsClose.aspx.designer.cs">
+      <DependentUpon>ShippingGoodsClose.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ShippingGoodsView.aspx.cs">
       <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
     </Compile>
@@ -181,6 +191,7 @@
     <Content Include="middle.aspx" />
     <Content Include="api\print\pending.ashx" />
     <Content Include="api\print\complete.ashx" />
+    <Content Include="api\print\fail.ashx" />
     <Content Include="api\print\pending-labels.ashx" />
     <Content Include="api\print\record-detail.ashx" />
     <Content Include="NoPrivateMsg.aspx" />
@@ -188,6 +199,7 @@
     <Content Include="PrintRecordList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
     <Content Include="ShippingGoodsREPrintList.aspx" />
+    <Content Include="ShippingGoodsClose.aspx" />
     <Content Include="ShippingGoodsUpload.aspx" />
     <Content Include="ShippingGoodsView.aspx" />
     <Content Include="Web.config" />

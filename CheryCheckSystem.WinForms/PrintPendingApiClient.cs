@@ -11,9 +11,9 @@ namespace CheryCheckSystem.PrintClient
     {
         private readonly JavaScriptSerializer _serializer = new JavaScriptSerializer();
 
-        public List<PrintPendingRecord> FetchPendingRecords(string apiBaseUrl, string pendingApiPath, string machineId)
+        public List<PrintPendingRecord> FetchPendingRecords(string apiBaseUrl, string pendingApiPath, string machineId, int lockTimeoutMinutes)
         {
-            string requestUrl = BuildPendingUrl(apiBaseUrl, pendingApiPath, machineId);
+            string requestUrl = BuildPendingUrl(apiBaseUrl, pendingApiPath, machineId, lockTimeoutMinutes);
             using (WebClient webClient = CreateWebClient())
             {
                 string responseText = webClient.DownloadString(requestUrl);
@@ -129,7 +129,34 @@ namespace CheryCheckSystem.PrintClient
             }
         }
 
-        public string BuildPendingUrl(string apiBaseUrl, string pendingApiPath, string machineId)
+        public void FailPrint(string failApiUrl, string taskId, string failureMessage)
+        {
+            if (string.IsNullOrWhiteSpace(failApiUrl))
+            {
+                throw new InvalidOperationException("未配置打印失败接口地址。");
+            }
+
+            string requestBody = _serializer.Serialize(new
+            {
+                TaskId = taskId,
+                FailureMessage = failureMessage
+            });
+
+            using (WebClient webClient = CreateWebClient())
+            {
+                webClient.Headers[HttpRequestHeader.ContentType] = "application/json; charset=utf-8";
+                string responseText = webClient.UploadString(failApiUrl, "POST", requestBody);
+                PrintPendingApiResponse response = _serializer.Deserialize<PrintPendingApiResponse>(responseText);
+                if (response == null || !response.success)
+                {
+                    throw new InvalidOperationException(response == null || string.IsNullOrWhiteSpace(response.message)
+                        ? "打印失败回写接口返回失败。"
+                        : response.message);
+                }
+            }
+        }
+
+        public string BuildPendingUrl(string apiBaseUrl, string pendingApiPath, string machineId, int lockTimeoutMinutes)
         {
             string safeMachineId = Uri.EscapeDataString(SafeValue(machineId));
             string relativePath = SafeValue(pendingApiPath);
@@ -139,10 +166,10 @@ namespace CheryCheckSystem.PrintClient
             }
 
             string separator = relativePath.IndexOf('?') >= 0 ? "&" : "?";
-            return BuildUri(apiBaseUrl, relativePath + separator + "machineId=" + safeMachineId).ToString();
+            return BuildUri(apiBaseUrl, relativePath + separator + "machineId=" + safeMachineId + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes)).ToString();
         }
 
-        public string BuildPendingUrlFromTemplate(string pendingApiUrlTemplate, string machineId)
+        public string BuildPendingUrlFromTemplate(string pendingApiUrlTemplate, string machineId, int lockTimeoutMinutes)
         {
             string template = SafeValue(pendingApiUrlTemplate);
             if (string.IsNullOrWhiteSpace(template))
@@ -161,11 +188,11 @@ namespace CheryCheckSystem.PrintClient
                     "(^|&)machineId=[^&]*",
                     "$1machineId=" + encodedMachineId,
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                return uri.GetLeftPart(UriPartial.Path) + "?" + updated;
+                return uri.GetLeftPart(UriPartial.Path) + "?" + updated + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes);
             }
 
             string separator = string.IsNullOrWhiteSpace(query) ? "?" : "&";
-            return template + separator + "machineId=" + encodedMachineId;
+            return template + separator + "machineId=" + encodedMachineId + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes);
         }
 
         private static WebClient CreateWebClient()

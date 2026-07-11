@@ -46,6 +46,9 @@ namespace LabelHelp.Pdf
                 FontName = config.FontName,
                 TitleFontSize = config.TitleFontSize,
                 ValueFontSize = config.ValueFontSize,
+                TableLeftColumnRatio = config.TableLeftColumnRatio,
+                TableMiddleColumnRatio = config.TableMiddleColumnRatio,
+                TableQrColumnRatio = config.TableQrColumnRatio,
 
                 TemplateFolder = config.TemplateFolder,
                 OutputFolder = config.OutputFolder

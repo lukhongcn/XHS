@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -25,26 +25,47 @@ namespace XHS.MSSQL
 
         public List<PrintRecordInfo> GetPrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType)
         {
-            string queryString = "select " + PrintRecordSelectColumns + " from tb_PrintRecord where 1=1";
+            return GetPrintRecords(supplyBatchNo, partNo, cartonNo, printType, string.Empty);
+        }
+
+        public List<PrintRecordInfo> GetPrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType, string closeStatus)
+        {
+            string queryString = "select distinct pr." + PrintRecordSelectColumns.Replace(",", ",pr.") + " from tb_PrintRecord pr";
+
+            if (!string.IsNullOrWhiteSpace(closeStatus))
+            {
+                queryString += " inner join tb_ShippingGoods sg on pr.SupplyBatchNo=sg.SupplyBatchNo and pr.PartNo=sg.PartNo and pr.CartonNo=sg.CartonNo";
+            }
+
+            queryString += " where 1=1";
 
             if (!string.IsNullOrWhiteSpace(supplyBatchNo))
             {
-                queryString += string.Format(" and SupplyBatchNo like '%{0}%'", SafeSqlValue(supplyBatchNo));
+                queryString += string.Format(" and pr.SupplyBatchNo like '%{0}%'", SafeSqlValue(supplyBatchNo));
             }
 
             if (!string.IsNullOrWhiteSpace(partNo))
             {
-                queryString += string.Format(" and PartNo like '%{0}%'", SafeSqlValue(partNo));
+                queryString += string.Format(" and pr.PartNo like '%{0}%'", SafeSqlValue(partNo));
             }
 
             if (!string.IsNullOrWhiteSpace(cartonNo))
             {
-                queryString += string.Format(" and CartonNo like '%{0}%'", SafeSqlValue(cartonNo));
+                queryString += string.Format(" and pr.CartonNo like '%{0}%'", SafeSqlValue(cartonNo));
             }
 
             if (!string.IsNullOrWhiteSpace(printType))
             {
-                queryString += string.Format(" and PrintType='{0}'", SafeSqlValue(printType));
+                queryString += string.Format(" and pr.PrintType='{0}'", SafeSqlValue(printType));
+            }
+
+            if (string.Equals(closeStatus, ShippingGoodsStatusInfo.Closed, StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += string.Format(" and sg.Status='{0}'", SafeSqlValue(ShippingGoodsStatusInfo.Closed));
+            }
+            else if (!string.IsNullOrWhiteSpace(closeStatus))
+            {
+                queryString += string.Format(" and (sg.Status is null or sg.Status='' or sg.Status<>'{0}')", SafeSqlValue(ShippingGoodsStatusInfo.Closed));
             }
 
             queryString += PrintRecordOrderBy;
@@ -76,7 +97,7 @@ namespace XHS.MSSQL
             return GetPrintRecordsBySql(queryString);
         }
 
-        public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount)
+        public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes)
         {
             if (string.IsNullOrWhiteSpace(machineId) || maxCount <= 0)
             {
@@ -84,9 +105,13 @@ namespace XHS.MSSQL
             }
 
             int takeCount = maxCount > 30 ? 30 : maxCount;
+            int timeoutMinutes = lockTimeoutMinutes < 1 ? 3 : lockTimeoutMinutes;
             string outputColumns = "inserted." + PrintRecordSelectColumns.Replace(",", ",inserted.");
             string queryString = string.Format(
-                "with NextRecord as (" +
+                "update tb_PrintRecord set Status=@FailedStatus,LockTime=null,UpdateTime=getdate()" +
+                " where Status=@Status and MachineId=@MachineId and LockTime is not null" +
+                " and LockTime <= dateadd(minute, -@LockTimeoutMinutes, getdate());" +
+                " with NextRecord as (" +
                 " select top (@TopCount) {0} from tb_PrintRecord with (updlock, rowlock, readpast)" +
                 " where Status=@Status and MachineId=@MachineId and LockTime is null" +
                 " order by CreateTime asc, Id asc" +
@@ -100,6 +125,8 @@ namespace XHS.MSSQL
                 queryString,
                 new SqlParameter("@TopCount", SqlDbType.Int) { Value = takeCount },
                 new SqlParameter("@Status", SqlDbType.Int) { Value = PrintRecordStatusInfo.Pending },
+                new SqlParameter("@FailedStatus", SqlDbType.Int) { Value = PrintRecordStatusInfo.Failed },
+                new SqlParameter("@LockTimeoutMinutes", SqlDbType.Int) { Value = timeoutMinutes },
                 new SqlParameter("@MachineId", SqlDbType.NVarChar, 50) { Value = machineId.Trim() });
 
             return BuildPrintRecords(dataSet);

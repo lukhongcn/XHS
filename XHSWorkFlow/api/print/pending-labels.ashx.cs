@@ -20,6 +20,12 @@ namespace ModuleWorkFlow.Api
             context.Response.Cache.SetNoStore();
 
             string machineId = (context.Request.QueryString["machineId"] ?? string.Empty).Trim();
+            int lockTimeoutMinutes;
+            if (!int.TryParse(context.Request.QueryString["lockTimeoutMinutes"], out lockTimeoutMinutes))
+            {
+                lockTimeoutMinutes = 3;
+            }
+            lockTimeoutMinutes = Math.Max(1, Math.Min(60, lockTimeoutMinutes));
             if (string.IsNullOrWhiteSpace(machineId))
             {
                 WriteJson(context, new
@@ -34,7 +40,7 @@ namespace ModuleWorkFlow.Api
             try
             {
                 XHS.BLL.PrintRecord printrecord = new XHS.BLL.PrintRecord();
-                List<PrintRecordInfo> printRecordInfos = printrecord.LockPendingPrintRecords(machineId, 30);
+                List<PrintRecordInfo> printRecordInfos = printrecord.LockPendingPrintRecords(machineId, 30, lockTimeoutMinutes);
                 WriteJson(context, new
                 {
                     success = true,

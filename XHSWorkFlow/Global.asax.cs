@@ -20,6 +20,10 @@ namespace XHSWorkFlow
             {
                 Context.RewritePath("~/api/print/complete.ashx");
             }
+            else if (string.Equals(requestPath, "~/api/print/fail", StringComparison.OrdinalIgnoreCase))
+            {
+                Context.RewritePath("~/api/print/fail.ashx");
+            }
             else if (string.Equals(requestPath, "~/api/print/pending-labels", StringComparison.OrdinalIgnoreCase))
             {
                 Context.RewritePath("~/api/print/pending-labels.ashx");

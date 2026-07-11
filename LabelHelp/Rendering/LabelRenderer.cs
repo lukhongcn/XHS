@@ -65,9 +65,14 @@ namespace LabelHelp.Rendering
 
             float titleRowHeight = tableHeight * 0.12f;
             float rowHeight = (tableHeight - titleRowHeight) / 9f;
-            float leftColWidth = tableWidth * 0.24f;
-            float middleColWidth = tableWidth * 0.31f;
-            float rightColWidth = tableWidth - leftColWidth - middleColWidth;
+            float leftColumnRatio = NormalizeRatio(config.TableLeftColumnRatio, 0.26f);
+            float middleColumnRatio = NormalizeRatio(config.TableMiddleColumnRatio, 0.42f);
+            float qrColumnRatio = NormalizeRatio(config.TableQrColumnRatio, 0.32f);
+            float ratioTotal = leftColumnRatio + middleColumnRatio + qrColumnRatio;
+
+            float leftColWidth = tableWidth * leftColumnRatio / ratioTotal;
+            float middleColWidth = tableWidth * middleColumnRatio / ratioTotal;
+            float rightColWidth = tableWidth * qrColumnRatio / ratioTotal;
 
             float col1X = tableX;
             float col2X = tableX + leftColWidth;
@@ -266,6 +271,11 @@ namespace LabelHelp.Rendering
         private static string Safe(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static float NormalizeRatio(float ratio, float defaultValue)
+        {
+            return ratio > 0f ? ratio : defaultValue;
         }
 
         private static string ValueOrSlash(string value)
