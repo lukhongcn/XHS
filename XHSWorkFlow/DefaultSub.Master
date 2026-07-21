@@ -7,6 +7,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"  />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title><%=menuname %></title>
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css" />
 
 
    </head>
@@ -215,7 +216,7 @@
             </asp:ContentPlaceHolder>
         </div>
         <div id="xhsMessageModalMask" class="xhs-message-modal-mask">
-            <div class="xhs-message-modal" role="dialog" aria-modal="true" aria-labelledby="xhsMessageModalTitle">
+            <div class="xhs-message-modal" role="dialog" aria-modal="true" aria-labelledby="xhsMessageModalTitle" onclick="event.stopPropagation();">
                 <div id="xhsMessageModalTitle" class="xhs-message-modal-title">提示</div>
                 <div id="xhsMessageModalBody" class="xhs-message-modal-body"></div>
                 <div class="xhs-message-modal-actions">

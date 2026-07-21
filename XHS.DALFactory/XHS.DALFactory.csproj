@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>XHS.DALFactory</RootNamespace>
     <AssemblyName>XHS.DALFactory</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
@@ -47,8 +47,16 @@
     <Reference Include="System.Xml"/>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PackingExceptionType.cs" />
+    <Compile Include="PackingRecord.cs" />
+    <Compile Include="PackingScanRecord.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
+    <Compile Include="LabelCode.cs" />
+    <Compile Include="LabelCodeRuleField.cs" />
+    <Compile Include="BatchRule.cs" />
+    <Compile Include="LabelCodeRule.cs" />
+    <Compile Include="FieldType.cs" />
     <Compile Include="ShippingGoods.cs" />
     <Compile Include="UnRegularTableImportField.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -32,6 +32,8 @@
     <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FactoryBarcodeResultInfo.cs" />
+    <Compile Include="FactoryBarcodeType.cs" />
     <Compile Include="CheryApiResponse.cs" />
     <Compile Include="CheryCheckRecordRequest.cs" />
     <Compile Include="CheryScanDisplayRow.cs" />
@@ -43,8 +45,18 @@
     <Compile Include="ShippingGoodsStatusInfo.cs" />
     <Compile Include="UnRegularTableImportFieldInfo.cs" />
     <Compile Include="Label\LabelInfo.cs" />
+    <Compile Include="LabelCodeInfo.cs" />
+    <Compile Include="LabelCodeRuleFieldInfo.cs" />
+    <Compile Include="FieldTypeInfo.cs" />
     <Compile Include="PackingDetailInfo.cs" />
+    <Compile Include="PackingExceptionTypeInfo.cs" />
+    <Compile Include="PackingRecordInfo.cs" />
+    <Compile Include="PackingScanRecordInfo.cs" />
+    <Compile Include="BatchRuleInfo.cs" />
+    <Compile Include="LabelCodeRuleInfo.cs" />
+    <Compile Include="PackingScanRecordQRCodeTypeInfo.cs" />
     <Compile Include="ParamterInfo.cs" />
+    <Compile Include="PartInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

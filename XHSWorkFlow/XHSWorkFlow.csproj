@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>XHSWorkFlow</RootNamespace>
     <AssemblyName>XHSWorkFlow</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
@@ -43,6 +43,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\BLL.dll</HintPath>
     </Reference>
+    <Reference Include="BLL.System, Version=1.0.9691.47, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twPart\new_xuxiang2018_zhengqin_twPart\bin\BLL.System.dll</HintPath>
+    </Reference>
     <Reference Include="DALFactory, Version=1.0.9637.27678, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\DALFactory.dll</HintPath>
@@ -54,6 +58,10 @@
     <Reference Include="Microsoft.Web.UI.WebControls, Version=1.0.2.226, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Microsoft.Web.UI.WebControls.dll</HintPath>
+    </Reference>
+    <Reference Include="Model.System, Version=1.0.9651.28324, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twPart\new_xuxiang2018_zhengqin_twPart\bin\Model.System.dll</HintPath>
     </Reference>
     <Reference Include="ModuleWorkFlow.Model, Version=1.0.9622.26681, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -81,40 +89,61 @@
   <ItemGroup>
     <Compile Include="admin\UserEdit.aspx.cs">
       <DependentUpon>UserEdit.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="admin\UserList.aspx.cs">
       <DependentUpon>UserList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="admin\UserPasswordChange.aspx.cs">
       <DependentUpon>UserPasswordChange.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="admin\UserPrivilegeAddEdit.aspx.cs">
       <DependentUpon>UserPrivilegeAddEdit.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="admin\UserPrivilegeList.aspx.cs">
       <DependentUpon>UserPrivilegeList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="admin\UserView.aspx.cs">
+      <DependentUpon>UserView.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Controls\newLeft.aspx.cs">
       <DependentUpon>newLeft.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Default.aspx.cs">
       <DependentUpon>Default.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Default.aspx.designer.cs">
       <DependentUpon>Default.aspx</DependentUpon>
     </Compile>
     <Compile Include="DefaultSub.Master.cs">
       <DependentUpon>DefaultSub.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="DefaultSub.Master.designer.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="LabelBinding.aspx.cs">
+      <DependentUpon>LabelBinding.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="LabelBinding.aspx.designer.cs">
+      <DependentUpon>LabelBinding.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="middle.aspx.cs">
       <DependentUpon>middle.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="api\print\pending.ashx.cs">
       <DependentUpon>pending.ashx</DependentUpon>
@@ -133,45 +162,60 @@
     </Compile>
     <Compile Include="NoPrivateMsg.aspx.cs">
       <DependentUpon>NoPrivateMsg.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Packing.aspx.cs">
+      <DependentUpon>Packing.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Packing.aspx.designer.cs">
+      <DependentUpon>Packing.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.designer.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsPrintList.aspx.cs">
       <DependentUpon>ShippingGoodsPrintList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ShippingGoodsPrintList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsPrintList.aspx</DependentUpon>
     </Compile>
     <Compile Include="PrintRecordList.aspx.cs">
       <DependentUpon>PrintRecordList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="PrintRecordList.aspx.designer.cs">
       <DependentUpon>PrintRecordList.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsREPrintList.aspx.cs">
       <DependentUpon>ShippingGoodsREPrintList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ShippingGoodsREPrintList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsREPrintList.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsClose.aspx.cs">
       <DependentUpon>ShippingGoodsClose.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ShippingGoodsClose.aspx.designer.cs">
       <DependentUpon>ShippingGoodsClose.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsView.aspx.cs">
       <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ShippingGoodsView.aspx.designer.cs">
       <DependentUpon>ShippingGoodsView.aspx</DependentUpon>
     </Compile>
     <Compile Include="ShippingGoodsList.aspx.cs">
       <DependentUpon>ShippingGoodsList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="ShippingGoodsList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsList.aspx</DependentUpon>
@@ -184,9 +228,11 @@
     <Content Include="admin\UserPasswordChange.aspx" />
     <Content Include="admin\UserPrivilegeAddEdit.aspx" />
     <Content Include="admin\UserPrivilegeList.aspx" />
+    <Content Include="admin\UserView.aspx" />
     <Content Include="Controls\newLeft.aspx" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
+    <Content Include="LabelBinding.aspx" />
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
     <Content Include="api\print\pending.ashx" />
@@ -195,6 +241,7 @@
     <Content Include="api\print\pending-labels.ashx" />
     <Content Include="api\print\record-detail.ashx" />
     <Content Include="NoPrivateMsg.aspx" />
+    <Content Include="Packing.aspx" />
     <Content Include="ShippingGoodsList.aspx" />
     <Content Include="PrintRecordList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
@@ -238,6 +285,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="admin\UserPrivilegeList.aspx.resx">
       <DependentUpon>UserPrivilegeList.aspx.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="admin\UserView.aspx.resx">
+      <DependentUpon>UserView.aspx.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\newLeft.aspx.resx" />
     <EmbeddedResource Include="NoPrivateMsg.aspx.resx" />
