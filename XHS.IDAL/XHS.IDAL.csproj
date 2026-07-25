@@ -44,6 +44,7 @@
     <Compile Include="IPackingExceptionType.cs" />
     <Compile Include="IPackingRecord.cs" />
     <Compile Include="IPackingScanRecord.cs" />
+    <Compile Include="IPartMaster.cs" />
     <Compile Include="IPrintRecord.cs" />
     <Compile Include="IReprintReason.cs" />
     <Compile Include="ILabelCode.cs" />

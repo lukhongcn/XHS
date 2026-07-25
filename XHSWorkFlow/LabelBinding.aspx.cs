@@ -77,14 +77,36 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            txt_FactoryCodeType.Text = string.IsNullOrWhiteSpace(partInfo.ProcessOrderNo)
-                ? "包装码"
-                : "工单码";
+            bool isPackagingCode = string.IsNullOrWhiteSpace(partInfo.ProcessOrderNo);
+            txt_FactoryCodeType.Text = isPackagingCode ? "包装码" : "工单码";
 
-            txt_WorkOrderNo.Text = partInfo.ProcessOrderNo ?? string.Empty;
-            txt_FactoryPartNo.Text = partInfo.JHSMaterialNo ?? string.Empty;
-            txt_FactoryPartName.Text = partInfo.MaterialName ?? string.Empty;
-            txt_FactoryBatchNo.Text = partInfo.JHSBatchNo ?? string.Empty;
+            if (isPackagingCode)
+            {
+                PartMaster partmaster = new PartMaster();
+                PartMasterInfo partMasterInfo = partmaster.GetPartMasterByJHSPartNo(partInfo.JHSMaterialNo);
+                if (partMasterInfo != null)
+                {
+                    txt_WorkOrderNo.Text = string.Empty;
+                    txt_FactoryPartNo.Text = partMasterInfo.JHSPartNo ?? string.Empty;
+                    txt_FactoryPartName.Text = partMasterInfo.MaterialName ?? string.Empty;
+                    txt_FactoryBatchNo.Text = partInfo.JHSBatchNo ?? string.Empty;
+                }
+                else
+                {
+                    txt_WorkOrderNo.Text = string.Empty;
+                    txt_FactoryPartNo.Text = partInfo.JHSMaterialNo ?? string.Empty;
+                    txt_FactoryPartName.Text = partInfo.MaterialName ?? string.Empty;
+                    txt_FactoryBatchNo.Text = partInfo.JHSBatchNo ?? string.Empty;
+                }
+            }
+            else
+            {
+                txt_WorkOrderNo.Text = partInfo.ProcessOrderNo ?? string.Empty;
+                txt_FactoryPartNo.Text = partInfo.JHSMaterialNo ?? string.Empty;
+                txt_FactoryPartName.Text = partInfo.MaterialName ?? string.Empty;
+                txt_FactoryBatchNo.Text = partInfo.JHSBatchNo ?? string.Empty;
+            }
+
             Label_Message.Text = "本厂条码解析成功。";
         }
 

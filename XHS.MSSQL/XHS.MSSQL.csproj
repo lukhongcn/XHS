@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>XHS.MSSQL</RootNamespace>
     <AssemblyName>XHS.MSSQL</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
@@ -44,6 +44,7 @@
     <Compile Include="PackingExceptionType.cs" />
     <Compile Include="PackingRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />
+    <Compile Include="PartMaster.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="LabelCode.cs" />

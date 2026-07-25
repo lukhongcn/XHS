@@ -38,6 +38,7 @@
     <Compile Include="CheryCheckRecordRequest.cs" />
     <Compile Include="CheryScanDisplayRow.cs" />
     <Compile Include="CheryUploadInfo.cs" />
+    <Compile Include="PartMasterInfo.cs" />
     <Compile Include="PrintRecordInfo.cs" />
     <Compile Include="PrintRecordStatusInfo.cs" />
     <Compile Include="ReprintReasonInfo.cs" />

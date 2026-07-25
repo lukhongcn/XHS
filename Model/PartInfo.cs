@@ -22,5 +22,7 @@ namespace XHS.Model
         public bool? HasSteelStamp { get; set; }
 
         public string ProcessOrderNo { get; set; }
+
+        public int JHSQty { get; set; }
     }
 }

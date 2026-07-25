@@ -13,44 +13,122 @@ namespace BLL
     {
         private readonly RegexFieldParser regexParser = new RegexFieldParser();
 
-        public PartInfo ParseFactoryBarcode(string rawCode, string customerId)
+        public PartInfo ParseFactoryBarcode(
+     string rawCode,
+     string customerId)
         {
             rawCode = (rawCode ?? string.Empty)
                 .Replace("\r", string.Empty)
                 .Replace("\n", string.Empty)
                 .Trim();
 
-            // 优先匹配下方包装码
-            List<LabelCodeRuleInfo> codeRuleInfos = new LabelCodeRule().GetLabelCodeRulesByCustomerId(customerId);
-            foreach (var cri in codeRuleInfos)
+            if (string.IsNullOrEmpty(rawCode))
             {
-                FactoryBarcodeResultInfo packageResult = TryMatchRule(
-                    rawCode,
-                    "FACTORY_PACKAGE",
-                    FactoryBarcodeType.Package,
-                    cri.MatchRegex);
+                return null;
+            }
 
-                if (packageResult.Success)
+            // 1. 优先匹配下方零件包装码
+            List<LabelCodeRuleInfo> codeRuleInfos =
+                new LabelCodeRule()
+                    .GetLabelCodeRulesByCustomerId(customerId);
+
+            if (codeRuleInfos != null)
+            {
+                foreach (LabelCodeRuleInfo codeRuleInfo in codeRuleInfos)
                 {
-                    List<LabelCodeRuleFieldInfo> labelCodeRuleFieldInfos =
-                        new LabelCodeRuleField().GetLabelCodeRuleFieldsByRuleId(cri.RuleId.GetValueOrDefault());
+                    if (codeRuleInfo == null ||
+                        string.IsNullOrWhiteSpace(codeRuleInfo.MatchRegex))
+                    {
+                        continue;
+                    }
 
-                    return BuildPartInfo(cri, labelCodeRuleFieldInfos, packageResult.Fields);
+                    FactoryBarcodeResultInfo packageResult =
+                        TryMatchRule(
+                            rawCode,
+                            "FACTORY_PACKAGE",
+                            FactoryBarcodeType.Package,
+                            codeRuleInfo.MatchRegex);
+
+                    if (!packageResult.Success)
+                    {
+                        continue;
+                    }
+
+                    string materialNo = GetFieldValue(
+                        packageResult.Fields,
+                        "MaterialNo");
+
+                    string batchNo = GetFieldValue(
+                        packageResult.Fields,
+                        "BatchNo");
+
+                    string qtyText = GetFieldValue(
+                        packageResult.Fields,
+                        "Qty");
+
+                    int qty;
+                    if (!int.TryParse(qtyText, out qty))
+                    {
+                        qty = 0;
+                    }
+
+                    PartInfo partInfo = new PartInfo();
+
+                    // 金鸿顺标签上的零件编号
+                    partInfo.JHSMaterialNo = materialNo;
+
+                    // 年月日批号或年周批号
+                    partInfo.JHSBatchNo = batchNo;
+
+                    // 原始条码
+                    partInfo.LabelInfo = rawCode;
+
+                    // PartInfo 增加 JHSQty 属性后启用
+                    partInfo.JHSQty = qty;
+
+                    return partInfo;
                 }
             }
 
-            // 再匹配上方工单码
-            FactoryBarcodeResultInfo workOrderResult = TryMatchRule(
-                rawCode,
-                "FACTORY_WORK_ORDER",
-                FactoryBarcodeType.WorkOrder,
-                @"^(?<WorkOrderNo>\d{4}-\d{11})$");
+            // 2. 再匹配上方工单码
+            FactoryBarcodeResultInfo workOrderResult =
+                TryMatchRule(
+                    rawCode,
+                    "FACTORY_WORK_ORDER",
+                    FactoryBarcodeType.WorkOrder,
+                    @"^(?<WorkOrderNo>\d{4}-\d{11})$");
 
             if (workOrderResult.Success)
             {
-                PartInfo partInfo = new PartInfo();
-                partInfo.ProcessOrderNo = rawCode;
-                return partInfo;
+                return new PartInfo
+                {
+                    ProcessOrderNo = GetFieldValue(
+                        workOrderResult.Fields,
+                        "WorkOrderNo"),
+
+                    LabelInfo = rawCode
+                };
+            }
+
+            // 两种条码都无法识别
+            return null;
+        }
+
+        private string GetFieldValue(
+            IDictionary<string, string> fields,
+            string fieldName)
+        {
+            if (fields == null ||
+                string.IsNullOrEmpty(fieldName))
+            {
+                return null;
+            }
+
+            string value;
+
+            if (fields.TryGetValue(fieldName, out value))
+            {
+                return value;
             }
 
             return null;

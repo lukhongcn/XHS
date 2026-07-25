@@ -10,3 +10,4 @@ TestResults/
 [Dd]ebug/
 [Rr]elease/
 packages/
+.nuget/

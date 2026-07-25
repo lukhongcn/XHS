@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.IO;
+using System.Reflection;
+using System.Web.UI.WebControls;
 using BLL;
 using XHS.Model;
 
@@ -14,6 +16,7 @@ namespace XHS.Tests
         {
             try
             {
+                TestCustomerQRCodeTextChanged();
                 TestUnRegularTableImportGetList();
                 Console.WriteLine("All tests passed.");
                 return 0;
@@ -23,6 +26,76 @@ namespace XHS.Tests
                 Console.WriteLine(ex.ToString());
                 return 1;
             }
+        }
+
+        /// <summary>
+        /// 测试 txt_CustomerQRCode_TextChanged 方法，输入客户 QRCode "26J030252690"。
+        /// </summary>
+        private static void TestCustomerQRCodeTextChanged()
+        {
+            // 通过反射创建 LabelBinding 页面实例
+            Assembly workflowAssembly = Assembly.Load("XHSWorkFlow");
+            Type labelBindingType = workflowAssembly.GetType("ModuleWorkFlow.LabelBinding");
+            object page = Activator.CreateInstance(labelBindingType);
+
+            // 创建并设置 txt_CustomerQRCode 文本框
+            TextBox txtCustomerQRCode = new TextBox();
+            txtCustomerQRCode.Text = "26J030252690";
+
+            FieldInfo txtCustomerQRCodeField = labelBindingType.GetField(
+                "txt_CustomerQRCode",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            txtCustomerQRCodeField.SetValue(page, txtCustomerQRCode);
+
+            // 确保 Label_Message 标签控件存在
+            Label labelMessage = new Label();
+            FieldInfo labelMessageField = labelBindingType.GetField(
+                "Label_Message",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            labelMessageField.SetValue(page, labelMessage);
+
+            // 创建其他会被 ClearFactoryScanArea 清空的控件
+            FieldInfo[] fields = labelBindingType.GetFields(
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+            foreach (FieldInfo field in fields)
+            {
+                if (field.Name.StartsWith("txt_") && field.GetValue(page) == null)
+                {
+                    if (field.FieldType == typeof(TextBox))
+                        field.SetValue(page, new TextBox());
+                }
+
+                if (field.Name.StartsWith("hid") && field.GetValue(page) == null)
+                {
+                    if (field.FieldType == typeof(HiddenField))
+                        field.SetValue(page, new HiddenField());
+                }
+            }
+
+            // 通过反射调用 protected 方法 txt_CustomerQRCode_TextChanged
+            MethodInfo method = labelBindingType.GetMethod(
+                "txt_CustomerQRCode_TextChanged",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+            method.Invoke(page, new object[] { page, EventArgs.Empty });
+
+            // 验证：Label_Message 应被设置
+            Label actualLabel = (Label)labelMessageField.GetValue(page);
+            string actualMessage = actualLabel.Text ?? string.Empty;
+            AssertEqual(false, string.IsNullOrWhiteSpace(actualMessage),
+                "客户 QRCode 文本变更后应设置 Label_Message。");
+            Console.WriteLine("  Label_Message.Text = " + actualMessage);
+
+            // 验证：工厂扫码区域字段应被清空
+            FieldInfo factoryBarcodeField = labelBindingType.GetField(
+                "txt_FactoryBarcode",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            TextBox factoryBarcode = (TextBox)factoryBarcodeField.GetValue(page);
+            AssertEqual(string.Empty, factoryBarcode.Text,
+                "ClearFactoryScanArea 应清空本厂条码文本框。");
+
+            Console.WriteLine("TestCustomerQRCodeTextChanged 通过。");
         }
 
         private static void TestUnRegularTableImportGetList()
