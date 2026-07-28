@@ -66,13 +66,16 @@ namespace ModuleWorkFlow
             BindEmptyScanRecords();
             hidPackingId.Value = string.Empty;
             hidLockToken.Value = string.Empty;
+            hidPackingCompleteMode.Value = string.Empty;
             txt_LockToken.Text = string.Empty;
             txt_Status.Text = "等待 KD 标签";
             txt_ExceptionStatus.Text = "正常";
+            txt_Qty.Text = "0";
             txt_ScanQRCode.Enabled = true;
             txt_MaterialNo.Enabled = false;
             txt_Qty.Enabled = false;
             lnkbutton_save.Enabled = false;
+            lnkbutton_packing_complete.Enabled = false;
             pnlLocked.Style["display"] = "none";
             SetScanTypeState(false);
         }
@@ -172,11 +175,8 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            int qty;
-            if (!int.TryParse(txt_Qty.Text.Trim(), out qty) || qty <= 0)
-            {
-                qty = 1;
-            }
+            // 每次扫描零件标签，装箱数量自动加 1
+            int qty = 1;
 
             // 自动填入解析到的物料号
             txt_MaterialNo.Text = parsedInfo.PartNo;
@@ -236,6 +236,7 @@ namespace ModuleWorkFlow
                 // Token 过期，禁止继续操作
                 txt_ScanQRCode.Enabled = false;
                 lnkbutton_save.Enabled = false;
+                lnkbutton_packing_complete.Enabled = false;
                 ShowMessage(result.Message);
                 return;
             }
@@ -287,6 +288,7 @@ namespace ModuleWorkFlow
             hidLockToken.Value = SafeValue(record.LockToken);
             txt_LockToken.Text = SafeValue(record.LockToken);
             txt_PlanQty.Text = record.PlanQty.HasValue ? record.PlanQty.Value.ToString() : string.Empty;
+            txt_Qty.Text = record.PackingQty.HasValue ? record.PackingQty.Value.ToString() : "0";
             txt_Status.Text = record.Status == 1 ? "已完成" : "装箱中";
             txt_ExceptionStatus.Text = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0 ? "异常暂停" : "正常";
 
@@ -302,7 +304,6 @@ namespace ModuleWorkFlow
             txt_Qty.Enabled = !locked && !completed;
             lnkbutton_save.Enabled = !locked && !completed;
             SetScanTypeState(locked || completed);
-            rblScanType.SelectedValue = "Material";
         }
 
         private void SetScanTypeState(bool lockedOrCompleted)
@@ -311,9 +312,59 @@ namespace ModuleWorkFlow
             var packingItem = rblScanType.Items.FindByValue("Packing");
             var materialItem = rblScanType.Items.FindByValue("Material");
             bool hasActiveTask = GetTaskId() != Guid.Empty || GetPackingId() > 0;
-            if (kdItem != null) kdItem.Enabled = !lockedOrCompleted && !hasActiveTask;
-            if (packingItem != null) packingItem.Enabled = !lockedOrCompleted && hasActiveTask;
-            if (materialItem != null) materialItem.Enabled = !lockedOrCompleted && hasActiveTask;
+            bool packingCompleteMode = hidPackingCompleteMode.Value == "1";
+
+            if (lockedOrCompleted)
+            {
+                if (kdItem != null) kdItem.Enabled = false;
+                if (packingItem != null) packingItem.Enabled = false;
+                if (materialItem != null) materialItem.Enabled = false;
+                lnkbutton_packing_complete.Enabled = false;
+            }
+            else if (!hasActiveTask)
+            {
+                // 无任务：仅 KD 标签启用
+                if (kdItem != null) kdItem.Enabled = true;
+                if (packingItem != null) packingItem.Enabled = false;
+                if (materialItem != null) materialItem.Enabled = false;
+                lnkbutton_packing_complete.Enabled = false;
+                rblScanType.SelectedValue = "KD";
+            }
+            else if (packingCompleteMode)
+            {
+                // 装箱完成模式：仅随箱码启用
+                if (kdItem != null) kdItem.Enabled = false;
+                if (packingItem != null) packingItem.Enabled = true;
+                if (materialItem != null) materialItem.Enabled = false;
+                lnkbutton_packing_complete.Enabled = false;
+                rblScanType.SelectedValue = "Packing";
+            }
+            else
+            {
+                // 正常扫描模式：仅零件标签启用
+                if (kdItem != null) kdItem.Enabled = false;
+                if (packingItem != null) packingItem.Enabled = false;
+                if (materialItem != null) materialItem.Enabled = true;
+                lnkbutton_packing_complete.Enabled = true;
+                rblScanType.SelectedValue = "Material";
+            }
+
+            UpdateRadioStyles();
+        }
+
+        private void UpdateRadioStyles()
+        {
+            ClientScript.RegisterStartupScript(
+                GetType(),
+                "PackingRadioStyles",
+                "updatePackingRadioStyles();",
+                true);
+        }
+
+        protected void lnkbutton_packing_complete_Click(object sender, EventArgs e)
+        {
+            hidPackingCompleteMode.Value = "1";
+            SetScanTypeState(false);
         }
 
         private void RedirectToTask(PackingRecordInfo record)
