@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using BLL;
 using Utility;
 using XHS.IDAL;
 using XHS.Model;
@@ -282,8 +283,8 @@ namespace XHS.BLL
                 return PackingOperationResult.Error("请填写物料号后再扫描零件标签。");
             }
 
-            // 优先使用服务器端现有二维码解析器的结果，页面字段只作为未能解析时的补充。
-            ShippingGoodsInfo parsedMaterial = new QRCode().ParseShippingGoodsInfo(qrCode);
+            // 使用 LabelCodeRule 正则解析零件标签二维码。
+            ShippingGoodsInfo parsedMaterial = new FactoryBarcodeParser().ParseShippingGoodsBarcode(qrCode, "XHSFZPart");
             string effectiveMaterialNo = string.IsNullOrWhiteSpace(parsedMaterial.PartNo)
                 ? materialNo.Trim()
                 : parsedMaterial.PartNo.Trim();
