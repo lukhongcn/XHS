@@ -528,7 +528,7 @@ namespace ModuleWorkFlow
                 true);
         }
 
-        private static void WriteUploadJsonLog(string partNo, string requestJson)
+        private void WriteUploadJsonLog(string partNo, string requestJson)
         {
             if (string.IsNullOrWhiteSpace(requestJson)) return;
 
@@ -536,7 +536,7 @@ namespace ModuleWorkFlow
             foreach (char invalidChar in Path.GetInvalidFileNameChars())
                 safePartNo = safePartNo.Replace(invalidChar.ToString(), string.Empty);
 
-            string logsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            string logsFolder = Server.MapPath("~/Logs");
             Directory.CreateDirectory(logsFolder);
 
             string fileName = safePartNo + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".json";
