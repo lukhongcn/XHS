@@ -47,6 +47,13 @@ namespace ModuleWorkFlow
             set { ViewState["KdRawBarcode"] = value; }
         }
 
+        // 缓存 ShippingGoods.PackageName（ClearDeliveryDisplay 后再赋值）
+        private string PackageNameDefault
+        {
+            get { return ViewState["PackageNameDefault"] as string ?? string.Empty; }
+            set { ViewState["PackageNameDefault"] = value; }
+        }
+
         // KD 对应的零件中文名称
         private string KdPartName
         {
@@ -144,7 +151,7 @@ namespace ModuleWorkFlow
                 {
                     KdPartName = existList[0].PartChineseName ?? string.Empty;
                     shippingPackingStage = existList[0].PackingStage;
-                    txt_DeliveryPackageName.Text = existList[0].PackageName ?? string.Empty;
+                    PackageNameDefault = existList[0].PackageName ?? string.Empty;
                 }
                 else
                 {
@@ -189,6 +196,7 @@ namespace ModuleWorkFlow
 
             // 清除旧配送单和核验结果
             ClearDeliveryDisplay();
+            txt_DeliveryPackageName.Text = PackageNameDefault;
             txt_DeliveryMatch.Text = string.Empty;
 
             RecheckMatch();
@@ -512,7 +520,7 @@ namespace ModuleWorkFlow
             txt_DeliveryQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
             txt_SxCardSeq.Text = SafeValue(info.PackingCardNo);
             txt_DeliveryPackageCode.Text = SafeValue(info.PackageCode);
-            // txt_DeliveryPackageName 已在 ScanKd 中预设
+            // txt_DeliveryPackageName 在 ClearDeliveryDisplay 后赋值
             // txt_DeliveryNo 手工填写，不自动带出
         }
 
