@@ -5,6 +5,7 @@ namespace XHS.Model
     /// <summary>
     /// 出货货品信息。
     /// </summary>
+    [Serializable]
     public class ShippingGoodsInfo
     {
         /// <summary>
