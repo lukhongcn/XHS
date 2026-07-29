@@ -75,7 +75,7 @@ namespace ModuleWorkFlow
             txt_MaterialNo.Enabled = false;
             txt_Qty.Enabled = false;
             lnkbutton_save.Enabled = false;
-            lnkbutton_packing_complete.Enabled = false;
+            btn_packing_complete.Enabled = false;
             pnlLocked.Style["display"] = "none";
             SetScanTypeState(false);
         }
@@ -236,7 +236,7 @@ namespace ModuleWorkFlow
                 // Token 过期，禁止继续操作
                 txt_ScanQRCode.Enabled = false;
                 lnkbutton_save.Enabled = false;
-                lnkbutton_packing_complete.Enabled = false;
+                btn_packing_complete.Enabled = false;
                 ShowMessage(result.Message);
                 return;
             }
@@ -319,7 +319,7 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = false;
                 if (packingItem != null) packingItem.Enabled = false;
                 if (materialItem != null) materialItem.Enabled = false;
-                lnkbutton_packing_complete.Enabled = false;
+                btn_packing_complete.Enabled = false;
             }
             else if (!hasActiveTask)
             {
@@ -327,7 +327,7 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = true;
                 if (packingItem != null) packingItem.Enabled = false;
                 if (materialItem != null) materialItem.Enabled = false;
-                lnkbutton_packing_complete.Enabled = false;
+                btn_packing_complete.Enabled = false;
                 rblScanType.SelectedValue = "KD";
             }
             else if (packingCompleteMode)
@@ -336,7 +336,7 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = false;
                 if (packingItem != null) packingItem.Enabled = true;
                 if (materialItem != null) materialItem.Enabled = false;
-                lnkbutton_packing_complete.Enabled = false;
+                btn_packing_complete.Enabled = false;
                 rblScanType.SelectedValue = "Packing";
             }
             else
@@ -345,23 +345,13 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = false;
                 if (packingItem != null) packingItem.Enabled = false;
                 if (materialItem != null) materialItem.Enabled = true;
-                lnkbutton_packing_complete.Enabled = true;
+                btn_packing_complete.Enabled = true;
                 rblScanType.SelectedValue = "Material";
             }
 
-            UpdateRadioStyles();
         }
 
-        private void UpdateRadioStyles()
-        {
-            ClientScript.RegisterStartupScript(
-                GetType(),
-                "PackingRadioStyles",
-                "updatePackingRadioStyles();",
-                true);
-        }
-
-        protected void lnkbutton_packing_complete_Click(object sender, EventArgs e)
+        protected void btn_packing_complete_Click(object sender, EventArgs e)
         {
             hidPackingCompleteMode.Value = "1";
             SetScanTypeState(false);

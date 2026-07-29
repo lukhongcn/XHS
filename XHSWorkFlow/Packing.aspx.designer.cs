@@ -4,7 +4,7 @@
     {
         protected global::System.Web.UI.ScriptManager ScriptManager1;
         protected global::System.Web.UI.WebControls.LinkButton lnk_view;
-        protected global::System.Web.UI.WebControls.LinkButton lnkbutton_packing_complete;
+        protected global::System.Web.UI.WebControls.Button btn_packing_complete;
         protected global::System.Web.UI.WebControls.LinkButton lnkbutton_save;
         protected global::System.Web.UI.WebControls.Panel pnlLocked;
         protected global::System.Web.UI.WebControls.Label Label_LockMessage;
