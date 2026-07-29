@@ -119,6 +119,14 @@ namespace ModuleWorkFlow
             txt_CartonNo.Text = parsedInfo.CartonNo;
             txt_PlanQty.Text = parsedInfo.Quantity.Value.ToString();
 
+            // 校验 KD 标签是否在 tb_ShippingGoods 中已存在
+            if (!CheckShippingGoodsExists(parsedInfo.SupplyBatchNo, parsedInfo.PartNo, parsedInfo.CartonNo))
+            {
+                ShowMessage(string.Format("该 KD 标签在出货单中不存在：批次{0}，零件{1}，箱号{2}，不允许建立装箱任务。",
+                    parsedInfo.SupplyBatchNo, parsedInfo.PartNo, parsedInfo.CartonNo));
+                return;
+            }
+
             int planQty = parsedInfo.Quantity.Value;
             PackingOperationResult result = packingService.OpenOrCreateByKd(
                 parsedInfo.SupplyBatchNo,
@@ -393,6 +401,20 @@ namespace ModuleWorkFlow
                 : new List<PackingScanRecordInfo>();
             gvScanRecords.DataSource = records ?? new List<PackingScanRecordInfo>();
             gvScanRecords.DataBind();
+        }
+
+        private static bool CheckShippingGoodsExists(string supplyBatchNo, string partNo, string cartonNo)
+        {
+            try
+            {
+                List<ShippingGoodsInfo> list = new ShippingGoods()
+                    .GetShippingGoodsByBusinessKey(supplyBatchNo, partNo, cartonNo);
+                return list != null && list.Count > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private string GetUserName() { return "admin"; }
