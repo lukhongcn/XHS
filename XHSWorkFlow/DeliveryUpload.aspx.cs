@@ -163,13 +163,13 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            // 2. 校验 PackingStage 必须是装箱完成
+            // 2. 校验 PackingStage 必须是已完成
             string stage = shippingPackingStage ?? string.Empty;
-            if (stage != PackingStageInfo.装箱完成.Status)
+            if (stage != PackingStageInfo.已完成.Status)
             {
                 string stageName = string.IsNullOrWhiteSpace(stage)
                     ? "未开始" : PackingStageInfo.GetStatusName(stage);
-                ShowMessage("该 KD 标签的装箱阶段为" + stageName + "，必须为" + PackingStageInfo.装箱完成.StatusName + "后才能上传配送单。");
+                ShowMessage("该 KD 标签的装箱阶段为" + stageName + "，必须为" + PackingStageInfo.已完成.StatusName + "后才能上传配送单。");
                 return;
             }
 
