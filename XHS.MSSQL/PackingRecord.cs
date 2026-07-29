@@ -283,6 +283,20 @@ namespace XHS.MSSQL
             return rows == 1;
         }
 
+        public bool UpdateShippingGoodsPackingStage(string supplyBatchNo, string partNo, string cartonNo, string packingStage, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_ShippingGoods set PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = packingStage ?? (object)DBNull.Value },
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? (object)DBNull.Value },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? (object)DBNull.Value },
+                new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = cartonNo ?? (object)DBNull.Value }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows > 0;
+        }
+
         private static DataSet ExecuteDatasetInternal(SqlConnection connection, SqlTransaction transaction, string sql, SqlParameter[] parameters)
         {
             if (transaction != null)

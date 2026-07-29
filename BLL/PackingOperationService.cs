@@ -110,6 +110,9 @@ namespace XHS.BLL
                             // 插入 KD 扫描记录
                             packingScanRecordDal.InsertScanRecord(newId, PackingScanRecordQRCodeTypeInfo.KD, kdQRCode, string.Empty, 0, userName, connection, transaction);
 
+                            // 同步更新 tb_ShippingGoods.PackingStage
+                            packingRecordDal.UpdateShippingGoodsPackingStage(record.SupplyBatchNo, record.PartNo, record.CartonNo, PackingStageInfo.装箱中.Status, connection, transaction);
+
                             transaction.Commit();
 
                             // 提交后重新读取完整记录
@@ -538,6 +541,9 @@ namespace XHS.BLL
                                 return PackingOperationResult.Error("完成装箱失败，请重试。");
                             }
 
+                            // 同步更新 tb_ShippingGoods.PackingStage
+                            packingRecordDal.UpdateShippingGoodsPackingStage(record.SupplyBatchNo, record.PartNo, record.CartonNo, PackingStageInfo.已完成.Status, connection, transaction);
+
                             transaction.Commit();
                             record = LoadPackingRecord(packingId);
                             return PackingOperationResult.Completed("配送单核验通过，装箱已完成。", newToken, record);
@@ -610,6 +616,9 @@ namespace XHS.BLL
                                 }
                                 return PackingOperationResult.Error("更新装箱阶段失败，请重试。");
                             }
+
+                            // 同步更新 tb_ShippingGoods.PackingStage
+                            packingRecordDal.UpdateShippingGoodsPackingStage(record.SupplyBatchNo, record.PartNo, record.CartonNo, PackingStageInfo.装箱完成.Status, connection, transaction);
 
                             transaction.Commit();
 

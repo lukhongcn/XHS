@@ -48,5 +48,8 @@ namespace XHS.IDAL
 
         /// <summary>事务内更新装箱阶段。</summary>
         bool UpdatePackingStage(long packingId, string pageToken, string packingStage, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>同步更新 tb_ShippingGoods.PackingStage。</summary>
+        bool UpdateShippingGoodsPackingStage(string supplyBatchNo, string partNo, string cartonNo, string packingStage, SqlConnection connection, SqlTransaction transaction);
     }
 }
