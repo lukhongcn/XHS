@@ -4,6 +4,7 @@
     {
         protected global::System.Web.UI.ScriptManager ScriptManager1;
         protected global::System.Web.UI.WebControls.LinkButton lnk_view;
+        protected global::System.Web.UI.WebControls.LinkButton lnkbutton_packing_complete;
         protected global::System.Web.UI.WebControls.LinkButton lnkbutton_save;
         protected global::System.Web.UI.WebControls.Panel pnlLocked;
         protected global::System.Web.UI.WebControls.Label Label_LockMessage;
@@ -30,6 +31,7 @@
         protected global::System.Web.UI.WebControls.TextBox txt_LockToken;
         protected global::System.Web.UI.WebControls.HiddenField hidPackingId;
         protected global::System.Web.UI.WebControls.HiddenField hidLockToken;
+        protected global::System.Web.UI.WebControls.HiddenField hidPackingCompleteMode;
         protected global::System.Web.UI.WebControls.GridView gvScanRecords;
         protected global::System.Web.UI.WebControls.Label Label_Message;
     }
