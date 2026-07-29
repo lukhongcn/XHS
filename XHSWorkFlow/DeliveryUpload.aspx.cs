@@ -453,7 +453,7 @@ namespace ModuleWorkFlow
                     CartonNo = KdInfo.CartonNo,
                     Quantity = packCount,
                     SupplierCode = KdInfo.SupplierCode,
-                    PackingCardNo = DeliveryInfo.PackingCardNo,
+                    PackingCardNo = SafeValue(txt_SxCardSeq.Text),
                     PackageCode = SafeValue(txt_DeliveryPackageCode.Text),
                     ExSupplyBatchNo = DeliveryInfo.ExSupplyBatchNo,
                     PackageName = SafeValue(txt_DeliveryPackageName.Text),
@@ -510,7 +510,7 @@ namespace ModuleWorkFlow
             txt_DeliverySupplyBatchNo.Text = SafeValue(info.SupplyBatchNo);
             txt_DeliveryPartNo.Text = SafeValue(info.PartNo);
             txt_DeliveryQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
-            txt_DeliveryCardNo.Text = SafeValue(info.PackingCardNo);
+            txt_SxCardSeq.Text = SafeValue(info.PackingCardNo);
             txt_DeliveryPackageCode.Text = SafeValue(info.PackageCode);
             // txt_DeliveryPackageName 已在 ScanKd 中预设
             txt_DeliveryNo.Text = KdInfo != null ? SafeValue(KdInfo.SupplyBatchNo) : string.Empty;
@@ -521,7 +521,6 @@ namespace ModuleWorkFlow
             txt_DeliverySupplyBatchNo.Text = string.Empty;
             txt_DeliveryPartNo.Text = string.Empty;
             txt_DeliveryQty.Text = string.Empty;
-            txt_DeliveryCardNo.Text = string.Empty;
             txt_DeliveryPackageCode.Text = string.Empty;
             txt_DeliveryPackageName.Text = string.Empty;
             txt_DeliveryNo.Text = string.Empty;

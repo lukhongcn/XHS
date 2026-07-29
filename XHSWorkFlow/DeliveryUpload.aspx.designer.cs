@@ -222,17 +222,6 @@ namespace ModuleWorkFlow
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label Label_DeliveryCardNo;
-
-        /// <summary>
-        /// txt_DeliveryCardNo control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txt_DeliveryCardNo;
-
         protected global::System.Web.UI.WebControls.Label Label_SxCardSeq;
         protected global::System.Web.UI.WebControls.TextBox txt_SxCardSeq;
 
