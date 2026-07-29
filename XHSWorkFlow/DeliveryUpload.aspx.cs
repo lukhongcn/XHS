@@ -69,14 +69,14 @@ namespace ModuleWorkFlow
 
         protected void lnk_view_Click(object sender, EventArgs e) { Response.Redirect("DeliveryUpload.aspx"); }
         protected void txt_ScanQRCode_TextChanged(object sender, EventArgs e) { ProcessScan(); }
-        protected void lnkbutton_upload_Click(object sender, EventArgs e) { UploadDelivery(); }
+        protected void btn_upload_Click(object sender, EventArgs e) { UploadDelivery(); }
 
         private void BindInitialState()
         {
             ClearKdDisplay();
             ClearDeliveryDisplay();
             txt_DeliveryMatch.Text = string.Empty;
-            lnkbutton_upload.Enabled = false;
+            btn_upload.Enabled = false;
             SetDeliveryRadioState(false);
         }
 
@@ -229,7 +229,7 @@ namespace ModuleWorkFlow
         {
             if (KdInfo == null || DeliveryInfo == null)
             {
-                lnkbutton_upload.Enabled = false;
+                btn_upload.Enabled = false;
                 return;
             }
 
@@ -237,7 +237,7 @@ namespace ModuleWorkFlow
             if (!string.Equals(KdInfo.PartNo, DeliveryInfo.PartNo, StringComparison.OrdinalIgnoreCase))
             {
                 txt_DeliveryMatch.Text = string.Format("零件不匹配：KD={0}，配送单={1}", KdInfo.PartNo, DeliveryInfo.PartNo);
-                lnkbutton_upload.Enabled = false;
+                btn_upload.Enabled = false;
                 return;
             }
 
@@ -245,7 +245,7 @@ namespace ModuleWorkFlow
             if (!string.Equals(KdInfo.SupplyBatchNo, DeliveryInfo.SupplyBatchNo, StringComparison.OrdinalIgnoreCase))
             {
                 txt_DeliveryMatch.Text = string.Format("批号不匹配：KD={0}，配送单={1}", KdInfo.SupplyBatchNo, DeliveryInfo.SupplyBatchNo);
-                lnkbutton_upload.Enabled = false;
+                btn_upload.Enabled = false;
                 return;
             }
 
@@ -253,12 +253,12 @@ namespace ModuleWorkFlow
             if (KdInfo.Quantity.Value != DeliveryInfo.Quantity.Value)
             {
                 txt_DeliveryMatch.Text = string.Format("数量不匹配：KD={0}，配送单={1}", KdInfo.Quantity.Value, DeliveryInfo.Quantity.Value);
-                lnkbutton_upload.Enabled = false;
+                btn_upload.Enabled = false;
                 return;
             }
 
             txt_DeliveryMatch.Text = "核验通过，零件/批号/数量一致。";
-            lnkbutton_upload.Enabled = true;
+            btn_upload.Enabled = true;
         }
 
         // ----- 条码解析辅助 -----
@@ -368,7 +368,7 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            if (!lnkbutton_upload.Enabled)
+            if (!btn_upload.Enabled)
             {
                 ShowMessage("核验未通过，无法上传。");
                 return;
