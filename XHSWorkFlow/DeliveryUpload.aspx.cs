@@ -47,17 +47,11 @@ namespace ModuleWorkFlow
             set { ViewState["KdRawBarcode"] = value; }
         }
 
-        // KD 对应的零件中文名称和包装名称
+        // KD 对应的零件中文名称
         private string KdPartName
         {
             get { return ViewState["KdPartName"] as string ?? string.Empty; }
             set { ViewState["KdPartName"] = value; }
-        }
-
-        private string PackageNameVal
-        {
-            get { return ViewState["PackageNameVal"] as string ?? string.Empty; }
-            set { ViewState["PackageNameVal"] = value; }
         }
 
         private void Page_Load(object sender, EventArgs e)
@@ -70,6 +64,7 @@ namespace ModuleWorkFlow
 
         protected void lnk_view_Click(object sender, EventArgs e) { Response.Redirect("DeliveryUpload.aspx"); }
         protected void txt_ScanQRCode_TextChanged(object sender, EventArgs e) { ProcessScan(); }
+        protected void txt_SxCardSeq_TextChanged(object sender, EventArgs e) { RecheckMatch(); }
         protected void btn_upload_Click(object sender, EventArgs e) { UploadDelivery(); }
 
         private void BindInitialState()
@@ -138,9 +133,8 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            // 1. 从 tb_ShippingGoods 查找零件名称、包装名称和装箱阶段
+            // 1. 从 tb_ShippingGoods 查找零件名称和装箱阶段
             KdPartName = string.Empty;
-            PackageNameVal = string.Empty;
             string shippingPackingStage = null;
             try
             {
@@ -149,8 +143,8 @@ namespace ModuleWorkFlow
                 if (existList != null && existList.Count > 0)
                 {
                     KdPartName = existList[0].PartChineseName ?? string.Empty;
-                    PackageNameVal = existList[0].PackageName ?? string.Empty;
                     shippingPackingStage = existList[0].PackingStage;
+                    txt_DeliveryPackageName.Text = existList[0].PackageName ?? string.Empty;
                 }
                 else
                 {
@@ -230,6 +224,20 @@ namespace ModuleWorkFlow
         {
             if (KdInfo == null || DeliveryInfo == null)
             {
+                btn_upload.Enabled = false;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txt_SxCardSeq.Text))
+            {
+                txt_DeliveryMatch.Text = "请填写随箱卡流水号。";
+                btn_upload.Enabled = false;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txt_DeliveryPackageName.Text))
+            {
+                txt_DeliveryMatch.Text = "请填写包装名称。";
                 btn_upload.Enabled = false;
                 return;
             }
@@ -380,7 +388,6 @@ namespace ModuleWorkFlow
                 string materialNo = KdInfo.PartNo;
                 int packCount = KdInfo.Quantity ?? 0;
                 string packageBarCode = KdRawBarcode;
-                string sxCardSeq = GetPackingKdQRCode();
 
                 // 1. 按零件编号获取扫描明细（仅零件标签）
                 List<PackingScanRecordInfo> scanRecords = new PackingScanRecord()
@@ -400,9 +407,9 @@ namespace ModuleWorkFlow
                 var uploadInfo = new CheryUploadInfo
                 {
                     DeliveryNo = SafeValue(txt_DeliveryNo.Text),
-                    SxCardSeq = sxCardSeq,
+                    SxCardSeq = SafeValue(txt_SxCardSeq.Text),
                     MaterialNo = materialNo,
-                    MaterialName = KdPartName,
+                    MaterialName = SafeValue(txt_KdPartName.Text),
                     PackingCount = packCount.ToString(),
                     PackageType = CheryPortConfig.PackageType,
                     PackageBarCode = packageBarCode,
@@ -415,7 +422,7 @@ namespace ModuleWorkFlow
                     {
                         materialBarCode = r.QRCode,
                         materialNo = r.MaterialNo,
-                        materialName = string.Empty,
+                        materialName = SafeValue(txt_KdPartName.Text),
                         createTime = (r.ScanTime ?? DateTime.Now).ToString("yyyy-MM-dd HH:mm:ss"),
                         createName = r.ScanUser
                     })
@@ -487,7 +494,6 @@ namespace ModuleWorkFlow
             txt_KdCartonNo.Text = SafeValue(info.CartonNo);
             txt_KdQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
             txt_KdPartName.Text = KdPartName;
-            txt_PackageName.Text = PackageNameVal;
         }
 
         private void ClearKdDisplay()
@@ -497,7 +503,6 @@ namespace ModuleWorkFlow
             txt_KdCartonNo.Text = string.Empty;
             txt_KdQty.Text = string.Empty;
             txt_KdPartName.Text = string.Empty;
-            txt_PackageName.Text = string.Empty;
         }
 
         private void BindDeliveryInfo(ShippingGoodsInfo info)
@@ -507,7 +512,7 @@ namespace ModuleWorkFlow
             txt_DeliveryQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
             txt_DeliveryCardNo.Text = SafeValue(info.PackingCardNo);
             txt_DeliveryPackageCode.Text = SafeValue(info.PackageCode);
-            txt_DeliveryPackageName.Text = PackageNameVal;
+            // txt_DeliveryPackageName 已在 ScanKd 中预设
             txt_DeliveryNo.Text = KdInfo != null ? SafeValue(KdInfo.SupplyBatchNo) : string.Empty;
         }
 
@@ -520,21 +525,7 @@ namespace ModuleWorkFlow
             txt_DeliveryPackageCode.Text = string.Empty;
             txt_DeliveryPackageName.Text = string.Empty;
             txt_DeliveryNo.Text = string.Empty;
-        }
-
-        private string GetPackingKdQRCode()
-        {
-            if (KdPackingId > 0)
-            {
-                PackingOperationResult stateResult = packingService.GetPackingState(KdPackingId);
-                if (stateResult != null && stateResult.PackingRecord != null &&
-                    !string.IsNullOrWhiteSpace(stateResult.PackingRecord.KDQRCode))
-                {
-                    return stateResult.PackingRecord.KDQRCode;
-                }
-            }
-
-            return KdRawBarcode;
+            txt_SxCardSeq.Text = string.Empty;
         }
 
         private string GetUserName() { return "admin"; }

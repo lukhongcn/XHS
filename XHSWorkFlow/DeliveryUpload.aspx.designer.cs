@@ -151,8 +151,6 @@ namespace ModuleWorkFlow
 
         protected global::System.Web.UI.WebControls.Label Label_KdPartName;
         protected global::System.Web.UI.WebControls.TextBox txt_KdPartName;
-        protected global::System.Web.UI.WebControls.Label Label_PackageName;
-        protected global::System.Web.UI.WebControls.TextBox txt_PackageName;
 
         /// <summary>
         /// Label_DeliveryTitle control.
@@ -234,6 +232,9 @@ namespace ModuleWorkFlow
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txt_DeliveryCardNo;
+
+        protected global::System.Web.UI.WebControls.Label Label_SxCardSeq;
+        protected global::System.Web.UI.WebControls.TextBox txt_SxCardSeq;
 
         protected global::System.Web.UI.WebControls.Label Label_DeliveryPackageCode;
         protected global::System.Web.UI.WebControls.TextBox txt_DeliveryPackageCode;
