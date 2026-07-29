@@ -891,6 +891,27 @@ namespace XHS.BLL
             }
         }
 
+        /// <summary>按 KD 二维码查询装箱记录（只读，不涉及事务）。</summary>
+        public PackingOperationResult GetPackingStateByKdQRCode(string kdQRCode)
+        {
+            try
+            {
+                PackingRecordInfo record = LoadPackingRecordByKdQRCode(kdQRCode);
+                if (record == null)
+                {
+                    return PackingOperationResult.Error("该 KD 标签尚未创建装箱任务。");
+                }
+
+                PackingExceptionInfo exception = LoadPendingException(record.Id ?? 0L);
+                return BuildOpenExistingResult(record, exception);
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "GetPackingStateByKdQRCode error: " + ex.Message);
+                return PackingOperationResult.Error("读取装箱状态失败：" + ex.Message);
+            }
+        }
+
         /// <summary>按当前装箱任务 Id 读取扫描明细。</summary>
         public List<PackingScanRecordInfo> GetScanRecordsByPackingId(long packingId)
         {

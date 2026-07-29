@@ -2,6 +2,7 @@ using System;
 using System.Web;
 using System.Web.UI;
 using BLL;
+using XHS.BLL;
 using XHS.Model;
 
 namespace ModuleWorkFlow
@@ -10,6 +11,7 @@ namespace ModuleWorkFlow
     public partial class DeliveryUpload : Page
     {
         protected string menuname = "配送单上传";
+        private readonly PackingOperationService packingService = new PackingOperationService();
 
         // 缓存 KD 解析结果
         private ShippingGoodsInfo KdInfo
@@ -82,10 +84,28 @@ namespace ModuleWorkFlow
                 return;
             }
 
+            // 查找该 KD 对应的装箱记录，检查 PackingStage 必须是装箱完成
+            PackingOperationResult stateResult = packingService.GetPackingStateByKdQRCode(qrCode);
+            if (stateResult.PackingRecord == null)
+            {
+                ShowMessage("该 KD 标签尚未创建装箱任务，请先在装箱页面中完成装箱。");
+                return;
+            }
+
+            string stage = stateResult.PackingRecord.PackingStage ?? string.Empty;
+            if (stage != PackingStageInfo.装箱完成.Status)
+            {
+                string stageName = string.IsNullOrWhiteSpace(stage)
+                    ? "未开始" : PackingStageInfo.GetStatusName(stage);
+                ShowMessage("该 KD 标签的装箱阶段为" + stageName + "，必须为" + PackingStageInfo.装箱完成.StatusName + "后才能上传配送单。");
+
+                return;
+            }
+
             KdInfo = parsedInfo;
             BindKdInfo(parsedInfo);
 
-            // KD 扫描成功后自动切到配送单
+            // KD 扫描成功，切到配送单
             rblScanType.SelectedValue = "Packing";
 
             // 清除旧配送单和核验结果
@@ -93,7 +113,7 @@ namespace ModuleWorkFlow
             txt_DeliveryMatch.Text = string.Empty;
 
             RecheckMatch();
-            ShowMessage("KD 标签扫描成功，请扫描配送单。");
+            ShowMessage("KD 标签扫描成功，装箱已完成，请扫描配送单。");
         }
 
         private void ScanDelivery(string qrCode)
