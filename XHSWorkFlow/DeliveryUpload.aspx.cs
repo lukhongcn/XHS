@@ -377,15 +377,14 @@ namespace ModuleWorkFlow
 
             try
             {
-                // 1. 获取装箱扫描明细（仅零件标签）
-                List<PackingScanRecordInfo> scanRecords = KdPackingId > 0
-                    ? packingService.GetScanRecordsByPackingId(KdPackingId)
-                        .FindAll(r => r.QRCodeType == PackingScanRecordQRCodeTypeInfo.MaterialLabel)
-                    : new List<PackingScanRecordInfo>();
-
                 string materialNo = KdInfo.PartNo;
                 int packCount = KdInfo.Quantity ?? 0;
                 string packageBarCode = KdRawBarcode;
+
+                // 1. 按零件编号获取扫描明细（仅零件标签）
+                List<PackingScanRecordInfo> scanRecords = new PackingScanRecord()
+                    .GetExPackingScanRecordsByPartNo(materialNo)
+                    .FindAll(r => r.QRCodeType == PackingScanRecordQRCodeTypeInfo.MaterialLabel);
 
                 // 2. 接口校验
                 string validateError = ValidateUploadRequest(packageBarCode, materialNo, packCount, scanRecords);
@@ -425,7 +424,7 @@ namespace ModuleWorkFlow
                 CheryCheckRecordRequest request = CheryRequestBuilder.BuildCheckRecordRequest(uploadInfo);
                 CheryPostResult postResult = new CheryHttpClient().PostCheckRecordRaw(request);
 
-                // 汇出请求 JSON 到本地 Logs 目录
+                // 汇出请求 JSON 到本地 Log 目录
                 WriteUploadJsonLog(materialNo, postResult != null ? postResult.RequestJson : string.Empty);
 
                 if (postResult == null || postResult.Response == null)
@@ -536,7 +535,7 @@ namespace ModuleWorkFlow
             foreach (char invalidChar in Path.GetInvalidFileNameChars())
                 safePartNo = safePartNo.Replace(invalidChar.ToString(), string.Empty);
 
-            string logsFolder = Server.MapPath("~/Logs");
+            string logsFolder = Server.MapPath("~/Log");
             Directory.CreateDirectory(logsFolder);
 
             string fileName = safePartNo + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".json";
