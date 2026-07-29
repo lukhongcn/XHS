@@ -139,9 +139,8 @@ namespace ModuleWorkFlow
                     return;
                 }
 
-                // 已有任务（无异常/有异常/已完成）→ 直接绑定到当前页面，自动切到零件标签
+                // 已有任务 → 进入 HandleResult，由 SetScanTypeState 根据 PackingStage 自动选中
                 HandleResult(result);
-                rblScanType.SelectedValue = "Material";
                 return;
             }
 
