@@ -73,6 +73,19 @@ namespace XHS.MSSQL
             return GetPackingScanRecordsBySql(queryString);
         }
 
+        public List<PackingScanRecordInfo> GetExPackingScanRecordsByPartNo(string partNo)
+        {
+            string queryString = "select " + PackingScanRecordSelectColumns + " from tb_PackingScanRecord psr inner join tb_PackingRecord pr on psr.PackingId=pr.Id where 1=1";
+
+            if (!string.IsNullOrWhiteSpace(partNo))
+            {
+                queryString += string.Format(" and pr.PartNo='{0}'", (partNo ?? string.Empty).Replace("'", "''"));
+            }
+
+            queryString += PackingScanRecordOrderBy;
+            return GetPackingScanRecordsBySql(queryString);
+        }
+
         public ParamterInfo InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos)
         {
             const string sql = "insert into tb_PackingScanRecord (PackingId,QRCodeType,QRCode,MaterialNo,Qty,ScanUser,ScanTime) values (@PackingId,@QRCodeType,@QRCode,@MaterialNo,@Qty,@ScanUser,@ScanTime)";

@@ -28,6 +28,11 @@ namespace XHS.BLL
             return dal.GetExPackingScanRecordsByQRCodes(kdQRCode, packingQRCode, materialLabelQRCode);
         }
 
+        public List<PackingScanRecordInfo> GetExPackingScanRecordsByPartNo(string partNo)
+        {
+            return dal.GetExPackingScanRecordsByPartNo(partNo);
+        }
+
         public string InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos)
         {
             ParamterInfo paramterInfo = dal.InsertPackingScanRecord(packingScanRecordInfos);
