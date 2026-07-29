@@ -380,6 +380,7 @@ namespace ModuleWorkFlow
                 string materialNo = KdInfo.PartNo;
                 int packCount = KdInfo.Quantity ?? 0;
                 string packageBarCode = KdRawBarcode;
+                string sxCardSeq = GetPackingKdQRCode();
 
                 // 1. 按零件编号获取扫描明细（仅零件标签）
                 List<PackingScanRecordInfo> scanRecords = new PackingScanRecord()
@@ -398,19 +399,18 @@ namespace ModuleWorkFlow
                 // 3. 组装上传信息
                 var uploadInfo = new CheryUploadInfo
                 {
-                    DeliveryNo = KdInfo.SupplyBatchNo,
-                    SxCardSeq = DeliveryInfo.PackingCardNo,
+                    DeliveryNo = SafeValue(txt_DeliveryNo.Text),
+                    SxCardSeq = sxCardSeq,
                     MaterialNo = materialNo,
                     MaterialName = KdPartName,
                     PackingCount = packCount.ToString(),
                     PackageType = CheryPortConfig.PackageType,
                     PackageBarCode = packageBarCode,
-                    PackageCode = DeliveryInfo.PackageCode,
-                    PackageName = PackageNameVal,
+                    PackageCode = SafeValue(txt_DeliveryPackageCode.Text),
+                    PackageName = SafeValue(txt_DeliveryPackageName.Text),
                     PackingDate = DateTime.Now,
                     CheckTime = DateTime.Now,
                     CheckUserName = GetUserName(),
-                    operateType = 1.ToString(),
                     PackingDetails = scanRecords.ConvertAll(r => new PackingDetailInfo
                     {
                         materialBarCode = r.QRCode,
@@ -447,9 +447,9 @@ namespace ModuleWorkFlow
                     Quantity = packCount,
                     SupplierCode = KdInfo.SupplierCode,
                     PackingCardNo = DeliveryInfo.PackingCardNo,
-                    PackageCode = DeliveryInfo.PackageCode,
+                    PackageCode = SafeValue(txt_DeliveryPackageCode.Text),
                     ExSupplyBatchNo = DeliveryInfo.ExSupplyBatchNo,
-                    PackageName = PackageNameVal,
+                    PackageName = SafeValue(txt_DeliveryPackageName.Text),
                     OutBoxQRCode = KdRawBarcode,
                     QrCode = KdRawBarcode,
                     Status = ShippingGoodsStatusInfo.UnPrinted,
@@ -520,6 +520,21 @@ namespace ModuleWorkFlow
             txt_DeliveryPackageCode.Text = string.Empty;
             txt_DeliveryPackageName.Text = string.Empty;
             txt_DeliveryNo.Text = string.Empty;
+        }
+
+        private string GetPackingKdQRCode()
+        {
+            if (KdPackingId > 0)
+            {
+                PackingOperationResult stateResult = packingService.GetPackingState(KdPackingId);
+                if (stateResult != null && stateResult.PackingRecord != null &&
+                    !string.IsNullOrWhiteSpace(stateResult.PackingRecord.KDQRCode))
+                {
+                    return stateResult.PackingRecord.KDQRCode;
+                }
+            }
+
+            return KdRawBarcode;
         }
 
         private string GetUserName() { return "admin"; }
