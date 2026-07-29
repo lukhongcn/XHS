@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Web;
 using System.Web.UI;
 using BLL;
@@ -424,6 +425,9 @@ namespace ModuleWorkFlow
                 CheryCheckRecordRequest request = CheryRequestBuilder.BuildCheckRecordRequest(uploadInfo);
                 CheryPostResult postResult = new CheryHttpClient().PostCheckRecordRaw(request);
 
+                // 汇出请求 JSON 到本地 Logs 目录
+                WriteUploadJsonLog(materialNo, postResult != null ? postResult.RequestJson : string.Empty);
+
                 if (postResult == null || postResult.Response == null)
                 {
                     ShowMessage("平台上传失败：无法连接到海行云平台。");
@@ -522,6 +526,21 @@ namespace ModuleWorkFlow
                 "DeliveryUploadMessage",
                 string.Format("showMessageModal('{0}');", HttpUtility.JavaScriptStringEncode(SafeValue(message))),
                 true);
+        }
+
+        private static void WriteUploadJsonLog(string partNo, string requestJson)
+        {
+            if (string.IsNullOrWhiteSpace(requestJson)) return;
+
+            string safePartNo = string.IsNullOrWhiteSpace(partNo) ? "UnknownPart" : partNo.Trim();
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+                safePartNo = safePartNo.Replace(invalidChar.ToString(), string.Empty);
+
+            string logsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            Directory.CreateDirectory(logsFolder);
+
+            string fileName = safePartNo + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".json";
+            File.WriteAllText(Path.Combine(logsFolder, fileName), requestJson);
         }
 
         private static string SafeValue(string value) { return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim(); }
