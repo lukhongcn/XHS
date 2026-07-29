@@ -10,5 +10,6 @@ namespace XHS.Model
         public const string Boxed = "已装箱";
         public const string Verified = "已核验";
         public const string Uploaded = "已上传";
+        public const string Closed = "已结案";
     }
 }
