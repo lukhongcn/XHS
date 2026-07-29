@@ -20,15 +20,21 @@
 ```
 Packing.aspx (页面层)
     ↓
-PackingOperationService (BLL 业务事务层)
+PackingOperationService (BLL 业务事务层)  ←  QRCode (KEY_VALUE 硬编码解析)
     ↓
-DALFactory (工厂层，创建 MSSQL 实例)
+DALFactory (工厂层)
     ↓
-IPackingRecord / IPackingScanRecord / IPackingException (IDAL 接口层)
+IPacking* (IDAL 接口层)
     ↓
-MSSQL PackingRecord / PackingScanRecord / PackingException (数据访问实现层)
+MSSQL Packing* (数据访问实现层)
     ↓
-tb_PackingRecord / tb_PackingScanRecord / tb_PackingException (数据库表)
+tb_Packing* (数据库表)
+
+条码解析链路（独立于 Packing 事务，在页面层直接调用）：
+FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → MSSQL.LabelCodeRule → tb_LabelCodeRule
+                     → RegexFieldParser (Regex 命名群組提取)
+                     → 手動映射 PartInfo
+（LabelCodeRuleField 全鏈路未使用）
 ```
 
 ---
@@ -623,12 +629,63 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 | `XHS.DALFactory/PackingException.cs` | 异常记录工厂 |
 | `XHS.DALFactory/PackingExceptionType.cs` | 异常类型工厂 |
 
-### SQL 脚本（.tmp）
+### SQL 脚本（Packing 模块）
 
 | 文件 | 说明 |
 |------|------|
 | `.tmp/alter_tb_PackingException.sql` | 异常表增量迁移 v1 |
 | `.tmp/alter_tb_PackingException_v2.sql` | 异常表增量迁移 v2（sqlcmd 优化版） |
+
+### 条码解析引擎 — 模型层（Model）
+
+> Packing 模块依赖 LabelCodeRule 系统进行 KD 标签和零件标签的二维码解析。实际使用的只有 `LabelCodeRuleInfo`（MatchRegex），字段映射使用手動硬編碼而非資料庫驅動。
+
+| 文件 | 说明 |
+|------|------|
+| `Model/LabelCodeRuleInfo.cs` | ✅ 条码规则定义（MatchRegex、ParseType、CustomerId 等） |
+| `Model/FactoryBarcodeResultInfo.cs` | ✅ 条码匹配中间结果（Success、BarcodeType、Fields） |
+| `Model/FactoryBarcodeType.cs` | ✅ 条码类型枚举（Unknown/WorkOrder/Package） |
+| `Model/PartInfo.cs` | ✅ 厂内条码解析输出实体（LabelBinding 使用） |
+| `Model/ShippingGoodsInfo.cs` | ✅ 出货标签解析输出实体（PartNo、SupplyBatchNo、CartonNo、Quantity） |
+| `Model/LabelCodeRuleFieldInfo.cs` | ❌ 未使用 — 字段映射表實體，`BuildPartInfo()` 引用但該方法從未被呼叫 |
+
+### 条码解析引擎 — 业务逻辑层（BLL）
+
+| 文件 | 说明 |
+|------|------|
+| `BLL/LabelCodeRule.cs` | ✅ `GetLabelCodeRulesByCustomerId` — 提供 MatchRegex |
+| `BLL/FactoryBarcodeParser.cs` | ✅ `ParseFactoryBarcode()` — Regex 規則匹配後手動提取命名群組 |
+| `BLL/RegexFieldParser.cs` | ✅ Regex 命名捕获组提取工具 |
+| `BLL/QRCode.cs` | ✅ `ParseShippingGoodsInfo()` — 寫死的 KEY_VALUE 格式（PackingOperationService 使用） |
+| `BLL/LabelCodeRuleField.cs` | ❌ 未使用 — 無任何外部呼叫者 |
+
+### 条码解析引擎 — 接口层（XHS.IDAL）
+
+| 文件 | 说明 |
+|------|------|
+| `XHS.IDAL/ILabelCodeRule.cs` | ✅ 条码规则数据访问接口 |
+| `XHS.IDAL/ILabelCodeRuleField.cs` | ❌ 未使用 |
+
+### 条码解析引擎 — 实现层（XHS.MSSQL）
+
+| 文件 | 说明 |
+|------|------|
+| `XHS.MSSQL/LabelCodeRule.cs` | ✅ SQL Server 规则实现（表 `tb_LabelCodeRule`） |
+| `XHS.MSSQL/LabelCodeRuleField.cs` | ❌ 未使用（表 `tb_LabelCodeRuleField`，資料庫有建但目前代碼不走） |
+
+### 条码解析引擎 — 工厂层（XHS.DALFactory）
+
+| 文件 | 说明 |
+|------|------|
+| `XHS.DALFactory/LabelCodeRule.cs` | ✅ 规则工厂 |
+| `XHS.DALFactory/LabelCodeRuleField.cs` | ❌ 未使用 |
+
+### SQL 脚本（LabelCodeRule 建表）
+
+| 文件 | 说明 |
+|------|------|
+| `Label_Parser_Init_SQLServer_MD.sql` | 解析引擎建表脚本（tb_FieldType、tb_BatchRule、tb_LabelCodeRule、tb_LabelCodeRuleField） |
+| `绑定.sql` | MatchRegex 列增量迁移 + REGEX 解析类型支持 |
 
 ---
 
@@ -639,12 +696,31 @@ Packing.aspx.cs
   ├── PackingOperationService (XHS.BLL)
   │     ├── IPackingRecord → DALFactory.PackingRecord → MSSQL.PackingRecord
   │     ├── IPackingScanRecord → DALFactory.PackingScanRecord → MSSQL.PackingScanRecord
-  │     └── IPackingException → DALFactory.PackingException → MSSQL.PackingException
+  │     ├── IPackingException → DALFactory.PackingException → MSSQL.PackingException
+  │     └── QRCode (BLL) — KEY_VALUE 格式解析（內部使用，寫死 "10#" 等鍵值）
   ├── FactoryBarcodeParser (BLL) — KD 标签/零件标签二维码解析
-  ├── QRCode (BLL) — 通用二维码解析
+  │     ├── LabelCodeRule (BLL) — 规则查询（僅取 MatchRegex）
+  │     │     └── ILabelCodeRule → DALFactory.LabelCodeRule → MSSQL.LabelCodeRule
+  │     ├── RegexFieldParser (BLL) — Regex 捕获组提取
+  │     ├── LabelCodeRuleInfo / FactoryBarcodeResultInfo (Model)
+  │     └── PartInfo / ShippingGoodsInfo (Model)
   ├── PackingOperationResult (XHS.BLL) — 操作结果
   └── PackingRecordInfo / PackingScanRecordInfo / PackingExceptionInfo (XHS.Model)
+
+（LabelCodeRuleField 全鏈路未使用：Model/BLL/IDAL/MSSQL/DALFactory 共 5 層均無外部呼叫者）
 ```
+
+### 解析调用关系
+
+| 调用位置 | 解析器 | 方法 | 说明 |
+|----------|--------|------|------|
+| `Packing.aspx.cs` 第 108 行 | `FactoryBarcodeParser` | `ParseShippingGoodsBarcode(code, "XHSFZKD")` | KD 标签解析 |
+| `Packing.aspx.cs` 第 171 行 | `FactoryBarcodeParser` | `ParseShippingGoodsBarcode(code, "XHSFZPart")` | 零件标签解析 |
+| `PackingException.cs` 第 36 行 | `FactoryBarcodeParser` | `ParseShippingGoodsBarcode(code, "XHSFZKD")` | 异常搜索解析 |
+| `PackingOperationService.cs` 第 285 行 | `QRCode` | `ParseShippingGoodsInfo(code)` | 零件扫描 KEY_VALUE 解析 |
+| `LabelBinding.aspx.cs` 第 72 行 | `FactoryBarcodeParser` | `ParseFactoryBarcode(code, "JHX")` | 厂内条码解析（Regex 规则匹配） |
+
+> ⚠️ **注意**：`FactoryBarcodeParser.ParseShippingGoodsBarcode()` 方法目前未实现。`FactoryBarcodeParser` 仅实现了 `ParseFactoryBarcode()`（返回 `PartInfo`，供 LabelBinding 使用）。Packing 页面调用的 `ParseShippingGoodsBarcode()`（应返回 `ShippingGoodsInfo`）需要补充实现，或改为调用 `QRCode.ParseShippingGoodsInfo()`。
 
 ---
 
