@@ -127,6 +127,11 @@ namespace XHS.Model
         /// 外包装箱名。
         /// </summary>
         public string PackageName { get; set; }
+
+        /// <summary>
+        /// 装箱阶段：Scanning=装箱中，PackingComplete=装箱完成，Completed=已完成。
+        /// </summary>
+        public string PackingStage { get; set; }
     }
 }
 

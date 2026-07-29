@@ -89,7 +89,7 @@ namespace XHS.MSSQL
 
         public ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,PackageName) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@OutBoxQRCode,@Status,@PrintCount,@Creater,@CreatDate,@Closer,@CloseDate,@ExSupplyBatchNo,@PackageName)";
+            const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,PackageName,PackingStage) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@OutBoxQRCode,@Status,@PrintCount,@Creater,@CreatDate,@Closer,@CloseDate,@ExSupplyBatchNo,@PackageName,@PackingStage)";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
@@ -160,7 +160,8 @@ namespace XHS.MSSQL
                     Closer = ReadString(row, "Closer"),
                     CloseDate = ReadNullableDateTime(row, "CloseDate"),
                     ExSupplyBatchNo = ReadString(row, "ExSupplyBatchNo"),
-                    PackageName = ReadString(row, "PackageName")
+                    PackageName = ReadString(row, "PackageName"),
+                    PackingStage = ReadString(row, "PackingStage")
                 });
             }
 
@@ -217,7 +218,8 @@ namespace XHS.MSSQL
                 new SqlParameter("@Closer", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.Closer) },
                 new SqlParameter("@CloseDate", SqlDbType.DateTime) { Value = ToDbValue(info.CloseDate) },
                 new SqlParameter("@ExSupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.ExSupplyBatchNo) },
-                new SqlParameter("@PackageName", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PackageName) }
+                new SqlParameter("@PackageName", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PackageName) },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = ToDbValue(info.PackingStage) }
             };
         }
 
