@@ -430,14 +430,10 @@ namespace ModuleWorkFlow
                     return;
                 }
 
-                if (postResult.Response.code != 200)
-                {
-                    ShowMessage(string.Format("平台返回失败：code={0}, msg={1}",
-                        postResult.Response.code, postResult.Response.msg ?? string.Empty));
-                    return;
-                }
+                string respMsg = string.Format("code={0}, msg={1}",
+                    postResult.Response.code, postResult.Response.msg ?? string.Empty);
 
-                // 5. 平台成功后写入 ShippingGoods
+                // 5. 不管平台返回什么状态，都写入 ShippingGoods
                 ShippingGoodsInfo record = new ShippingGoodsInfo
                 {
                     SupplyBatchNo = KdInfo.SupplyBatchNo,
@@ -462,7 +458,7 @@ namespace ModuleWorkFlow
 
                 if (string.IsNullOrWhiteSpace(saveMessage))
                 {
-                    ShowMessage("上传成功，code=" + postResult.Response.code);
+                    ShowMessage("平台返回：" + respMsg);
                     BindInitialState();
                     KdInfo = null;
                     DeliveryInfo = null;
@@ -471,7 +467,7 @@ namespace ModuleWorkFlow
                 }
                 else
                 {
-                    ShowMessage("平台上传成功，但本地保存失败：" + saveMessage);
+                    ShowMessage("平台返回：" + respMsg + "，但本地保存失败：" + saveMessage);
                 }
             }
             catch (Exception ex)
