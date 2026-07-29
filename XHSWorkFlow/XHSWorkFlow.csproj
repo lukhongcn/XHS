@@ -19,6 +19,8 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+    <RuntimeIdentifiers>win;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -80,6 +82,9 @@
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Resources.Extensions">
+      <HintPath>bin\System.Resources.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="WebView, Version=1.0.9637.27691, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -171,6 +176,20 @@
     <Compile Include="Packing.aspx.designer.cs">
       <DependentUpon>Packing.aspx</DependentUpon>
     </Compile>
+    <Compile Include="DeliveryUpload.aspx.cs">
+      <DependentUpon>DeliveryUpload.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="DeliveryUpload.aspx.designer.cs">
+      <DependentUpon>DeliveryUpload.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ExceptionReview.aspx.cs">
+      <DependentUpon>ExceptionReview.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ExceptionReview.aspx.designer.cs">
+      <DependentUpon>ExceptionReview.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -242,6 +261,8 @@
     <Content Include="api\print\record-detail.ashx" />
     <Content Include="NoPrivateMsg.aspx" />
     <Content Include="Packing.aspx" />
+    <Content Include="DeliveryUpload.aspx" />
+    <Content Include="ExceptionReview.aspx" />
     <Content Include="ShippingGoodsList.aspx" />
     <Content Include="PrintRecordList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
