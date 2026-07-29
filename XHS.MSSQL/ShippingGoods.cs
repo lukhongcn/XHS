@@ -14,11 +14,12 @@ namespace XHS.MSSQL
     /// </summary>
     public class ShippingGoods : IShippingGoods
     {
+        private const string ShippingGoodsSelectColumns = "Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,PackageName,PackingStage";
         private const string ShippingGoodsOrderBy = " order by SupplyBatchNo, PartNo, case when charindex('-', CartonNo) > 0 and substring(CartonNo, charindex('-', CartonNo) + 1, len(CartonNo)) not like '%[^0-9]%' then cast(substring(CartonNo, charindex('-', CartonNo) + 1, len(CartonNo)) as int) when CartonNo not like '%[^0-9]%' then cast(CartonNo as int) else 2147483647 end, CartonNo";
 
         public List<ShippingGoodsInfo> GetShippingGoods()
         {
-            const string queryString = "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate from tb_ShippingGoods" + ShippingGoodsOrderBy;
+            const string queryString = "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods" + ShippingGoodsOrderBy;
             return GetShippingGoodsBySql(queryString);
         }
 
@@ -29,7 +30,7 @@ namespace XHS.MSSQL
 
         public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus)
         {
-            string queryString = "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate from tb_ShippingGoods where 1=1";
+            string queryString = "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods where 1=1";
 
             if (!string.IsNullOrWhiteSpace(partNo))
             {
@@ -63,7 +64,7 @@ namespace XHS.MSSQL
         public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
         {
             string queryString = string.Format(
-                "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate from tb_ShippingGoods where SupplyBatchNo='{0}'",
+                "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods where SupplyBatchNo='{0}'",
                 SafeSqlValue(supplyBatchNo));
 
             if (!string.IsNullOrWhiteSpace(cartonNo))
@@ -78,7 +79,7 @@ namespace XHS.MSSQL
         public List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo)
         {
             string queryString = string.Format(
-                "select Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate from tb_ShippingGoods where SupplyBatchNo='{0}' and PartNo='{1}' and CartonNo='{2}'",
+                "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods where SupplyBatchNo='{0}' and PartNo='{1}' and CartonNo='{2}'",
                 SafeSqlValue(supplyBatchNo),
                 SafeSqlValue(partNo),
                 SafeSqlValue(cartonNo));
@@ -95,7 +96,7 @@ namespace XHS.MSSQL
 
         public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate,Closer=@Closer,CloseDate=@CloseDate where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
+            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate,Closer=@Closer,CloseDate=@CloseDate,ExSupplyBatchNo=@ExSupplyBatchNo,PackageName=@PackageName,PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
