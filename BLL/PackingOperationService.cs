@@ -288,9 +288,8 @@ namespace XHS.BLL
             string effectiveMaterialNo = string.IsNullOrWhiteSpace(parsedMaterial.PartNo)
                 ? materialNo.Trim()
                 : parsedMaterial.PartNo.Trim();
-            int effectiveQty = parsedMaterial.Quantity.HasValue && parsedMaterial.Quantity.Value > 0
-                ? parsedMaterial.Quantity.Value
-                : qty;
+            // 零件标签每成功绑定一次只计 1 件，装箱数量等于零件标签绑定次数。
+            int effectiveQty = qty;
 
             string newToken = GenerateToken();
 
@@ -510,6 +509,140 @@ namespace XHS.BLL
             {
                 Log.WriteLog("PackingOperationService.log", "CompletePacking error: " + ex.Message + "\r\n" + ex.StackTrace);
                 return PackingOperationResult.Error("完成装箱失败：" + ex.Message);
+            }
+        }
+
+        /// <summary>扫描配送单：解码 → 核对零件/批号/数量 → 匹配则完成，不匹配则异常锁定（事务内完成）。</summary>
+        public PackingOperationResult ScanDeliveryNote(
+            long packingId,
+            string pageToken,
+            string qrCode,
+            string userName)
+        {
+            if (string.IsNullOrWhiteSpace(qrCode))
+                return PackingOperationResult.Error("配送单二维码不能为空。");
+
+            ShippingGoodsInfo parsedInfo = new FactoryBarcodeParser()
+                .ParseShippingGoodsBarcode(qrCode, "XHSFZPS");
+            if (parsedInfo == null ||
+                string.IsNullOrWhiteSpace(parsedInfo.PartNo) ||
+                string.IsNullOrWhiteSpace(parsedInfo.SupplyBatchNo) ||
+                !parsedInfo.Quantity.HasValue || parsedInfo.Quantity.Value <= 0)
+            {
+                return PackingOperationResult.Error("配送单解析失败，缺少零件号、供货批次号或数量。");
+            }
+
+            string newToken = GenerateToken();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqlTransaction transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // 1. UPDLOCK 读取装箱记录
+                            PackingRecordInfo record = packingRecordDal.GetPackingRecordForUpdate(packingId, connection, transaction);
+                            if (record == null)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Error("装箱任务不存在。");
+                            }
+
+                            // 2. 验证 Token
+                            if (!string.Equals(record.LockToken, pageToken, StringComparison.Ordinal))
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Stale("装箱令牌已变更，请重新加载页面。");
+                            }
+
+                            // 3. 检查状态
+                            if (record.Status == 1)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Error("装箱已完成，不能继续操作。");
+                            }
+
+                            if (record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Lock("装箱已异常锁定。", record.LockToken, record);
+                            }
+
+                            // 4. 核对零件编号
+                            if (!string.Equals(record.PartNo, parsedInfo.PartNo, StringComparison.OrdinalIgnoreCase))
+                            {
+                                string msg = string.Format("KD标签的零件是：{0}，配送单是：{1}，零件不匹配。", record.PartNo ?? string.Empty, parsedInfo.PartNo ?? string.Empty);
+                                PackingOperationResult lockResult = LockForExceptionInternal(packingId, pageToken, "PART001", msg, qrCode, userName, connection, transaction);
+                                if (lockResult.Status == "LOCK")
+                                {
+                                    transaction.Commit();
+                                    lockResult.PackingRecord = LoadPackingRecord(packingId);
+                                }
+                                else { transaction.Rollback(); }
+                                return lockResult;
+                            }
+
+                            // 5. 核对供货批次号
+                            if (!string.Equals(record.SupplyBatchNo, parsedInfo.SupplyBatchNo, StringComparison.OrdinalIgnoreCase))
+                            {
+                                string msg = string.Format("KD标签的批号是：{0}，配送单是：{1}，批号不匹配。", record.SupplyBatchNo ?? string.Empty, parsedInfo.SupplyBatchNo ?? string.Empty);
+                                PackingOperationResult lockResult = LockForExceptionInternal(packingId, pageToken, "PART001", msg, qrCode, userName, connection, transaction);
+                                if (lockResult.Status == "LOCK")
+                                {
+                                    transaction.Commit();
+                                    lockResult.PackingRecord = LoadPackingRecord(packingId);
+                                }
+                                else { transaction.Rollback(); }
+                                return lockResult;
+                            }
+
+                            // 6. 核对数量
+                            int deliveryQty = parsedInfo.Quantity.Value;
+                            if (deliveryQty != (record.PlanQty ?? 0))
+                            {
+                                string msg = string.Format("KD标签的计划数量是：{0}，配送单数量是：{1}，数量不匹配。", record.PlanQty ?? 0, deliveryQty);
+                                PackingOperationResult lockResult = LockForExceptionInternal(packingId, pageToken, "QTY001", msg, qrCode, userName, connection, transaction);
+                                if (lockResult.Status == "LOCK")
+                                {
+                                    transaction.Commit();
+                                    lockResult.PackingRecord = LoadPackingRecord(packingId);
+                                }
+                                else { transaction.Rollback(); }
+                                return lockResult;
+                            }
+
+                            // 7. 插入配送单扫描记录
+                            packingScanRecordDal.InsertScanRecord(packingId, PackingScanRecordQRCodeTypeInfo.Packing, qrCode, string.Empty, 0, userName, connection, transaction);
+
+                            // 8. 完成装箱
+                            if (!packingRecordDal.CompletePackingRecord(packingId, pageToken, newToken, userName, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                record = LoadPackingRecord(packingId);
+                                if (record != null && !string.Equals(record.LockToken, pageToken, StringComparison.Ordinal))
+                                    return PackingOperationResult.Stale("装箱令牌已变更，请重新加载页面。");
+                                return PackingOperationResult.Error("完成装箱失败，请重试。");
+                            }
+
+                            transaction.Commit();
+                            record = LoadPackingRecord(packingId);
+                            return PackingOperationResult.Completed("配送单核验通过，装箱已完成。", newToken, record);
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "ScanDeliveryNote error: " + ex.Message + "\r\n" + ex.StackTrace);
+                return PackingOperationResult.Error("配送单扫描失败：" + ex.Message);
             }
         }
 
