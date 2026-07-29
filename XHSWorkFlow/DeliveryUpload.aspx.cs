@@ -408,12 +408,16 @@ namespace ModuleWorkFlow
                 {
                     SupplyBatchNo = KdInfo.SupplyBatchNo,
                     PartNo = KdInfo.PartNo,
+                    PartChineseName = KdPartName,
                     CartonNo = KdInfo.CartonNo,
                     Quantity = packCount,
                     SupplierCode = KdInfo.SupplierCode,
                     PackingCardNo = DeliveryInfo.PackingCardNo,
                     PackageCode = DeliveryInfo.PackageCode,
                     ExSupplyBatchNo = DeliveryInfo.ExSupplyBatchNo,
+                    PackageName = PackageNameVal,
+                    OutBoxQRCode = KdRawBarcode,
+                    QrCode = KdRawBarcode,
                     Status = ShippingGoodsStatusInfo.UnPrinted,
                     Creater = GetUserName(),
                     CreatDate = DateTime.Now
