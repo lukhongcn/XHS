@@ -96,6 +96,37 @@ namespace XHS.Model
         /// 创建日期。
         /// </summary>
         public DateTime? CreatDate { get; set; }
+
+        /// <summary>
+        /// 结案人。
+        /// </summary>
+        public string Closer { get; set; }
+
+        /// <summary>
+        /// 结案时间。
+        /// </summary>
+        public DateTime? CloseDate { get; set; }
+
+        public DateTime ProductDate { get; set; }
+
+        public string JHXBatch {  get; set; }
+
+        /// <summary>
+        /// 随箱卡号。
+        /// </summary>
+        public string PackingCardNo { get; set; }
+
+        /// <summary>
+        /// 包装编码。
+        /// </summary>
+        public string PackageCode { get; set; }
+
+        public string ExSupplyBatchNo { get; set; }
+
+        /// <summary>
+        /// 外包装箱名。
+        /// </summary>
+        public string PackageName { get; set; }
     }
 }
 
