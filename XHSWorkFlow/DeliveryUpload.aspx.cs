@@ -46,6 +46,19 @@ namespace ModuleWorkFlow
             set { ViewState["KdRawBarcode"] = value; }
         }
 
+        // KD 对应的零件中文名称和包装名称
+        private string KdPartName
+        {
+            get { return ViewState["KdPartName"] as string ?? string.Empty; }
+            set { ViewState["KdPartName"] = value; }
+        }
+
+        private string PackageNameVal
+        {
+            get { return ViewState["PackageNameVal"] as string ?? string.Empty; }
+            set { ViewState["PackageNameVal"] = value; }
+        }
+
         private void Page_Load(object sender, EventArgs e)
         {
             if (Master is DefaultSub master) { master.Menuname = menuname; }
@@ -124,6 +137,22 @@ namespace ModuleWorkFlow
             KdInfo = parsedInfo;
             KdPackingId = stateResult.PackingRecord.Id ?? 0L;
             KdRawBarcode = qrCode;
+
+            // 从 tb_ShippingGoods 查零件中文名称
+            KdPartName = string.Empty;
+            PackageNameVal = string.Empty;
+            try
+            {
+                List<ShippingGoodsInfo> existList = new ShippingGoods()
+                    .GetShippingGoodsByBusinessKey(parsedInfo.SupplyBatchNo, parsedInfo.PartNo, parsedInfo.CartonNo);
+                if (existList != null && existList.Count > 0)
+                {
+                    KdPartName = existList[0].PartChineseName ?? string.Empty;
+                    PackageNameVal = existList[0].PackageName ?? string.Empty;
+                }
+            }
+            catch { }
+
             BindKdInfo(parsedInfo);
 
             // KD 扫描成功，切到配送单
@@ -338,12 +367,12 @@ namespace ModuleWorkFlow
                     DeliveryNo = KdInfo.SupplyBatchNo,
                     SxCardSeq = DeliveryInfo.PackingCardNo,
                     MaterialNo = materialNo,
-                    MaterialName = string.Empty,
+                    MaterialName = KdPartName,
                     PackingCount = packCount.ToString(),
                     PackageType = CheryPortConfig.PackageType,
                     PackageBarCode = packageBarCode,
                     PackageCode = DeliveryInfo.PackageCode,
-                    PackageName = string.Empty,
+                    PackageName = PackageNameVal,
                     PackingDate = DateTime.Now,
                     CheckTime = DateTime.Now,
                     CheckUserName = GetUserName(),
@@ -419,6 +448,8 @@ namespace ModuleWorkFlow
             txt_KdPartNo.Text = SafeValue(info.PartNo);
             txt_KdCartonNo.Text = SafeValue(info.CartonNo);
             txt_KdQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
+            txt_KdPartName.Text = KdPartName;
+            txt_PackageName.Text = PackageNameVal;
         }
 
         private void ClearKdDisplay()
@@ -427,6 +458,8 @@ namespace ModuleWorkFlow
             txt_KdPartNo.Text = string.Empty;
             txt_KdCartonNo.Text = string.Empty;
             txt_KdQty.Text = string.Empty;
+            txt_KdPartName.Text = string.Empty;
+            txt_PackageName.Text = string.Empty;
         }
 
         private void BindDeliveryInfo(ShippingGoodsInfo info)

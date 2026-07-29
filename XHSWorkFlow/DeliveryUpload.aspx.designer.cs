@@ -149,6 +149,11 @@ namespace ModuleWorkFlow
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txt_KdQty;
 
+        protected global::System.Web.UI.WebControls.Label Label_KdPartName;
+        protected global::System.Web.UI.WebControls.TextBox txt_KdPartName;
+        protected global::System.Web.UI.WebControls.Label Label_PackageName;
+        protected global::System.Web.UI.WebControls.TextBox txt_PackageName;
+
         /// <summary>
         /// Label_DeliveryTitle control.
         /// </summary>
