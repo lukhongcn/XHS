@@ -25,7 +25,6 @@ namespace ModuleWorkFlow
         }
 
         protected void lnk_view_Click(object sender, EventArgs e) { Response.Redirect("Packing.aspx"); }
-        protected void lnkbutton_save_Click(object sender, EventArgs e) { CompletePacking(); }
         protected void txt_ScanQRCode_TextChanged(object sender, EventArgs e) { ProcessScan(); }
 
         private void LoadPackingRecord()
@@ -74,7 +73,6 @@ namespace ModuleWorkFlow
             txt_ScanQRCode.Enabled = true;
             txt_MaterialNo.Enabled = false;
             txt_Qty.Enabled = false;
-            lnkbutton_save.Enabled = false;
             btn_packing_complete.Enabled = false;
             pnlLocked.Style["display"] = "none";
             SetScanTypeState(false);
@@ -192,19 +190,6 @@ namespace ModuleWorkFlow
             HandleResult(result);
         }
 
-        private void CompletePacking()
-        {
-            long packingId = GetRequiredPackingId();
-            if (packingId <= 0) return;
-
-            PackingOperationResult result = packingService.CompletePacking(
-                packingId,
-                SafeValue(hidLockToken.Value),
-                GetUserName());
-
-            HandleResult(result);
-        }
-
         private void HandleResult(PackingOperationResult result)
         {
             // 更新 Token
@@ -235,8 +220,7 @@ namespace ModuleWorkFlow
             {
                 // Token 过期，禁止继续操作
                 txt_ScanQRCode.Enabled = false;
-                lnkbutton_save.Enabled = false;
-                btn_packing_complete.Enabled = false;
+                    btn_packing_complete.Enabled = false;
                 ShowMessage(result.Message);
                 return;
             }
@@ -304,7 +288,6 @@ namespace ModuleWorkFlow
             txt_ScanQRCode.Enabled = !locked && !completed;
             txt_MaterialNo.Enabled = !locked && !completed;
             txt_Qty.Enabled = !locked && !completed;
-            lnkbutton_save.Enabled = !locked && !completed;
             SetScanTypeState(locked || completed, record.PackingStage);
         }
 

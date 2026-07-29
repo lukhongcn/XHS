@@ -5,7 +5,7 @@
     <div id="Wrapper">
         <div id="Header"><div class="headbox"><div class="linebox"><a href="#">生产管理</a><img src="images/arrow.png" /><a href="#"><%=menuname %></a></div><div class="logout"><a href="login.aspx" target="_parent">登出</a></div><div class="clearbox"></div></div></div>
         <div id="Container"><div id="Content">
-            <div id="Menu"><div class="menubox"><div class="mod1"><ul><li class="btn5"><asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton></li></ul></div><div class="mod2"><ul><li class="btn3"><asp:LinkButton ID="lnkbutton_save" runat="server" ToolTip="保存/save" OnClick="lnkbutton_save_Click">保存/save</asp:LinkButton></li></ul></div><div class="clearbox"></div></div></div>
+            <div id="Menu"><div class="menubox"><div class="mod1"><ul><li class="btn5"><asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton></li></ul></div><div class="clearbox"></div></div></div>
             <div class="space1"></div>
             <asp:Panel ID="pnlLocked" runat="server" CssClass="packing-lock-panel" Visible="true" Style="display:none" role="alertdialog" aria-modal="true"><div class="packing-lock-card"><strong>装箱异常已暂停</strong><br /><asp:Label ID="Label_LockMessage" runat="server"></asp:Label><br />等待主管审核</div></asp:Panel>
             <div class="container mt-3 border border-primary"><div class="container mt-3">
