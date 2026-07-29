@@ -235,6 +235,13 @@ namespace ModuleWorkFlow
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txt_DeliveryCardNo;
 
+        protected global::System.Web.UI.WebControls.Label Label_DeliveryPackageCode;
+        protected global::System.Web.UI.WebControls.TextBox txt_DeliveryPackageCode;
+        protected global::System.Web.UI.WebControls.Label Label_DeliveryPackageName;
+        protected global::System.Web.UI.WebControls.TextBox txt_DeliveryPackageName;
+        protected global::System.Web.UI.WebControls.Label Label_DeliveryNo;
+        protected global::System.Web.UI.WebControls.TextBox txt_DeliveryNo;
+
         /// <summary>
         /// Label_DeliveryMatch control.
         /// </summary>

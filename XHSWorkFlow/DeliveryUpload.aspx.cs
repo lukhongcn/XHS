@@ -410,6 +410,7 @@ namespace ModuleWorkFlow
                     PackingDate = DateTime.Now,
                     CheckTime = DateTime.Now,
                     CheckUserName = GetUserName(),
+                    operateType = 1.ToString(),
                     PackingDetails = scanRecords.ConvertAll(r => new PackingDetailInfo
                     {
                         materialBarCode = r.QRCode,
@@ -505,6 +506,9 @@ namespace ModuleWorkFlow
             txt_DeliveryPartNo.Text = SafeValue(info.PartNo);
             txt_DeliveryQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
             txt_DeliveryCardNo.Text = SafeValue(info.PackingCardNo);
+            txt_DeliveryPackageCode.Text = SafeValue(info.PackageCode);
+            txt_DeliveryPackageName.Text = PackageNameVal;
+            txt_DeliveryNo.Text = KdInfo != null ? SafeValue(KdInfo.SupplyBatchNo) : string.Empty;
         }
 
         private void ClearDeliveryDisplay()
@@ -513,6 +517,9 @@ namespace ModuleWorkFlow
             txt_DeliveryPartNo.Text = string.Empty;
             txt_DeliveryQty.Text = string.Empty;
             txt_DeliveryCardNo.Text = string.Empty;
+            txt_DeliveryPackageCode.Text = string.Empty;
+            txt_DeliveryPackageName.Text = string.Empty;
+            txt_DeliveryNo.Text = string.Empty;
         }
 
         private string GetUserName() { return "admin"; }

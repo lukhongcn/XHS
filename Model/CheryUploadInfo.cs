@@ -14,6 +14,7 @@ namespace XHS.Model
         public string MaterialName { get; set; }
         public string PackingCount { get; set; }
 
+
         public int? PackageType { get; set; }
 
         public string PackageBarCode { get; set; }
@@ -26,5 +27,7 @@ namespace XHS.Model
         public string CheckUserName { get; set; }
 
         public List<PackingDetailInfo> PackingDetails { get; set; }
+
+        public string operateType { get; set; }
     }
 }
