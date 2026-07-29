@@ -41,6 +41,8 @@ namespace XHS.Model
 
         public string LockMachine { get; set; }
 
+        public string PackingStage { get; set; }
+
         public string ClientId { get; set; }
 
         public string MachineId { get; set; }

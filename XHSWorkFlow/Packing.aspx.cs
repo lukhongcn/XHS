@@ -289,7 +289,9 @@ namespace ModuleWorkFlow
             txt_LockToken.Text = SafeValue(record.LockToken);
             txt_PlanQty.Text = record.PlanQty.HasValue ? record.PlanQty.Value.ToString() : string.Empty;
             txt_Qty.Text = record.PackingQty.HasValue ? record.PackingQty.Value.ToString() : "0";
-            txt_Status.Text = record.Status == 1 ? "已完成" : "装箱中";
+            txt_Status.Text = !string.IsNullOrWhiteSpace(record.PackingStage)
+                ? PackingStageInfo.GetStatusName(record.PackingStage)
+                : (record.Status == 1 ? "已完成" : "装箱中");
             txt_ExceptionStatus.Text = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0 ? "异常暂停" : "正常";
 
             bool locked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
@@ -353,8 +355,20 @@ namespace ModuleWorkFlow
 
         protected void btn_packing_complete_Click(object sender, EventArgs e)
         {
-            hidPackingCompleteMode.Value = "1";
-            SetScanTypeState(false);
+            long packingId = GetRequiredPackingId();
+            if (packingId <= 0) return;
+
+            PackingOperationResult result = packingService.UpdatePackingStage(
+                packingId,
+                SafeValue(hidLockToken.Value),
+                PackingStageInfo.装箱完成.Status,
+                GetUserName());
+
+            if (result.Success)
+            {
+                hidPackingCompleteMode.Value = "1";
+            }
+            HandleResult(result);
         }
 
         private void RedirectToTask(PackingRecordInfo record)

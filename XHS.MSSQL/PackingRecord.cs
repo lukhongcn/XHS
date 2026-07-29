@@ -15,7 +15,7 @@ namespace XHS.MSSQL
     /// </summary>
     public class PackingRecord : IPackingRecord
     {
-        private const string PackingRecordSelectColumns = "Id,SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime";
+        private const string PackingRecordSelectColumns = "Id,SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,PackingStage,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime";
         private const string PackingRecordOrderBy = " order by CreateTime desc, Id desc";
 
         public List<PackingRecordInfo> GetExPackingRecords(string supplyBatchNo, string partNo)
@@ -38,7 +38,7 @@ namespace XHS.MSSQL
 
         public ParamterInfo InsertPackingRecord(List<PackingRecordInfo> packingRecordInfos)
         {
-            const string sql = "insert into tb_PackingRecord (SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@KDQRCode,@PackingQRCode,@TaskId,@Status,@PlanQty,@PackingQty,@PackingUser,@PackingTime,@ExceptionStatus,@LockToken,@LockTime,@LockUser,@LockMachine,@ClientId,@MachineId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime)";
+            const string sql = "insert into tb_PackingRecord (SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,PackingStage,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@KDQRCode,@PackingQRCode,@TaskId,@Status,@PlanQty,@PackingQty,@PackingUser,@PackingTime,@ExceptionStatus,@LockToken,@LockTime,@LockUser,@LockMachine,@PackingStage,@ClientId,@MachineId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime)";
             ParamterInfo paramterInfo = new ParamterInfo
             {
                 Sql = sql,
@@ -70,7 +70,7 @@ namespace XHS.MSSQL
 
         public ParamterInfo UpdatePackingRecord(List<PackingRecordInfo> packingRecordInfos)
         {
-            const string sql = "update tb_PackingRecord set KDQRCode=@KDQRCode,PackingQRCode=@PackingQRCode,TaskId=@TaskId,Status=@Status,PlanQty=@PlanQty,PackingQty=@PackingQty,PackingUser=@PackingUser,PackingTime=@PackingTime,ExceptionStatus=@ExceptionStatus,LockToken=@LockToken,LockTime=@LockTime,LockUser=@LockUser,LockMachine=@LockMachine,ClientId=@ClientId,MachineId=@MachineId,CreateUser=@CreateUser,CreateTime=@CreateTime,UpdateUser=@UpdateUser,UpdateTime=@UpdateTime where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
+            const string sql = "update tb_PackingRecord set KDQRCode=@KDQRCode,PackingQRCode=@PackingQRCode,TaskId=@TaskId,Status=@Status,PlanQty=@PlanQty,PackingQty=@PackingQty,PackingUser=@PackingUser,PackingTime=@PackingTime,ExceptionStatus=@ExceptionStatus,LockToken=@LockToken,LockTime=@LockTime,LockUser=@LockUser,LockMachine=@LockMachine,PackingStage=@PackingStage,ClientId=@ClientId,MachineId=@MachineId,CreateUser=@CreateUser,CreateTime=@CreateTime,UpdateUser=@UpdateUser,UpdateTime=@UpdateTime where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
             ParamterInfo paramterInfo = new ParamterInfo
             {
                 Sql = sql,
@@ -184,7 +184,7 @@ namespace XHS.MSSQL
         /// <summary>事务内插入装箱记录，返回新 Id。</summary>
         public long InsertPackingRecord(PackingRecordInfo info, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "insert into tb_PackingRecord (SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@KDQRCode,@PackingQRCode,@TaskId,@Status,@PlanQty,@PackingQty,@PackingUser,@PackingTime,@ExceptionStatus,@LockToken,@LockTime,@LockUser,@LockMachine,@ClientId,@MachineId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime); select SCOPE_IDENTITY();";
+            const string sql = "insert into tb_PackingRecord (SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,PackingStage,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@KDQRCode,@PackingQRCode,@TaskId,@Status,@PlanQty,@PackingQty,@PackingUser,@PackingTime,@ExceptionStatus,@LockToken,@LockTime,@LockUser,@LockMachine,@PackingStage,@ClientId,@MachineId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime); select SCOPE_IDENTITY();";
             SqlParameter[] parameters = BuildInsertOrUpdateParameters(info);
             object result = SqlHelper.ExecuteScalar(transaction, CommandType.Text, sql, parameters);
             return result != null && result != DBNull.Value ? Convert.ToInt64(result) : 0L;
@@ -225,7 +225,7 @@ namespace XHS.MSSQL
         /// <summary>事务内完成装箱。</summary>
         public bool CompletePackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set Status=1,PackingUser=@UserName,PackingTime=GETDATE(),LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            const string sql = "update tb_PackingRecord set Status=1,PackingStage='Completed',PackingUser=@UserName,PackingTime=GETDATE(),LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -267,6 +267,22 @@ namespace XHS.MSSQL
             return rows == 1;
         }
 
+        /// <summary>事务内更新装箱阶段。</summary>
+        public bool UpdatePackingStage(long packingId, string pageToken, string packingStage, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingRecord set PackingStage=@PackingStage,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@PageToken", SqlDbType.NVarChar, 100) { Value = pageToken ?? (object)DBNull.Value },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = packingStage ?? (object)DBNull.Value },
+                new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken },
+                new SqlParameter("@UserName", SqlDbType.NVarChar, 50) { Value = userName ?? (object)DBNull.Value }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows == 1;
+        }
+
         private static DataSet ExecuteDatasetInternal(SqlConnection connection, SqlTransaction transaction, string sql, SqlParameter[] parameters)
         {
             if (transaction != null)
@@ -297,6 +313,7 @@ namespace XHS.MSSQL
                 LockTime = row.IsNull("LockTime") ? (DateTime?)null : Convert.ToDateTime(row["LockTime"]),
                 LockUser = row.IsNull("LockUser") ? null : Convert.ToString(row["LockUser"]),
                 LockMachine = row.IsNull("LockMachine") ? null : Convert.ToString(row["LockMachine"]),
+                PackingStage = row.IsNull("PackingStage") ? null : Convert.ToString(row["PackingStage"]),
                 ClientId = row.IsNull("ClientId") ? null : Convert.ToString(row["ClientId"]),
                 MachineId = row.IsNull("MachineId") ? null : Convert.ToString(row["MachineId"]),
                 CreateUser = row.IsNull("CreateUser") ? null : Convert.ToString(row["CreateUser"]),
@@ -326,6 +343,7 @@ namespace XHS.MSSQL
                 new SqlParameter("@LockTime", SqlDbType.DateTime) { Value = info.LockTime ?? (object)DBNull.Value },
                 new SqlParameter("@LockUser", SqlDbType.NVarChar, 50) { Value = info.LockUser ?? (object)DBNull.Value },
                 new SqlParameter("@LockMachine", SqlDbType.NVarChar, 50) { Value = info.LockMachine ?? (object)DBNull.Value },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = info.PackingStage ?? (object)DBNull.Value },
                 new SqlParameter("@ClientId", SqlDbType.NVarChar, 50) { Value = info.ClientId ?? (object)DBNull.Value },
                 new SqlParameter("@MachineId", SqlDbType.NVarChar, 50) { Value = info.MachineId ?? (object)DBNull.Value },
                 new SqlParameter("@CreateUser", SqlDbType.NVarChar, 50) { Value = info.CreateUser ?? (object)DBNull.Value },

@@ -50,13 +50,17 @@
     <Compile Include="LabelCodeRuleFieldInfo.cs" />
     <Compile Include="FieldTypeInfo.cs" />
     <Compile Include="PackingDetailInfo.cs" />
+    <Compile Include="PackingExceptionInfo.cs" />
     <Compile Include="PackingExceptionTypeInfo.cs" />
     <Compile Include="PackingRecordInfo.cs" />
     <Compile Include="PackingScanRecordInfo.cs" />
     <Compile Include="BatchRuleInfo.cs" />
     <Compile Include="LabelCodeRuleInfo.cs" />
     <Compile Include="PackingScanRecordQRCodeTypeInfo.cs" />
+    <Compile Include="PackingStageInfo.cs" />
     <Compile Include="ParamterInfo.cs" />
+    <Compile Include="LabelBindingCustomerInfo.cs" />
+    <Compile Include="LabelBindingFactoryInfo.cs" />
     <Compile Include="PartInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

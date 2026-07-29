@@ -45,5 +45,8 @@ namespace XHS.IDAL
 
         /// <summary>事务内更新装箱随箱码。</summary>
         bool UpdatePackingQRCode(long packingId, string pageToken, string packingQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内更新装箱阶段。</summary>
+        bool UpdatePackingStage(long packingId, string pageToken, string packingStage, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
     }
 }

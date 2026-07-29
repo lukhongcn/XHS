@@ -96,6 +96,7 @@ namespace XHS.BLL
                                 PlanQty = planQty,
                                 PackingQty = 0,
                                 ExceptionStatus = 0,
+                                PackingStage = PackingStageInfo.装箱中.Status,
                                 LockToken = newToken,
                                 CreateUser = userName,
                                 CreateTime = DateTime.Now,
@@ -508,6 +509,80 @@ namespace XHS.BLL
             {
                 Log.WriteLog("PackingOperationService.log", "CompletePacking error: " + ex.Message + "\r\n" + ex.StackTrace);
                 return PackingOperationResult.Error("完成装箱失败：" + ex.Message);
+            }
+        }
+
+        /// <summary>更新装箱阶段（事务内完成）。</summary>
+        public PackingOperationResult UpdatePackingStage(
+            long packingId,
+            string pageToken,
+            string packingStage,
+            string userName)
+        {
+            string newToken = GenerateToken();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqlTransaction transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            PackingRecordInfo record = packingRecordDal.GetPackingRecordForUpdate(packingId, connection, transaction);
+                            if (record == null)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Error("装箱任务不存在。");
+                            }
+
+                            if (!string.Equals(record.LockToken, pageToken, StringComparison.Ordinal))
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Stale("装箱令牌已变更，请重新加载页面。");
+                            }
+
+                            if (record.Status == 1)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Error("装箱已完成，不能更新阶段。");
+                            }
+
+                            if (record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Lock("装箱已异常锁定。", record.LockToken, record);
+                            }
+
+                            if (!packingRecordDal.UpdatePackingStage(packingId, pageToken, packingStage, newToken, userName, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                record = LoadPackingRecord(packingId);
+                                if (record != null && !string.Equals(record.LockToken, pageToken, StringComparison.Ordinal))
+                                {
+                                    return PackingOperationResult.Stale("装箱令牌已变更，请重新加载页面。");
+                                }
+                                return PackingOperationResult.Error("更新装箱阶段失败，请重试。");
+                            }
+
+                            transaction.Commit();
+
+                            record = LoadPackingRecord(packingId);
+                            return PackingOperationResult.Ok("装箱阶段已更新为" + PackingStageInfo.GetStatusName(packingStage) + "。", newToken, record);
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "UpdatePackingStage error: " + ex.Message + "\r\n" + ex.StackTrace);
+                return PackingOperationResult.Error("更新装箱阶段失败：" + ex.Message);
             }
         }
 
