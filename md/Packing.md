@@ -20,7 +20,7 @@
 ```
 Packing.aspx (页面层)
     ↓
-PackingOperationService (BLL 业务事务层)  ←  QRCode (KEY_VALUE 硬编码解析)
+PackingOperationService (BLL 业务事务层)  ←  FactoryBarcodeParser (LabelCodeRule 正则解析)
     ↓
 DALFactory (工厂层)
     ↓
@@ -30,10 +30,10 @@ MSSQL Packing* (数据访问实现层)
     ↓
 tb_Packing* (数据库表)
 
-条码解析链路（独立于 Packing 事务，在页面层直接调用）：
+条码解析链路（页面层和服务层共用）：
 FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → MSSQL.LabelCodeRule → tb_LabelCodeRule
                      → RegexFieldParser (Regex 命名群組提取)
-                     → 手動映射 PartInfo
+                     → 反射映射 ShippingGoodsInfo
 （LabelCodeRuleField 全鏈路未使用）
 ```
 
@@ -52,12 +52,14 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
 | `txt_CartonNo` | TextBox | 箱号（黄色必填背景） |
 | `txt_PlanQty` | TextBox | 计划数量（黄色必填背景） |
 | `txt_MaterialNo` | TextBox | 物料号 |
-| `txt_Qty` | TextBox | 本次数量，默认值 1 |
-| `txt_Status` | TextBox | 装箱状态（只读） |
+| `txt_Qty` | TextBox | 装箱数量，只读，显示累计 PackingQty |
+| `txt_Status` | TextBox | 装箱状态（只读，中文显示 PackingStage） |
 | `txt_ExceptionStatus` | TextBox | 异常状态（只读） |
 | `txt_LockToken` | TextBox | 当前令牌（只读） |
 | `hidPackingId` | HiddenField | 装箱记录 ID |
 | `hidLockToken` | HiddenField | 当前令牌隐藏域 |
+| `hidPackingCompleteMode` | HiddenField | 装箱完成模式标记 |
+| `btn_packing_complete` | Button | 装箱完成按钮（输入区域内，与 RadioButtonList 同行） |
 
 ### 按钮
 
@@ -85,19 +87,16 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
      │
      ▼
 扫描 KD 标签 ──→ 解析条码（FactoryBarcodeParser）
-     │             创建 PackingRecord + 生成 LockToken
-     │             插入 KD 扫描记录
+     │             创建 PackingRecord + LockToken
+     │             PackingStage = Scanning
      │
-     ├── 已有任务（TaskId）→ 直接绑定，自动切至"零件标签"模式
+     ├── 已有任务（TaskId）→ 绑定，自动切至"零件标签"模式
      ├── 异常锁定 → 冻结页面 + 显示锁定遮罩
      └── 已完成 → 只读展示
      │
      ▼
-扫描随箱码（可选）──→ 验证 Token → 检查重复 → 写入 PackingQRCode
-     │
-     ▼
 扫描零件标签 ──→ 验证 Token → 检查重复 → BOM 零件匹配
-     │             检查数量是否超计划 → 累加 PackingQty
+     │             检查数量是否超计划 → 累加 PackingQty（每次 +1）
      │
      ├── 零件不匹配 → 异常锁定（PART001）
      ├── 标签重复 → 异常锁定（LABEL001）
@@ -105,19 +104,32 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
      └── 随箱码重复 → 异常锁定（BOX001）
      │
      ▼
-完成装箱 ──→ 验证 Token → 校验数量 == 计划数量 → Status=1
+点击"装箱完成" ──→ PackingStage = PackingComplete
+     │              KD/零件标签 → 禁用
+     │              随箱码 → 启用
+     │
+     ▼
+扫描随箱码 ──→ 验证 Token → 检查重复 → 写入 PackingQRCode
+     │
+     ▼
+点击"保存" ──→ 验证 Token → 校验数量 == 计划数量
+     │             PackingStage = Completed → Status=1
      │
      ▼
 异常审核（ExceptionReview.aspx）──→ 通过 → 解锁恢复 / 拒绝 → 保持锁定
 ```
 
-### 扫描类型切换逻辑
+### Radio 按钮与装箱完成按钮状态
 
-| 条件 | KD 标签 | 随箱码 | 零件标签 |
-|------|---------|--------|----------|
-| 无活动任务 | ✅ 启用 | ❌ 禁用 | ❌ 禁用 |
-| 有活动任务 | ❌ 禁用 | ✅ 启用 | ✅ 启用 |
-| 已锁定/已完成 | ❌ 禁用 | ❌ 禁用 | ❌ 禁用 |
+| 条件 | KD 标签 | 零件标签 | 随箱码 | 装箱完成按钮 |
+|------|---------|----------|--------|-------------|
+| 无活动任务 | ✅ 启用（黑色） | ❌ 禁用（灰色） | ❌ 禁用（灰色） | ❌ 禁用 |
+| 有活动任务 | ❌ 禁用（灰色） | ✅ 启用（黑色） | ❌ 禁用（灰色） | ✅ 启用 |
+| 点击"装箱完成"后 | ❌ 禁用（灰色） | ❌ 禁用（灰色） | ✅ 启用（黑色） | ❌ 禁用 |
+| 已锁定/已完成 | ❌ 禁用（灰色） | ❌ 禁用（灰色） | ❌ 禁用（灰色） | ❌ 禁用 |
+
+Radio 禁用时字体为灰色（packing-radio-disabled），启用时为黑色（packing-radio-enabled），
+由 JS `updatePackingRadioStyles()` 在每次 PostBack 后自动同步。
 
 ---
 
@@ -144,6 +156,7 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
 | LockTime | datetime | 锁定时间 |
 | LockUser | nvarchar(50) | 锁定操作人 |
 | LockMachine | nvarchar(50) | 锁定机器 |
+| PackingStage | nvarchar(30) | 装箱阶段：Scanning=装箱中，PackingComplete=装箱完成，Completed=已完成 |
 | ClientId | nvarchar(50) | 客户端标识 |
 | MachineId | nvarchar(50) | 机器标识 |
 | CreateUser | nvarchar(50) | 创建人 |
@@ -213,7 +226,7 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
 
 ### PackingRecordInfo
 
-装箱记录实体，对应 `tb_PackingRecord` 表。包含 22 个属性，所有可空类型均为 `Nullable<T>`。
+装箱记录实体，对应 `tb_PackingRecord` 表。包含 23 个属性，所有可空类型均为 `Nullable<T>`。
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
@@ -234,6 +247,7 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
 | LockTime | DateTime? | 锁定时间 |
 | LockUser | string | 锁定操作人 |
 | LockMachine | string | 锁定机器 |
+| PackingStage | string | 装箱阶段（Scanning/PackingComplete/Completed） |
 | ClientId | string | 客户端标识 |
 | MachineId | string | 机器标识 |
 | CreateUser | string | 创建人 |
@@ -314,13 +328,25 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
 | createTime | string | 创建时间 |
 | createName | string | 创建人 |
 
+### PackingStageInfo
+
+装箱阶段常量类（不映射数据表），Status 存数据库，StatusName 页面显示。
+
+| 常量 | Status | StatusName | 触发时机 |
+|------|--------|------------|----------|
+| `装箱中` | `Scanning` | 装箱中 | KD 扫描创建任务时 |
+| `装箱完成` | `PackingComplete` | 装箱完成 | 点击"装箱完成"按钮时 |
+| `已完成` | `Completed` | 已完成 | 点击"保存"完成装箱时 |
+
+方法：`GetStatusName(string status)` 按 Status 返回对应中文名称。
+
 ---
 
 ## 接口层（XHS.IDAL）
 
 ### IPackingRecord
 
-装箱记录数据访问接口，定义 12 个方法：
+装箱记录数据访问接口，定义 14 个方法：
 
 | 方法 | 返回类型 | 说明 |
 |------|----------|------|
@@ -337,6 +363,7 @@ FactoryBarcodeParser → LabelCodeRule (取 MatchRegex) → ILabelCodeRule → M
 | `CompletePackingRecord(packingId, pageToken, newToken, userName, conn, trans)` | `bool` | 事务内完成装箱 |
 | `UnlockPackingRecord(packingId, exceptionLockToken, newToken, conn, trans)` | `bool` | 事务内解锁 |
 | `UpdatePackingQRCode(packingId, pageToken, qrCode, newToken, userName, conn, trans)` | `bool` | 事务内更新随箱码 |
+| `UpdatePackingStage(packingId, pageToken, packingStage, newToken, userName, conn, trans)` | `bool` | 事务内更新装箱阶段 |
 
 ### IPackingScanRecord
 
@@ -401,6 +428,10 @@ WHERE Id=@PackingId AND LockToken=@PageToken AND ExceptionStatus=0 AND Status=0
 -- 解锁记录（审核通过）
 UPDATE tb_PackingRecord SET ExceptionStatus=0, LockToken=@NewToken, ...
 WHERE Id=@PackingId AND ExceptionStatus=1 AND LockToken=@ExceptionLockToken
+
+-- 更新装箱阶段
+UPDATE tb_PackingRecord SET PackingStage=@PackingStage, LockToken=@NewToken, ...
+WHERE Id=@PackingId AND LockToken=@PageToken AND ExceptionStatus=0 AND Status=0
 ```
 
 每条 UPDATE 受影响行数不等于 1 即判定失败。
@@ -447,6 +478,7 @@ packingExceptionDal = XHS.DALFactory.PackingException.Create();
 | `ScanPackingQRCode(...)` | 扫描随箱码 | ✅ |
 | `ScanMaterialQRCode(...)` | 扫描零件标签 | ✅ |
 | `CompletePacking(...)` | 完成装箱 | ✅ |
+| `UpdatePackingStage(...)` | 更新装箱阶段 | ✅ |
 | `LockForException(...)` | 异常锁定（外部调用入口） | ✅ |
 | `ReviewException(...)` | 审核异常 | ✅ |
 | `ReviewAndUnlock(...)` | 审核并解锁 | ✅ |
@@ -499,6 +531,10 @@ packingExceptionDal = XHS.DALFactory.PackingException.Create();
 - `InsertPackingRecord(List)` — 批量插入
 - `UpdatePackingRecord(List)` — 批量更新
 
+### ScanMaterialQRCode 解码说明
+
+`ScanMaterialQRCode` 方法接收页面传来的原始 `qrCode` 值，在服务端通过 `FactoryBarcodeParser.ParseShippingGoodsBarcode(qrCode, "XHSFZPart")` 解析出物料号。服务端以自身解析结果为 BOM 匹配依据，页面传来的 `materialNo` 仅作为解析失败时的 fallback，不直接信任客户端值。
+
 ### PackingScanRecord（传统 BLL）
 
 `XHS.BLL.PackingScanRecord`：
@@ -530,9 +566,15 @@ Token 是一个 GUID 去掉连字符的 32 位字符串（例：`9F6E8C3A5D2E4A9
 ### Token 生命周期
 
 ```
-KD 扫描创建任务 → 生成 Token1
+KD 扫描创建任务 → 生成 Token1（PackingStage=Scanning）
      │
-扫描随箱码/零件 → Token1 验证通过 → 生成 Token2（页面拿到新 Token）
+扫描零件标签 → Token1 验证通过 → 生成 Token2
+     │
+点击"装箱完成" → Token2 验证通过 → 生成 Token3（PackingStage=PackingComplete）
+     │
+扫描随箱码 → Token3 验证通过 → 生成 Token4
+     │
+保存/完成装箱 → Token4 验证通过 → 生成 Token5（PackingStage=Completed）
      │
 异常触发 → TokenN 写入 tb_PackingRecord.LockToken
      │             同时写入 tb_PackingException.LockToken
@@ -563,6 +605,20 @@ KD 扫描创建任务 → 生成 Token1
 
 同上，但使用 `COL_LENGTH()` 函数检查列，并显式设置 `SET QUOTED_IDENTIFIER ON` 以支持过滤索引创建。更适合 `sqlcmd` 方式执行。
 
+### add_tb_PackingRecord_PackingStage.sql
+
+新增 `PackingStage` 字段的增量迁移脚本，并对现有记录回填默认值（Status=0 → 'Scanning'，Status=1 → 'Completed'）。
+
+### 清除 Packing 所有数据
+
+```sql
+-- 必须按子表先删、主表后删的顺序
+DELETE FROM tb_PackingException;
+DELETE FROM tb_PackingScanRecord;
+DELETE FROM tb_PackingRecord;
+-- tb_PackingExceptionType 是基础配置表，不清除
+```
+
 执行方式：
 ```bash
 sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
@@ -576,8 +632,8 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 
 | 文件 | 行数 | 说明 |
 |------|------|------|
-| `Packing.aspx` | 57 | 前端页面，包含扫描区、GridView、锁定遮罩、JS 逻辑 |
-| `Packing.aspx.cs` | 376 | 后端代码，处理扫描事件、状态绑定、Token 管理 |
+| `Packing.aspx` | 56 | 前端页面，扫描区、GridView、锁定遮罩、Radio 按钮、装箱完成按钮、JS |
+| `Packing.aspx.cs` | 428 | 后端代码，处理扫描事件、阶段切换、状态绑定、Token 管理 |
 | `Packing.aspx.designer.cs` | — | 设计器自动生成 |
 
 ### 业务逻辑层（BLL）
@@ -595,9 +651,10 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 
 | 文件 | 说明 |
 |------|------|
-| `Model/PackingRecordInfo.cs` | 装箱记录实体（22 属性） |
+| `Model/PackingRecordInfo.cs` | 装箱记录实体（23 属性） |
 | `Model/PackingScanRecordInfo.cs` | 扫描记录实体（7 属性） |
 | `Model/PackingScanRecordQRCodeTypeInfo.cs` | 二维码类型常量 |
+| `Model/PackingStageInfo.cs` | 装箱阶段常量（Status↔StatusName） |
 | `Model/PackingExceptionInfo.cs` | 异常记录实体（16 属性） |
 | `Model/PackingExceptionTypeInfo.cs` | 异常类型实体（5 属性） |
 | `Model/PackingDetailInfo.cs` | 旧版兼容实体（5 属性） |
@@ -606,7 +663,7 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 
 | 文件 | 方法数 | 说明 |
 |------|--------|------|
-| `XHS.IDAL/IPackingRecord.cs` | 13 | 装箱记录接口 |
+| `XHS.IDAL/IPackingRecord.cs` | 14 | 装箱记录接口 |
 | `XHS.IDAL/IPackingScanRecord.cs` | 9 | 扫描记录接口 |
 | `XHS.IDAL/IPackingException.cs` | 9 | 异常记录接口 |
 | `XHS.IDAL/IPackingExceptionType.cs` | 1 | 异常类型接口 |
@@ -635,6 +692,7 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 |------|------|
 | `.tmp/alter_tb_PackingException.sql` | 异常表增量迁移 v1 |
 | `.tmp/alter_tb_PackingException_v2.sql` | 异常表增量迁移 v2（sqlcmd 优化版） |
+| `.tmp/add_tb_PackingRecord_PackingStage.sql` | PackingStage 字段增量迁移 |
 
 ### 条码解析引擎 — 模型层（Model）
 
@@ -656,7 +714,7 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 | `BLL/LabelCodeRule.cs` | ✅ `GetLabelCodeRulesByCustomerId` — 提供 MatchRegex |
 | `BLL/FactoryBarcodeParser.cs` | ✅ `ParseFactoryBarcode()` — Regex 規則匹配後手動提取命名群組 |
 | `BLL/RegexFieldParser.cs` | ✅ Regex 命名捕获组提取工具 |
-| `BLL/QRCode.cs` | ✅ `ParseShippingGoodsInfo()` — 寫死的 KEY_VALUE 格式（PackingOperationService 使用） |
+| `BLL/QRCode.cs` | ⚠️ 其他模块使用 — Packing 模块已不再引用（已切至 FactoryBarcodeParser）|
 | `BLL/LabelCodeRuleField.cs` | ❌ 未使用 — 無任何外部呼叫者 |
 
 ### 条码解析引擎 — 接口层（XHS.IDAL）
@@ -694,6 +752,7 @@ sqlcmd -S . -d XHS -U sa -P MES2016mj -C -i alter_tb_PackingException_v2.sql
 ```
 Packing.aspx.cs
   ├── PackingOperationService (XHS.BLL)
+  │     ├── FactoryBarcodeParser (LabelCodeRule 正则解析)
   │     ├── IPackingRecord → DALFactory.PackingRecord → MSSQL.PackingRecord
   │     ├── IPackingScanRecord → DALFactory.PackingScanRecord → MSSQL.PackingScanRecord
   │     ├── IPackingException → DALFactory.PackingException → MSSQL.PackingException
