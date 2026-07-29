@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Printing;
 using System.Linq;
 using System.Windows.Forms;
+using Label = System.Windows.Forms.Label;
 using BLL;
 using CheryPortHelp;
 using LabelHelp.Enums;

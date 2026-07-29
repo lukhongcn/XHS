@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PackingExceptionType.cs" />
+    <Compile Include="PackingException.cs" />
     <Compile Include="PackingRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />
     <Compile Include="PartMaster.cs" />

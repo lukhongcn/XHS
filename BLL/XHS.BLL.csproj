@@ -74,6 +74,9 @@
     <Compile Include="LabelCodeRuleField.cs" />
     <Compile Include="FieldType.cs" />
     <Compile Include="PackingExceptionType.cs" />
+    <Compile Include="PackingException.cs" />
+    <Compile Include="PackingOperationResult.cs" />
+    <Compile Include="PackingOperationService.cs" />
     <Compile Include="PackingRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />
     <Compile Include="PartMaster.cs" />

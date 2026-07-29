@@ -13,6 +13,12 @@ namespace BLL
     {
         private readonly RegexFieldParser regexParser = new RegexFieldParser();
 
+        /// <summary>兼容装箱业务使用的出货二维码解析入口。</summary>
+        public ShippingGoodsInfo ParseShippingGoodsBarcode(string rawCode, string customerId)
+        {
+            return new XHS.BLL.QRCode().ParseShippingGoodsInfo(rawCode);
+        }
+
         public PartInfo ParseFactoryBarcode(
      string rawCode,
      string customerId)
