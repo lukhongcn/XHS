@@ -77,6 +77,27 @@ namespace ModuleWorkFlow
             ClearDeliveryDisplay();
             txt_DeliveryMatch.Text = string.Empty;
             lnkbutton_upload.Enabled = false;
+            SetDeliveryRadioState(false);
+        }
+
+        /// <summary>hasKd: KD 扫描成功后切到配送单，否则仅 KD 可选。</summary>
+        private void SetDeliveryRadioState(bool hasKd)
+        {
+            var kdItem = rblScanType.Items.FindByValue("KD");
+            var packingItem = rblScanType.Items.FindByValue("Packing");
+            if (kdItem != null) kdItem.Enabled = !hasKd;
+            if (packingItem != null) packingItem.Enabled = hasKd;
+            rblScanType.SelectedValue = hasKd ? "Packing" : "KD";
+            UpdateRadioStyles();
+        }
+
+        private void UpdateRadioStyles()
+        {
+            ClientScript.RegisterStartupScript(
+                GetType(),
+                "DeliveryRadioStyles",
+                "updateDeliveryRadioStyles();",
+                true);
         }
 
         private void ProcessScan()
@@ -116,31 +137,10 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            // 查找该 KD 对应的装箱记录，检查 PackingStage 必须是装箱完成
-            PackingOperationResult stateResult = packingService.GetPackingStateByKdQRCode(qrCode);
-            if (stateResult.PackingRecord == null)
-            {
-                ShowMessage("该 KD 标签尚未创建装箱任务，请先在装箱页面中完成装箱。");
-                return;
-            }
-
-            string stage = stateResult.PackingRecord.PackingStage ?? string.Empty;
-            if (stage != PackingStageInfo.装箱完成.Status)
-            {
-                string stageName = string.IsNullOrWhiteSpace(stage)
-                    ? "未开始" : PackingStageInfo.GetStatusName(stage);
-                ShowMessage("该 KD 标签的装箱阶段为" + stageName + "，必须为" + PackingStageInfo.装箱完成.StatusName + "后才能上传配送单。");
-
-                return;
-            }
-
-            KdInfo = parsedInfo;
-            KdPackingId = stateResult.PackingRecord.Id ?? 0L;
-            KdRawBarcode = qrCode;
-
-            // 从 tb_ShippingGoods 查零件中文名称
+            // 1. 从 tb_ShippingGoods 查找零件名称、包装名称和装箱阶段
             KdPartName = string.Empty;
             PackageNameVal = string.Empty;
+            string shippingPackingStage = null;
             try
             {
                 List<ShippingGoodsInfo> existList = new ShippingGoods()
@@ -149,14 +149,48 @@ namespace ModuleWorkFlow
                 {
                     KdPartName = existList[0].PartChineseName ?? string.Empty;
                     PackageNameVal = existList[0].PackageName ?? string.Empty;
+                    shippingPackingStage = existList[0].PackingStage;
+                }
+                else
+                {
+                    ShowMessage("该 KD 标签在出货单中不存在，不允许上传配送单。");
+                    return;
+                }
+            }
+            catch
+            {
+                ShowMessage("查询出货单失败，请重试。");
+                return;
+            }
+
+            // 2. 校验 PackingStage 必须是装箱完成
+            string stage = shippingPackingStage ?? string.Empty;
+            if (stage != PackingStageInfo.装箱完成.Status)
+            {
+                string stageName = string.IsNullOrWhiteSpace(stage)
+                    ? "未开始" : PackingStageInfo.GetStatusName(stage);
+                ShowMessage("该 KD 标签的装箱阶段为" + stageName + "，必须为" + PackingStageInfo.装箱完成.StatusName + "后才能上传配送单。");
+                return;
+            }
+
+            // 3. 获取 PackingId（供上传时查扫描明细）
+            KdPackingId = 0L;
+            try
+            {
+                PackingOperationResult stateResult = packingService.GetPackingStateByKdQRCode(qrCode);
+                if (stateResult.PackingRecord != null)
+                {
+                    KdPackingId = stateResult.PackingRecord.Id ?? 0L;
                 }
             }
             catch { }
 
+            KdInfo = parsedInfo;
+            KdRawBarcode = qrCode;
             BindKdInfo(parsedInfo);
 
-            // KD 扫描成功，切到配送单
-            rblScanType.SelectedValue = "Packing";
+            // KD 扫描成功，KD 标签灰色禁用，配送单启用
+            SetDeliveryRadioState(true);
 
             // 清除旧配送单和核验结果
             ClearDeliveryDisplay();

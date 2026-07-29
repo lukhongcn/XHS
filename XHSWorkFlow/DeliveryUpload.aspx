@@ -1,4 +1,4 @@
-<%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="ajaxToolkit" %>
+﻿<%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="ajaxToolkit" %>
 <%@ Page Language="c#" CodeBehind="DeliveryUpload.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.DeliveryUpload" MasterPageFile="~/DefaultSub.Master" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="contentHolder" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnableScriptGlobalization="true"></asp:ScriptManager>
@@ -24,8 +24,22 @@
     </div>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="JSHolder" runat="server">
-    <style>.delivery-label{min-width:110px;line-height:30px}.delivery-scan{width:100%}.delivery-readonly{background-color:#f3f3f3!important}.delivery-scan-type label{margin-right:24px}.delivery-scan-type input[type='radio']:disabled + label{color:gray!important}.delivery-section-title{color:#0d6efd;margin-top:8px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #dee2e6}</style>
+    <style>.delivery-label{min-width:110px;line-height:30px}.delivery-scan{width:100%}.delivery-readonly{background-color:#f3f3f3!important}.delivery-scan-type label{margin-right:24px}.delivery-radio-disabled{color:gray!important}.delivery-radio-enabled{color:black!important}.delivery-section-title{color:#0d6efd;margin-top:8px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #dee2e6}</style>
     <script type="text/javascript">
+        function updateDeliveryRadioStyles() {
+            var radioList = document.getElementById('<%=rblScanType.ClientID%>');
+            if (!radioList) return;
+            var labels = radioList.getElementsByTagName('label');
+            var inputs = radioList.getElementsByTagName('input');
+            for (var i = 0; i < inputs.length && i < labels.length; i++) {
+                if (inputs[i].disabled) {
+                    labels[i].className = 'delivery-radio-disabled';
+                } else {
+                    labels[i].className = 'delivery-radio-enabled';
+                }
+            }
+        }
+
         function focusDeliveryScan() {
             var input = document.getElementById('<%=txt_ScanQRCode.ClientID%>');
             if (input && !input.disabled) {
