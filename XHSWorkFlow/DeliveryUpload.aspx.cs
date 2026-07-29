@@ -513,7 +513,7 @@ namespace ModuleWorkFlow
             txt_SxCardSeq.Text = SafeValue(info.PackingCardNo);
             txt_DeliveryPackageCode.Text = SafeValue(info.PackageCode);
             // txt_DeliveryPackageName 已在 ScanKd 中预设
-            txt_DeliveryNo.Text = KdInfo != null ? SafeValue(KdInfo.SupplyBatchNo) : string.Empty;
+            // txt_DeliveryNo 手工填写，不自动带出
         }
 
         private void ClearDeliveryDisplay()
