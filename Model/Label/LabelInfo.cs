@@ -32,6 +32,7 @@
         public string CheckConfirmDate { get; set; }  // 检验确认日期
         public string MaterialCode { get; set; }      // 材料代码
         public string SerialNo { get; set; }          // 流水号
+        public string GrossWeight { get; set; }         // 毛重，格式如 12.5KG
         public string QrContent { get; set; }         // 二维码内容
     }
 

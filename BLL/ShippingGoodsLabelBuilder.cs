@@ -27,6 +27,7 @@ namespace XHS.BLL
                 ProduceDate = FormatDate(info == null ? null : info.ProductionDate),
                 CheckConfirmDate = FormatDate(info == null ? null : info.InspectionConfirmDate),
                 PackageCode = SafeValue(info == null ? null : info.CartonNo),
+                GrossWeight = FormatGrossWeight(info?.SingleBoxGrossWeight),
                 BoxCount = "1"
             };
 
@@ -40,6 +41,11 @@ namespace XHS.BLL
             labelInfo.QrContent = labelService.GetQRCodeContents(
                 qrCodeService.GetOuterPackageQRCodeInfoList(),
                 labelInfo);
+
+            if (!string.IsNullOrWhiteSpace(labelInfo.GrossWeight))
+            {
+                labelInfo.QrContent += "$" + labelInfo.GrossWeight;
+            }
 
             return labelInfo;
         }
@@ -142,6 +148,11 @@ namespace XHS.BLL
         private static string SafeValue(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string FormatGrossWeight(decimal? value)
+        {
+            return value.HasValue ? value.Value.ToString("0.##") + "KG" : string.Empty;
         }
 
         private static string FormatDate(DateTime? value)
