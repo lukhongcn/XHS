@@ -4,7 +4,7 @@ using ModuleWorkFlow.business;
 using XHS.IDAL;
 using XHS.Model;
 
-namespace BLL
+namespace XHS.BLL
 {
     /// <summary>
     /// 零件主数据业务层。

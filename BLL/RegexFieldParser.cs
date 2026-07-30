@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace BLL
+namespace XHS.BLL
 {
     /// <summary>
     /// 正则表达式字段解析器，根据正则表达式从条码字符串中提取命名分组。

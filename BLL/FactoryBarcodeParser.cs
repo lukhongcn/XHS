@@ -4,7 +4,7 @@ using System.Linq;
 using Utility;
 using XHS.Model;
 
-namespace BLL
+namespace XHS.BLL
 {
     /// <summary>
     /// 本厂条码解析器，通过正则规则判断条码类型并提取字段。
@@ -161,33 +161,7 @@ namespace BLL
             };
         }
 
-        private static PartInfo BuildPartInfo(
-            LabelCodeRuleInfo rule,
-            List<LabelCodeRuleFieldInfo> ruleFields,
-            IDictionary<string, string> parsedValues)
-        {
-            var partInfo = new PartInfo();
-
-            foreach (var field in ruleFields)
-            {
-                if (string.IsNullOrWhiteSpace(field.KeyCode))
-                    continue;
-
-                string value;
-                if (!parsedValues.TryGetValue(field.KeyCode, out value))
-                {
-                    if (field.Required == true)
-                        return null;
-                    continue;
-                }
-
-                Type propertyType = Reflector.getPropertyType(partInfo, field.FieldName);
-                object convertedValue = Convert.ChangeType(value, propertyType);
-                Reflector.SetProperty(partInfo, field.FieldName, convertedValue);
-            }
-
-            return partInfo;
-        }
+        
 
         private static PartInfo BuildWorkOrderPartInfo(IDictionary<string, string> fields)
         {

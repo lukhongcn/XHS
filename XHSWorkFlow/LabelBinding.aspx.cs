@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Web.UI.WebControls;
-using BLL;
+using XHS.BLL;
 using XHS.Model;
 
 namespace ModuleWorkFlow

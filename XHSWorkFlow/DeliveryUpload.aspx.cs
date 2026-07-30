@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using BLL;
 using CheryPortHelp;
+using ModuleWorkFlow.BLL;
 using XHS.BLL;
 using XHS.Model;
 
@@ -13,7 +14,8 @@ namespace ModuleWorkFlow
     /// <summary>配送单上传页面。扫描 KD 标签和配送单，核对一致后上传。</summary>
     public partial class DeliveryUpload : Page
     {
-        protected string menuname = "配送单上传";
+        private const string MenuId = "B121";
+        protected string menuname = "";
         private readonly PackingOperationService packingService = new PackingOperationService();
 
         // 缓存 KD 解析结果
@@ -63,7 +65,20 @@ namespace ModuleWorkFlow
 
         private void Page_Load(object sender, EventArgs e)
         {
+            menuname = new PartTmenu().findbykey(MenuId).Menuname;
             if (Master is DefaultSub master) { master.Menuname = menuname; }
+
+            if (!Private.checkPrivate(this, MenuId, "PEDIT"))
+            {
+                return;
+            }
+
+            if (Session["userid"] == null)
+            {
+                Response.Redirect("login.aspx");
+                return;
+            }
+
             txt_ScanQRCode.Attributes["autocomplete"] = "off";
             txt_ScanQRCode.Attributes["onkeydown"] = "return deliveryScanKeyDown(event);";
             if (!IsPostBack) { BindInitialState(); }
@@ -236,20 +251,6 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(txt_SxCardSeq.Text))
-            {
-                txt_DeliveryMatch.Text = "请填写随箱卡流水号。";
-                btn_upload.Enabled = false;
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txt_DeliveryPackageName.Text))
-            {
-                txt_DeliveryMatch.Text = "请填写包装名称。";
-                btn_upload.Enabled = false;
-                return;
-            }
-
             // 核对零件编号
             if (!string.Equals(KdInfo.PartNo, DeliveryInfo.PartNo, StringComparison.OrdinalIgnoreCase))
             {
@@ -274,7 +275,7 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            txt_DeliveryMatch.Text = "核验通过，零件/批号/数量一致。";
+            txt_DeliveryMatch.Text = "核验通过，零件/批号/数量一致，请填入必填字段后上传。";
             btn_upload.Enabled = true;
         }
 
@@ -385,9 +386,25 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            if (!btn_upload.Enabled)
+            // 校验必填字段
+            if (string.IsNullOrWhiteSpace(txt_SxCardSeq.Text))
             {
-                ShowMessage("核验未通过，无法上传。");
+                ShowMessage("请填写随箱卡流水号。");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txt_DeliveryPackageName.Text))
+            {
+                ShowMessage("请填写包装名称。");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txt_DeliveryNo.Text))
+            {
+                ShowMessage("请填写配送单号。");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txt_DeliveryPackageCode.Text))
+            {
+                ShowMessage("请填写包装单编号。");
                 return;
             }
 
@@ -452,42 +469,26 @@ namespace ModuleWorkFlow
                 string respMsg = string.Format("code={0}, msg={1}",
                     postResult.Response.code, postResult.Response.msg ?? string.Empty);
 
-                // 5. 不管平台返回什么状态，都写入 ShippingGoods
-                ShippingGoodsInfo record = new ShippingGoodsInfo
+                // 5. 更新 tb_ShippingGoods.PackingStage 为上传完成
+                using (var conn = new System.Data.SqlClient.SqlConnection(
+                    System.Configuration.ConfigurationManager.AppSettings["MsSQLConnString"]))
+                using (var cmd = new System.Data.SqlClient.SqlCommand(
+                    "UPDATE tb_ShippingGoods SET PackingStage=@Stage WHERE SupplyBatchNo=@Batch AND PartNo=@Part AND CartonNo=@Carton", conn))
                 {
-                    SupplyBatchNo = KdInfo.SupplyBatchNo,
-                    PartNo = KdInfo.PartNo,
-                    PartChineseName = KdPartName,
-                    CartonNo = KdInfo.CartonNo,
-                    Quantity = packCount,
-                    SupplierCode = KdInfo.SupplierCode,
-                    PackingCardNo = SafeValue(txt_SxCardSeq.Text),
-                    PackageCode = SafeValue(txt_DeliveryPackageCode.Text),
-                    ExSupplyBatchNo = DeliveryInfo.ExSupplyBatchNo,
-                    PackageName = SafeValue(txt_DeliveryPackageName.Text),
-                    OutBoxQRCode = KdRawBarcode,
-                    QrCode = KdRawBarcode,
-                    Status = ShippingGoodsStatusInfo.UnPrinted,
-                    Creater = GetUserName(),
-                    CreatDate = DateTime.Now
-                };
-
-                string saveMessage = new ShippingGoods().InsertShippingGoods(
-                    new List<ShippingGoodsInfo> { record });
-
-                if (string.IsNullOrWhiteSpace(saveMessage))
-                {
-                    ShowMessage("平台返回：" + respMsg);
-                    BindInitialState();
-                    KdInfo = null;
-                    DeliveryInfo = null;
-                    KdPackingId = 0;
-                    KdRawBarcode = null;
+                    cmd.Parameters.AddWithValue("@Stage", PackingStageInfo.上传完成.Status);
+                    cmd.Parameters.AddWithValue("@Batch", KdInfo.SupplyBatchNo);
+                    cmd.Parameters.AddWithValue("@Part", KdInfo.PartNo);
+                    cmd.Parameters.AddWithValue("@Carton", KdInfo.CartonNo);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
                 }
-                else
-                {
-                    ShowMessage("平台返回：" + respMsg + "，但本地保存失败：" + saveMessage);
-                }
+
+                ShowMessage("平台返回：" + respMsg);
+                BindInitialState();
+                KdInfo = null;
+                DeliveryInfo = null;
+                KdPackingId = 0;
+                KdRawBarcode = null;
             }
             catch (Exception ex)
             {
@@ -535,7 +536,7 @@ namespace ModuleWorkFlow
             txt_SxCardSeq.Text = string.Empty;
         }
 
-        private string GetUserName() { return "admin"; }
+        private string GetUserName() { return SafeValue(Session["userid"] == null ? string.Empty : Session["userid"].ToString()); }
 
         private void ShowMessage(string message)
         {

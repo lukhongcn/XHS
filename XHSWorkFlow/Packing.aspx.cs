@@ -5,20 +5,33 @@ using System.Web.UI;
 using BLL;
 using XHS.BLL;
 using XHS.Model;
+using ModuleWorkFlow.BLL;
 
 namespace ModuleWorkFlow
 {
     /// <summary>装箱扫描页面。</summary>
     public partial class Packing : Page
     {
-        protected string menuname = "装箱扫描";
+        private const string MenuId = "B12";
+        protected string menuname = "";
         private readonly PackingOperationService packingService = new PackingOperationService();
 
         private void Page_Load(object sender, EventArgs e)
         {
+            menuname = new PartTmenu().findbykey(MenuId).Menuname;
             if (Master is DefaultSub master) { master.Menuname = menuname; }
-            // 暂时关闭页面权限检查，待权限规则确认后恢复。
-            // if (Session["userid"] == null) { Response.Redirect("login.aspx"); return; }
+
+            if (!Private.checkPrivate(this, MenuId, "PEDIT"))
+            {
+                return;
+            }
+
+            if (Session["userid"] == null)
+            {
+                Response.Redirect("login.aspx");
+                return;
+            }
+
             txt_ScanQRCode.Attributes["autocomplete"] = "off";
             txt_ScanQRCode.Attributes["onkeydown"] = "return packingScanKeyDown(event);";
             if (!IsPostBack) { LoadPackingRecord(); }
@@ -417,7 +430,7 @@ namespace ModuleWorkFlow
             }
         }
 
-        private string GetUserName() { return "admin"; }
+        private string GetUserName() { return SafeValue(Session["userid"] == null ? string.Empty : Session["userid"].ToString()); }
 
         private void ShowMessage(string message)
         {
