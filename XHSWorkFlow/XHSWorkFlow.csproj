@@ -47,7 +47,7 @@
     </Reference>
     <Reference Include="BLL.System, Version=1.0.9691.47, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\new_xuxiang2018_zhengqin_twPart\new_xuxiang2018_zhengqin_twPart\bin\BLL.System.dll</HintPath>
+      <HintPath>bin\BLL.System.dll</HintPath>
     </Reference>
     <Reference Include="DALFactory, Version=1.0.9637.27678, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -63,7 +63,7 @@
     </Reference>
     <Reference Include="Model.System, Version=1.0.9651.28324, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\new_xuxiang2018_zhengqin_twPart\new_xuxiang2018_zhengqin_twPart\bin\Model.System.dll</HintPath>
+      <HintPath>bin\Model.System.dll</HintPath>
     </Reference>
     <Reference Include="ModuleWorkFlow.Model, Version=1.0.9622.26681, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -176,6 +176,13 @@
     <Compile Include="Packing.aspx.designer.cs">
       <DependentUpon>Packing.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PackingList.aspx.cs">
+      <DependentUpon>PackingList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PackingList.aspx.designer.cs">
+      <DependentUpon>PackingList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="DeliveryUpload.aspx.cs">
       <DependentUpon>DeliveryUpload.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -261,6 +268,7 @@
     <Content Include="api\print\record-detail.ashx" />
     <Content Include="NoPrivateMsg.aspx" />
     <Content Include="Packing.aspx" />
+    <Content Include="PackingList.aspx" />
     <Content Include="DeliveryUpload.aspx" />
     <Content Include="ExceptionReview.aspx" />
     <Content Include="ShippingGoodsList.aspx" />

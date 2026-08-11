@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -201,7 +201,8 @@ namespace XHS.BLL
                             }
 
                             // 4. 检查是否已有随箱码
-                            if (!string.IsNullOrWhiteSpace(record.PackingQRCode))
+                            if (!string.IsNullOrWhiteSpace(record.PackingQRCode) ||
+                                packingScanRecordDal.CheckPackingQRCodeExists(packingId, connection, transaction))
                             {
                                 transaction.Rollback();
                                 return PackingOperationResult.Error("该箱已扫描随箱码，不能重复扫描。");
@@ -331,6 +332,13 @@ namespace XHS.BLL
                             {
                                 transaction.Rollback();
                                 return PackingOperationResult.Lock("装箱已异常锁定，等待主管审核。", record.LockToken, record);
+                            }
+
+                            PackingExceptionInfo approvedRepack = packingExceptionDal.GetLatestApprovedRepackException(packingId, connection, transaction);
+                            if (approvedRepack != null)
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Error("当前有审核通过且待执行的重新装箱申请，请在重新装箱弹窗中扫描产品二维码。");
                             }
 
                             // 4. 检查二维码是否重复
@@ -528,10 +536,17 @@ namespace XHS.BLL
                                 return lockResult;
                             }
 
-                            // 7. 插入配送单扫描记录
+                            // 7. 同一箱只允许存在一条随箱码记录
+                            if (packingScanRecordDal.CheckPackingQRCodeExists(packingId, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return PackingOperationResult.Error("该箱已存在随箱码记录，不能重复扫描。");
+                            }
+
+                            // 8. 插入配送单扫描记录
                             packingScanRecordDal.InsertScanRecord(packingId, PackingScanRecordQRCodeTypeInfo.Packing, qrCode, string.Empty, 0, userName, connection, transaction);
 
-                            // 8. 完成装箱
+                            // 9. 完成装箱
                             if (!packingRecordDal.CompletePackingRecord(packingId, pageToken, newToken, userName, connection, transaction))
                             {
                                 transaction.Rollback();
@@ -637,6 +652,223 @@ namespace XHS.BLL
             {
                 Log.WriteLog("PackingOperationService.log", "UpdatePackingStage error: " + ex.Message + "\r\n" + ex.StackTrace);
                 return PackingOperationResult.Error("更新装箱阶段失败：" + ex.Message);
+            }
+        }
+
+        /// <summary>平台返回成功后，事务内将装箱记录和出货货品状态同步更新为已上传。</summary>
+        public PackingOperationResult MarkPackingUploaded(long packingId, string userName)
+        {
+            if (packingId <= 0)
+            {
+                return PackingOperationResult.Error("装箱记录无效，无法更新上传状态。");
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqlTransaction transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            PackingRecordInfo record = packingRecordDal.GetPackingRecordForUpdate(packingId, connection, transaction);
+                            if (record == null)
+                            {
+                                return RollbackError(transaction, "装箱记录不存在，无法更新上传状态。");
+                            }
+                            if (!record.Status.HasValue || record.Status.Value != 1)
+                            {
+                                return RollbackError(transaction, "装箱尚未完成，无法更新为已上传。");
+                            }
+                            if (record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0)
+                            {
+                                return RollbackError(transaction, "装箱记录处于异常审核状态，无法更新为已上传。");
+                            }
+                            if (!packingRecordDal.MarkPackingRecordUploaded(packingId, userName, connection, transaction))
+                            {
+                                return RollbackError(transaction, "更新装箱记录上传状态失败。");
+                            }
+                            if (!packingRecordDal.MarkShippingGoodsUploaded(record.SupplyBatchNo, record.PartNo, record.CartonNo, connection, transaction))
+                            {
+                                return RollbackError(transaction, "更新出货货品状态失败。");
+                            }
+
+                            transaction.Commit();
+                            record = LoadPackingRecord(packingId);
+                            return PackingOperationResult.Ok("状态已更新为已上传。", record == null ? string.Empty : record.LockToken, record);
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "MarkPackingUploaded error: " + ex.Message + "\r\n" + ex.StackTrace);
+                return PackingOperationResult.Error("更新上传状态失败：" + ex.Message);
+            }
+        }
+
+        /// <summary>执行审核通过的重新装箱申请，校验产品二维码后更新目标扫描明细。</summary>
+        public PackingOperationResult ExecuteApprovedRepack(long packingId, long scanRecordId, string pageToken, string qrCode, string userName)
+        {
+            if (packingId <= 0 || scanRecordId <= 0)
+            {
+                return PackingOperationResult.Error("重新装箱目标明细无效。");
+            }
+            if (string.IsNullOrWhiteSpace(qrCode))
+            {
+                return PackingOperationResult.Error("产品二维码不能为空。");
+            }
+
+            ShippingGoodsInfo parsedMaterial = new FactoryBarcodeParser().ParseShippingGoodsBarcode(qrCode.Trim(), "XHSFZPart");
+            if (parsedMaterial == null || string.IsNullOrWhiteSpace(parsedMaterial.PartNo))
+            {
+                return PackingOperationResult.Error("产品二维码解析失败，无法识别零件编号。");
+            }
+
+            string effectiveMaterialNo = parsedMaterial.PartNo.Trim();
+            string newToken = GenerateToken();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqlTransaction transaction = connection.BeginTransaction())
+                    {
+                        PackingExceptionInfo approvedRepack = packingExceptionDal.GetLatestApprovedRepackException(packingId, connection, transaction);
+                        if (approvedRepack == null)
+                        {
+                            return RollbackError(transaction, "没有审核通过且待执行的重新装箱申请。");
+                        }
+
+                        PackingRecordInfo record = packingRecordDal.GetPackingRecordForUpdate(packingId, connection, transaction);
+                        if (record == null) return RollbackError(transaction, "装箱任务不存在。");
+                        if (!string.Equals(record.LockToken, pageToken, StringComparison.Ordinal)) return RollbackStale(transaction, "装箱令牌已变更，请重新加载页面。");
+                        if (record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0) return RollbackLock(transaction, "装箱已异常锁定，等待主管审核。", record);
+                        if (string.Equals(record.PackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase)) return RollbackError(transaction, "该装箱记录已经上传，不允许重新装箱。");
+
+                        long targetScanId;
+                        if (!TryParseRepackRequest(approvedRepack, out targetScanId)) return RollbackError(transaction, "重新装箱审核申请数据无效，请联系管理员。");
+                        if (targetScanId != scanRecordId) return RollbackError(transaction, "该明细不是本次审核通过的重新装箱目标。");
+                        if (!string.Equals(record.PartNo, effectiveMaterialNo, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return RollbackError(transaction, string.Format("KD标签的零件是：{0}，产品二维码是：{1}，零件不匹配。", record.PartNo ?? string.Empty, effectiveMaterialNo));
+                        }
+
+                        PackingScanRecordInfo targetScan = packingScanRecordDal.GetScanRecordById(targetScanId, packingId, connection, transaction);
+                        if (targetScan == null || !string.Equals(targetScan.QRCodeType, PackingScanRecordQRCodeTypeInfo.MaterialLabel, StringComparison.OrdinalIgnoreCase)) return RollbackError(transaction, "重新装箱目标明细不存在。");
+                        if (packingScanRecordDal.CheckDuplicateQRCodeExceptId(packingId, targetScanId, qrCode.Trim(), connection, transaction)) return RollbackError(transaction, "该产品二维码已经存在于当前装箱明细中。");
+
+                        int targetQty = targetScan.Qty.HasValue && targetScan.Qty.Value > 0 ? targetScan.Qty.Value : 1;
+                        if (!packingScanRecordDal.UpdateScanRecordForRepack(targetScanId, packingId, qrCode.Trim(), effectiveMaterialNo, targetQty, userName, connection, transaction)) return RollbackError(transaction, "更新重新装箱明细失败。");
+                        if (!packingExceptionDal.MarkRepackProcessed(approvedRepack.Id ?? 0L, userName, "重新装箱完成：" + effectiveMaterialNo, connection, transaction)) return RollbackError(transaction, "更新重新装箱执行状态失败。");
+
+                        if (!packingRecordDal.CompletePackingRecord(packingId, pageToken, newToken, userName, connection, transaction)) return RollbackError(transaction, "恢复装箱完成状态失败，请重新加载页面。");
+                        packingRecordDal.UpdateShippingGoodsPackingStage(record.SupplyBatchNo, record.PartNo, record.CartonNo, PackingStageInfo.已完成.Status, connection, transaction);
+                        transaction.Commit();
+                        return PackingOperationResult.Completed("零件二维码校验通过，重新装箱明细已更新，装箱状态已恢复为已完成。", newToken, LoadPackingRecord(packingId));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "ExecuteApprovedRepack error: " + ex.Message + "\r\n" + ex.StackTrace);
+                return PackingOperationResult.Error("重新装箱处理失败：" + ex.Message);
+            }
+        }
+
+        private static PackingOperationResult RollbackStale(SqlTransaction transaction, string message)
+        {
+            transaction.Rollback();
+            return PackingOperationResult.Stale(message);
+        }
+
+        private static PackingOperationResult RollbackLock(SqlTransaction transaction, string message, PackingRecordInfo record)
+        {
+            transaction.Rollback();
+            return PackingOperationResult.Lock(message, record == null ? string.Empty : record.LockToken, record);
+        }
+
+        /// <summary>提交重新装箱审核申请并冻结当前装箱记录。</summary>
+        public PackingOperationResult RequestRepack(
+            long packingId,
+            long scanRecordId,
+            string userName,
+            string machineId)
+        {
+            if (packingId <= 0 || scanRecordId <= 0)
+            {
+                return PackingOperationResult.Error("重新装箱申请缺少装箱记录或目标明细。");
+            }
+
+            string newToken = GenerateToken();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqlTransaction transaction = connection.BeginTransaction())
+                    {
+                        PackingRecordInfo record = packingRecordDal.GetPackingRecordForUpdate(packingId, connection, transaction);
+                        if (record == null) return RollbackError(transaction, "装箱任务不存在。");
+                        if (string.Equals(record.PackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return RollbackError(transaction, "该装箱记录已经上传，不允许重新装箱。");
+                        }
+
+                        PackingScanRecordInfo scanRecord = packingScanRecordDal.GetScanRecordById(scanRecordId, packingId, connection, transaction);
+                        if (scanRecord == null || !string.Equals(scanRecord.QRCodeType, PackingScanRecordQRCodeTypeInfo.MaterialLabel, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return RollbackError(transaction, "重新装箱目标明细不存在或不是零件明细。");
+                        }
+
+                        PackingExceptionInfo pending = packingExceptionDal.GetPendingException(packingId, connection, transaction);
+                        if (pending != null) return RollbackError(transaction, "该装箱记录已有待审核申请。");
+                        PackingExceptionInfo approved = packingExceptionDal.GetLatestApprovedRepackException(packingId, connection, transaction);
+                        if (approved != null) return RollbackError(transaction, "该装箱记录已有审核通过且尚未执行的重新装箱申请。");
+
+                        if (!packingRecordDal.LockPackingRecordForRepack(packingId, record.LockToken, newToken, userName, machineId, connection, transaction))
+                        {
+                            return RollbackError(transaction, "冻结装箱记录失败，请刷新后重试。");
+                        }
+
+                        PackingExceptionInfo exception = new PackingExceptionInfo
+                        {
+                            PackingId = packingId,
+                            BoxCode = record.CartonNo,
+                            CartonNo = record.CartonNo,
+                            ExceptionCode = "REPACK",
+                            ExceptionMessage = "申请重新装箱。",
+                            TriggerQRCode = "REPACK|" + scanRecordId,
+                            LockToken = newToken,
+                            Status = 0,
+                            CreateUser = userName,
+                            CreateTime = DateTime.Now
+                        };
+                        if (!packingExceptionDal.InsertException(exception, connection, transaction))
+                        {
+                            return RollbackError(transaction, "写入重新装箱审核申请失败。");
+                        }
+
+                        record.LockToken = newToken;
+                        record.ExceptionStatus = 1;
+                        record.LockTime = DateTime.Now;
+                        record.LockUser = userName;
+                        record.LockMachine = machineId;
+                        transaction.Commit();
+                        return PackingOperationResult.Lock("重新装箱审核申请已提交，当前装箱记录已冻结，等待审核。", newToken, record);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "RequestRepack error: " + ex.Message + "\r\n" + ex.StackTrace);
+                return PackingOperationResult.Error("提交重新装箱审核申请失败：" + ex.Message);
             }
         }
 
@@ -746,15 +978,19 @@ namespace XHS.BLL
 
                             if (newStatus == 1)
                             {
-                                if (!packingRecordDal.UnlockPackingRecord(packingId, exception.LockToken, newToken, connection, transaction))
+                                bool isRepack = string.Equals(exception.ExceptionCode, "REPACK", StringComparison.OrdinalIgnoreCase);
+                                bool unlocked = isRepack
+                                    ? packingRecordDal.ReopenPackingRecordForRepack(packingId, exception.LockToken, newToken, connection, transaction)
+                                    : packingRecordDal.UnlockPackingRecord(packingId, exception.LockToken, newToken, connection, transaction);
+                                if (!unlocked)
                                 {
                                     transaction.Rollback();
-                                    return PackingOperationResult.Error("解除装箱锁定失败，可能已被其他操作修改。");
+                                    return PackingOperationResult.Error(isRepack ? "重新开放装箱记录失败，可能已被其他操作修改。" : "解除装箱锁定失败，可能已被其他操作修改。");
                                 }
 
                                 transaction.Commit();
                                 record = LoadPackingRecord(packingId);
-                                return PackingOperationResult.Ok("审核通过，装箱已解除锁定。", newToken, record);
+                                return PackingOperationResult.Ok(isRepack ? "审核通过，请扫描零件二维码完成重新装箱。" : "审核通过，装箱已解除锁定。", newToken, record);
                             }
 
                             transaction.Commit();
@@ -832,7 +1068,10 @@ namespace XHS.BLL
                             }
 
                             // 6. 解锁装箱记录
-                            if (!packingRecordDal.UnlockPackingRecord(packingId, exception.LockToken, newToken, connection, transaction))
+                            bool reopened = string.Equals(exception.ExceptionCode, "REPACK", StringComparison.OrdinalIgnoreCase)
+                                ? packingRecordDal.ReopenPackingRecordForRepack(packingId, exception.LockToken, newToken, connection, transaction)
+                                : packingRecordDal.UnlockPackingRecord(packingId, exception.LockToken, newToken, connection, transaction);
+                            if (!reopened)
                             {
                                 transaction.Rollback();
                                 return PackingOperationResult.Error("解锁装箱记录失败，可能已被其他操作修改。");
@@ -841,7 +1080,9 @@ namespace XHS.BLL
                             transaction.Commit();
 
                             record = LoadPackingRecord(packingId);
-                            return PackingOperationResult.Ok("审核通过，装箱已解锁。", newToken, record);
+                            return PackingOperationResult.Ok(string.Equals(exception.ExceptionCode, "REPACK", StringComparison.OrdinalIgnoreCase)
+                                ? "审核通过，请扫描零件二维码完成重新装箱。"
+                                : "审核通过，装箱已解锁。", newToken, record);
                         }
                         catch
                         {
@@ -996,6 +1237,45 @@ namespace XHS.BLL
             {
                 return null;
             }
+        }
+
+        /// <summary>取得审核通过且待执行的重新装箱目标明细 Id。</summary>
+        public long GetApprovedRepackTargetScanId(long packingId)
+        {
+            if (packingId <= 0) return 0L;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    PackingExceptionInfo approvedRepack = packingExceptionDal.GetLatestApprovedRepackException(packingId, connection, null);
+                    long scanRecordId;
+                    return TryParseRepackRequest(approvedRepack, out scanRecordId) ? scanRecordId : 0L;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.WriteLog("PackingOperationService.log", "GetApprovedRepackTargetScanId error: " + ex.Message + "\r\n" + ex.StackTrace);
+                return 0L;
+            }
+        }
+
+        private static bool TryParseRepackRequest(PackingExceptionInfo exception, out long scanRecordId)
+        {
+            scanRecordId = 0L;
+            string trigger = exception == null ? string.Empty : exception.TriggerQRCode ?? string.Empty;
+            string[] parts = trigger.Split('|');
+            if (parts.Length != 2 || !string.Equals(parts[0], "REPACK", StringComparison.OrdinalIgnoreCase) || !long.TryParse(parts[1], out scanRecordId))
+            {
+                return false;
+            }
+            return scanRecordId > 0;
+        }
+
+        private static PackingOperationResult RollbackError(SqlTransaction transaction, string message)
+        {
+            transaction.Rollback();
+            return PackingOperationResult.Error(message);
         }
 
         private PackingExceptionInfo LoadPendingException(long packingId)

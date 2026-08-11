@@ -36,6 +36,47 @@ namespace XHS.MSSQL
             return GetPackingRecordsBySql(queryString);
         }
 
+        /// <summary>按 KD 码、零件编号和零件码查询装箱记录，每个装箱记录只返回一行。</summary>
+        public List<PackingRecordInfo> SearchPackingRecords(string kdQRCode, string partNo, string partCode)
+        {
+            const string sql = "select " + PackingRecordSelectColumns +
+                " from tb_PackingRecord pr where (@KDQRCode='' or pr.KDQRCode like @KDLike)" +
+                " and (@PartNo='' or pr.PartNo like @PartNoLike)" +
+                " and (@PartCode='' or exists (select 1 from tb_PackingScanRecord psr where psr.PackingId=pr.Id and psr.QRCode like @PartCodeLike))" +
+                PackingRecordOrderBy;
+
+            string kdValue = (kdQRCode ?? string.Empty).Trim();
+            string partNoValue = (partNo ?? string.Empty).Trim();
+            string partCodeValue = (partCode ?? string.Empty).Trim();
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@KDQRCode", SqlDbType.NVarChar, 100) { Value = kdValue },
+                new SqlParameter("@KDLike", SqlDbType.NVarChar, 202) { Value = "%" + kdValue + "%" },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNoValue },
+                new SqlParameter("@PartNoLike", SqlDbType.NVarChar, 152) { Value = "%" + partNoValue + "%" },
+                new SqlParameter("@PartCode", SqlDbType.NVarChar, 200) { Value = partCodeValue },
+                new SqlParameter("@PartCodeLike", SqlDbType.NVarChar, 402) { Value = "%" + partCodeValue + "%" }
+            };
+
+            using (var connection = new SqlConnection(Data.WriteConnectionStr()))
+            {
+                connection.Open();
+                DataSet dataSet = ExecuteDatasetInternal(connection, null, sql, parameters);
+                List<PackingRecordInfo> result = new List<PackingRecordInfo>();
+                if (dataSet == null || dataSet.Tables.Count == 0)
+                {
+                    return result;
+                }
+
+                foreach (DataRow row in dataSet.Tables[0].Rows)
+                {
+                    result.Add(BuildPackingRecordFromRow(row));
+                }
+
+                return result;
+            }
+        }
+
         public ParamterInfo InsertPackingRecord(List<PackingRecordInfo> packingRecordInfos)
         {
             const string sql = "insert into tb_PackingRecord (SupplyBatchNo,PartNo,CartonNo,KDQRCode,PackingQRCode,TaskId,Status,PlanQty,PackingQty,PackingUser,PackingTime,ExceptionStatus,LockToken,LockTime,LockUser,LockMachine,PackingStage,ClientId,MachineId,CreateUser,CreateTime,UpdateUser,UpdateTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@KDQRCode,@PackingQRCode,@TaskId,@Status,@PlanQty,@PackingQty,@PackingUser,@PackingTime,@ExceptionStatus,@LockToken,@LockTime,@LockUser,@LockMachine,@PackingStage,@ClientId,@MachineId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime)";
@@ -222,6 +263,23 @@ namespace XHS.MSSQL
             return rows == 1;
         }
 
+        /// <summary>事务内为重新装箱审核锁定记录，允许当前记录已经完成但不允许已上传。</summary>
+        public bool LockPackingRecordForRepack(long packingId, string pageToken, string newToken, string userName, string machineId, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingRecord set ExceptionStatus=1,LockToken=@NewToken,LockTime=GETDATE(),LockUser=@UserName,LockMachine=@MachineId,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and ISNULL(PackingStage,'')<>@UploadedStage";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@PageToken", SqlDbType.NVarChar, 100) { Value = pageToken ?? (object)DBNull.Value },
+                new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken },
+                new SqlParameter("@UserName", SqlDbType.NVarChar, 50) { Value = userName ?? (object)DBNull.Value },
+                new SqlParameter("@MachineId", SqlDbType.NVarChar, 50) { Value = machineId ?? (object)DBNull.Value },
+                new SqlParameter("@UploadedStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows == 1;
+        }
+
         /// <summary>事务内完成装箱。</summary>
         public bool CompletePackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
@@ -246,6 +304,22 @@ namespace XHS.MSSQL
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
                 new SqlParameter("@ExceptionLockToken", SqlDbType.NVarChar, 100) { Value = exceptionLockToken ?? (object)DBNull.Value },
                 new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows == 1;
+        }
+
+        /// <summary>事务内审核通过重新装箱申请后重新开放记录。</summary>
+        public bool ReopenPackingRecordForRepack(long packingId, string exceptionLockToken, string newToken, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingRecord set ExceptionStatus=0,Status=0,PackingStage=@PackingStage,LockToken=@NewToken,LockTime=NULL,LockUser=NULL,LockMachine=NULL,UpdateUser=@NewToken,UpdateTime=GETDATE() where Id=@PackingId and ExceptionStatus=1 and LockToken=@ExceptionLockToken and ISNULL(PackingStage,'')<>@UploadedStage";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@ExceptionLockToken", SqlDbType.NVarChar, 100) { Value = exceptionLockToken ?? (object)DBNull.Value },
+                new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.装箱中.Status },
+                new SqlParameter("@UploadedStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status }
             };
             int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
             return rows == 1;
@@ -283,12 +357,40 @@ namespace XHS.MSSQL
             return rows == 1;
         }
 
+        public bool MarkPackingRecordUploaded(long packingId, string userName, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingRecord set PackingStage=@PackingStage,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and Status=1 and ISNULL(ExceptionStatus,0)=0";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status },
+                new SqlParameter("@UserName", SqlDbType.NVarChar, 50) { Value = userName ?? (object)DBNull.Value }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows == 1;
+        }
+
         public bool UpdateShippingGoodsPackingStage(string supplyBatchNo, string partNo, string cartonNo, string packingStage, SqlConnection connection, SqlTransaction transaction)
         {
             const string sql = "update tb_ShippingGoods set PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = packingStage ?? (object)DBNull.Value },
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? (object)DBNull.Value },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? (object)DBNull.Value },
+                new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = cartonNo ?? (object)DBNull.Value }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows > 0;
+        }
+
+        public bool MarkShippingGoodsUploaded(string supplyBatchNo, string partNo, string cartonNo, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_ShippingGoods set Status=@Status,PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@Status", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Uploaded },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status },
                 new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? (object)DBNull.Value },
                 new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? (object)DBNull.Value },
                 new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = cartonNo ?? (object)DBNull.Value }

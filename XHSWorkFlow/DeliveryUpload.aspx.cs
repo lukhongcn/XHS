@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Web;
@@ -279,104 +279,6 @@ namespace ModuleWorkFlow
             btn_upload.Enabled = true;
         }
 
-        // ----- 条码解析辅助 -----
-
-        private static string Extract10Value(string barcode)
-        {
-            return ExtractKeyValue(barcode, "10#");
-        }
-
-        private static int? Extract17Quantity(string barcode)
-        {
-            string val = ExtractKeyValue(barcode, "17#");
-            if (val == null) return null;
-            int qty;
-            return int.TryParse(val, out qty) ? qty : (int?)null;
-        }
-
-        private static string ExtractKeyValue(string barcode, string key)
-        {
-            if (string.IsNullOrWhiteSpace(barcode)) return null;
-            int start = barcode.IndexOf(key, StringComparison.Ordinal);
-            if (start < 0) return null;
-            start += key.Length;
-            int end = barcode.IndexOf("$", start, StringComparison.Ordinal);
-            if (end < 0) return null;
-            return barcode.Substring(start, end - start);
-        }
-
-        private enum BarcodeFormat { Single, MinPack, Unknown }
-
-        private static BarcodeFormat DetectBarcodeFormat(string barcode)
-        {
-            if (string.IsNullOrWhiteSpace(barcode)) return BarcodeFormat.Unknown;
-            bool has10 = barcode.Contains("10#");
-            bool has11 = barcode.Contains("11#");
-            bool has12 = barcode.Contains("12#");
-            bool has17 = barcode.Contains("17#");
-            bool endsDY = barcode.TrimEnd().EndsWith("DY");
-            if (!has10 || !has11 || !has12) return BarcodeFormat.Unknown;
-            if (has17 && endsDY) return BarcodeFormat.MinPack;
-            if (!has17 && !endsDY) return BarcodeFormat.Single;
-            return BarcodeFormat.Unknown;
-        }
-
-        // ----- 接口校验 -----
-
-        /// <summary>按平台规则校验。返回 null 表示通过，否则返回错误消息。</summary>
-        private string ValidateUploadRequest(
-            string packageBarCode,
-            string materialNo,
-            int packCount,
-            List<PackingScanRecordInfo> scanRecords)
-        {
-            // 1. 箱内物料数量与包装流水号中 17# 数量一致
-            int? qty17 = Extract17Quantity(packageBarCode);
-            if (!qty17.HasValue || qty17.Value != packCount)
-                return "箱内物料数量与包装流水号中17#数量不一致";
-
-            if (scanRecords == null || scanRecords.Count == 0)
-                return null; // 无明细时不校验 2a-2c
-
-            // 2a. 检查全部物料流水号格式统一
-            BarcodeFormat? format = null;
-            foreach (var r in scanRecords)
-            {
-                BarcodeFormat fmt = DetectBarcodeFormat(r.QRCode);
-                if (fmt == BarcodeFormat.Unknown)
-                    return "非标准产品标签，请检查";
-                if (format == null)
-                    format = fmt;
-                else if (format.Value != fmt)
-                    return "箱内明细不允许单件、最小包装混装";
-            }
-
-            // 2b. 每个物料流水号中 10# 与 materialNo 一致
-            foreach (var r in scanRecords)
-            {
-                string part10 = Extract10Value(r.QRCode);
-                if (!string.Equals(materialNo, part10, StringComparison.OrdinalIgnoreCase))
-                    return "箱内明细物料与箱码物料不一致";
-            }
-
-            // 2c. 箱内明细数量之和与 packCount 一致
-            int totalQty;
-            if (format == BarcodeFormat.Single)
-                totalQty = scanRecords.Count;
-            else
-            {
-                totalQty = 0;
-                foreach (var r in scanRecords)
-                {
-                    int? q = Extract17Quantity(r.QRCode);
-                    if (q.HasValue) totalQty += q.Value;
-                }
-            }
-            if (totalQty != packCount)
-                return "箱内物料数量与箱内明细数量之和不一致";
-
-            return null;
-        }
 
         private void UploadDelivery()
         {
@@ -414,21 +316,18 @@ namespace ModuleWorkFlow
                 int packCount = KdInfo.Quantity ?? 0;
                 string packageBarCode = KdRawBarcode;
 
-                // 1. 按零件编号获取扫描明细（仅零件标签）
-                List<PackingScanRecordInfo> scanRecords = new PackingScanRecord()
-                    .GetExPackingScanRecordsByPartNo(materialNo)
-                    .FindAll(r => r.QRCodeType == PackingScanRecordQRCodeTypeInfo.MaterialLabel);
-
-                // 2. 接口校验
-                string validateError = ValidateUploadRequest(packageBarCode, materialNo, packCount, scanRecords);
-                if (validateError != null)
+                if (KdPackingId <= 0)
                 {
-                    txt_DeliveryMatch.Text = validateError;
-                    ShowMessage(validateError);
+                    ShowMessage("KD码对应的装箱记录不存在，无法上传。");
                     return;
                 }
 
-                // 3. 组装上传信息
+                // 1. 按零件编号获取扫描明细（仅零件标签）
+                List<PackingScanRecordInfo> scanRecords = new PackingScanRecord()
+                    .GetExPackingScanRecordsByPartNo(materialNo)
+                    .FindAll(r => r.QRCodeType == PackingScanRecordQRCodeTypeInfo.MaterialLabel && r.PackingId == KdPackingId);
+
+                // 2. 组装上传信息
                 var uploadInfo = new CheryUploadInfo
                 {
                     DeliveryNo = SafeValue(txt_DeliveryNo.Text),
@@ -437,6 +336,7 @@ namespace ModuleWorkFlow
                     MaterialName = SafeValue(txt_KdPartName.Text),
                     PackingCount = packCount.ToString(),
                     PackageType = CheryPortConfig.PackageType,
+                    operateType = "1",
                     PackageBarCode = packageBarCode,
                     PackageCode = SafeValue(txt_DeliveryPackageCode.Text),
                     PackageName = SafeValue(txt_DeliveryPackageName.Text),
@@ -455,10 +355,11 @@ namespace ModuleWorkFlow
 
                 // 4. 构建请求并发送
                 CheryCheckRecordRequest request = CheryRequestBuilder.BuildCheckRecordRequest(uploadInfo);
-                CheryPostResult postResult = new CheryHttpClient().PostCheckRecordRaw(request);
 
-                // 汇出请求 JSON 到本地 Log 目录
-                WriteUploadJsonLog(materialNo, postResult != null ? postResult.RequestJson : string.Empty);
+                // 汇出请求 JSON 到本地 Log 目录（在 HTTP 调用之前保存，确保无论平台是否可达都能留下记录）
+                WriteUploadJsonLog(materialNo, CheryHttpClient.SerializeRequest(request));
+
+                CheryPostResult postResult = new CheryHttpClient().PostCheckRecordRaw(request);
 
                 if (postResult == null || postResult.Response == null)
                 {
@@ -469,18 +370,17 @@ namespace ModuleWorkFlow
                 string respMsg = string.Format("code={0}, msg={1}",
                     postResult.Response.code, postResult.Response.msg ?? string.Empty);
 
-                // 5. 更新 tb_ShippingGoods.PackingStage 为上传完成
-                using (var conn = new System.Data.SqlClient.SqlConnection(
-                    System.Configuration.ConfigurationManager.AppSettings["MsSQLConnString"]))
-                using (var cmd = new System.Data.SqlClient.SqlCommand(
-                    "UPDATE tb_ShippingGoods SET PackingStage=@Stage WHERE SupplyBatchNo=@Batch AND PartNo=@Part AND CartonNo=@Carton", conn))
+                // 5. 平台返回 200 时才更新 PackingStage 为上传完成
+                if (postResult.Response.code == 200)
                 {
-                    cmd.Parameters.AddWithValue("@Stage", PackingStageInfo.上传完成.Status);
-                    cmd.Parameters.AddWithValue("@Batch", KdInfo.SupplyBatchNo);
-                    cmd.Parameters.AddWithValue("@Part", KdInfo.PartNo);
-                    cmd.Parameters.AddWithValue("@Carton", KdInfo.CartonNo);
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    PackingOperationResult uploadResult = packingService.MarkPackingUploaded(KdPackingId, GetUserName());
+                    if (!uploadResult.Success)
+                    {
+                        ShowMessage("平台上传成功，但状态更新失败：" + uploadResult.Message);
+                        return;
+                    }
+
+                    respMsg += "，状态已更新为" + ShippingGoodsStatusInfo.Uploaded;
                 }
 
                 ShowMessage("平台返回：" + respMsg);

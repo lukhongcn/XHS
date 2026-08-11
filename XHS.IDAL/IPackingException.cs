@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.SqlClient;
 using XHS.Model;
 
@@ -25,10 +25,16 @@ namespace XHS.IDAL
         /// <summary>只读查询装箱任务的待审核异常。</summary>
         PackingExceptionInfo GetPendingExceptionByPackingId(long packingId, SqlConnection connection, SqlTransaction transaction);
 
+        /// <summary>事务内查询装箱任务最新的已通过重新装箱申请。</summary>
+        PackingExceptionInfo GetLatestApprovedRepackException(long packingId, SqlConnection connection, SqlTransaction transaction);
+
         /// <summary>在事务中插入异常记录。</summary>
         bool InsertException(PackingExceptionInfo info, SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>在事务中更新异常审核信息。</summary>
         bool AuditException(long exceptionId, string auditUser, string auditRemark, int newStatus, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>将审核通过的重新装箱申请标记为已执行。</summary>
+        bool MarkRepackProcessed(long exceptionId, string executeUser, string executeRemark, SqlConnection connection, SqlTransaction transaction);
     }
 }

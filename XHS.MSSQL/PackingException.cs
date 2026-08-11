@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -154,6 +154,25 @@ namespace XHS.MSSQL
             return GetPendingException(packingId, connection, transaction);
         }
 
+        /// <summary>事务内查询装箱任务最新的已通过重新装箱申请。</summary>
+        public PackingExceptionInfo GetLatestApprovedRepackException(long packingId, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "select top 1 " + PackingExceptionSelectColumns + " from tb_PackingException where PackingId=@PackingId and ExceptionCode=@ExceptionCode and Status=1 order by AuditTime desc, Id desc";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@ExceptionCode", SqlDbType.NVarChar, 50) { Value = "REPACK" }
+            };
+            DataSet ds = transaction == null
+                ? SqlHelper.ExecuteDataset(connection, CommandType.Text, sql, parameters)
+                : SqlHelper.ExecuteDataset(transaction, CommandType.Text, sql, parameters);
+            if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+            {
+                return null;
+            }
+            return BuildPackingExceptionFromRow(ds.Tables[0].Rows[0]);
+        }
+
         /// <summary>在事务内插入异常记录。</summary>
         public bool InsertException(PackingExceptionInfo info, SqlConnection connection, SqlTransaction transaction)
         {
@@ -173,6 +192,23 @@ namespace XHS.MSSQL
                 new SqlParameter("@Status", SqlDbType.Int) { Value = newStatus },
                 new SqlParameter("@AuditUser", SqlDbType.NVarChar, 50) { Value = auditUser ?? (object)DBNull.Value },
                 new SqlParameter("@AuditRemark", SqlDbType.NVarChar, 500) { Value = auditRemark ?? (object)DBNull.Value }
+            };
+            int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
+            return rows > 0;
+        }
+
+        /// <summary>将审核通过的重新装箱申请标记为已执行。</summary>
+        public bool MarkRepackProcessed(long exceptionId, string executeUser, string executeRemark, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingException set Status=3,AuditRemark=case when isnull(AuditRemark,'')='' then @ExecuteRemark else AuditRemark+'；'+@ExecuteRemark end where Id=@Id and ExceptionCode=@ExceptionCode and Status=1";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@Id", SqlDbType.BigInt) { Value = exceptionId },
+                new SqlParameter("@ExceptionCode", SqlDbType.NVarChar, 50) { Value = "REPACK" },
+                new SqlParameter("@ExecuteRemark", SqlDbType.NVarChar, 500)
+                {
+                    Value = string.Format("{0}，操作人：{1}", executeRemark ?? string.Empty, executeUser ?? string.Empty)
+                }
             };
             int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
             return rows > 0;

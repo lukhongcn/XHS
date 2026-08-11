@@ -1,6 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Web;
+using System.Web.Script.Services;
+using System.Web.Services;
 using System.Web.UI;
 using BLL;
 using XHS.BLL;
@@ -15,6 +17,9 @@ namespace ModuleWorkFlow
         private const string MenuId = "B12";
         protected string menuname = "";
         private readonly PackingOperationService packingService = new PackingOperationService();
+        private string currentPackingStage = string.Empty;
+        private bool currentPackingLocked;
+        private long currentApprovedRepackScanId;
 
         private void Page_Load(object sender, EventArgs e)
         {
@@ -34,11 +39,136 @@ namespace ModuleWorkFlow
 
             txt_ScanQRCode.Attributes["autocomplete"] = "off";
             txt_ScanQRCode.Attributes["onkeydown"] = "return packingScanKeyDown(event);";
+            txt_RepackQRCode.Attributes["autocomplete"] = "off";
+            txt_RepackQRCode.Attributes["onkeydown"] = "return packingRepackKeyDown(event);";
             if (!IsPostBack) { LoadPackingRecord(); }
         }
 
         protected void lnk_view_Click(object sender, EventArgs e) { Response.Redirect("Packing.aspx"); }
         protected void txt_ScanQRCode_TextChanged(object sender, EventArgs e) { ProcessScan(); }
+
+        [WebMethod(EnableSession = true)]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public static PackingPageStatusResponse GetPackingPageStatus(string taskId, string lockToken)
+        {
+            HttpContext context = HttpContext.Current;
+            Packing page = context == null ? null : context.Handler as Packing;
+            if (context == null || context.Session["userid"] == null || page == null || !Private.checkPrivate(page, MenuId, "PEDIT"))
+            {
+                return PackingPageStatusResponse.Fail("当前用户没有装箱编辑权限，请重新登录或联系管理员。");
+            }
+
+            Guid parsedTaskId;
+            if (!Guid.TryParse(SafeValue(taskId), out parsedTaskId))
+            {
+                return PackingPageStatusResponse.Fail("装箱任务编号无效。");
+            }
+
+            PackingOperationService service = new PackingOperationService();
+            PackingOperationResult result = service.GetPackingState(parsedTaskId);
+            PackingRecordInfo record = result.PackingRecord;
+            if (record == null || !record.Id.HasValue)
+            {
+                return PackingPageStatusResponse.Fail("装箱任务不存在。");
+            }
+
+            bool isLocked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
+            bool tokenChanged = !string.Equals(SafeValue(record.LockToken), SafeValue(lockToken), StringComparison.Ordinal);
+            return PackingPageStatusResponse.Ok(
+                isLocked,
+                !isLocked || tokenChanged,
+                service.GetApprovedRepackTargetScanId(record.Id.Value));
+        }
+
+        protected void gvScanRecords_RowCommand(object sender, System.Web.UI.WebControls.GridViewCommandEventArgs e)
+        {
+            if (!string.Equals(e.CommandName, "Repack", StringComparison.OrdinalIgnoreCase)) return;
+            long scanRecordId;
+            if (!long.TryParse(SafeValue(Convert.ToString(e.CommandArgument)), out scanRecordId) || scanRecordId <= 0)
+            {
+                ShowMessage("重新装箱目标明细无效。");
+                return;
+            }
+
+            long packingId = GetRequiredPackingId();
+            if (packingId <= 0) return;
+
+            PackingOperationResult state = packingService.GetPackingState(GetTaskId());
+            if (state.PackingRecord == null)
+            {
+                ShowMessage("装箱任务不存在，请重新进入页面。");
+                return;
+            }
+
+            BindPackingRecord(state.PackingRecord);
+            currentApprovedRepackScanId = packingService.GetApprovedRepackTargetScanId(packingId);
+            if (currentPackingLocked)
+            {
+                ShowMessage("重新装箱申请已提交，请等待审核。");
+                return;
+            }
+            if (string.Equals(currentPackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage("该装箱记录已经上传，不允许重新装箱。");
+                return;
+            }
+
+            if (currentApprovedRepackScanId > 0)
+            {
+                if (currentApprovedRepackScanId != scanRecordId)
+                {
+                    ShowMessage("请在本次审核通过的目标明细上执行重新装箱。");
+                    return;
+                }
+
+                hidRepackScanId.Value = scanRecordId.ToString();
+                txt_RepackQRCode.Text = string.Empty;
+                ClientScript.RegisterStartupScript(GetType(), "PackingRepackModal", "window.setTimeout(function(){showPackingRepackModal();}, 0);", true);
+                return;
+            }
+
+            PackingOperationResult result = packingService.RequestRepack(
+                packingId, scanRecordId, GetUserName(), Environment.MachineName);
+            if (result.PackingRecord != null)
+            {
+                BindPackingRecord(result.PackingRecord);
+                BindScanRecords(result.PackingRecord);
+            }
+            ShowMessage(result.Message);
+        }
+
+        protected void lnkbutton_repack_save_Click(object sender, EventArgs e)
+        {
+            long packingId = GetRequiredPackingId();
+            long scanRecordId;
+            string qrCode = SafeValue(txt_RepackQRCode.Text);
+            if (packingId <= 0) return;
+            if (!long.TryParse(SafeValue(hidRepackScanId.Value), out scanRecordId) || scanRecordId <= 0)
+            {
+                ShowMessage("重新装箱目标明细无效。");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(qrCode))
+            {
+                ShowMessage("请输入或扫描产品二维码。");
+                ClientScript.RegisterStartupScript(GetType(), "PackingRepackModal", "window.setTimeout(function(){showPackingRepackModal();}, 0);", true);
+                return;
+            }
+
+            PackingOperationResult result = packingService.ExecuteApprovedRepack(
+                packingId, scanRecordId, SafeValue(hidLockToken.Value), qrCode, GetUserName());
+            if (result.PackingRecord != null)
+            {
+                BindPackingRecord(result.PackingRecord);
+                BindScanRecords(result.PackingRecord);
+            }
+            if (!result.Success)
+            {
+                hidRepackScanId.Value = scanRecordId.ToString();
+                ClientScript.RegisterStartupScript(GetType(), "PackingRepackModal", "window.setTimeout(function(){showPackingRepackModal();}, 0);", true);
+            }
+            ShowMessage(result.Message);
+        }
 
         private void LoadPackingRecord()
         {
@@ -76,6 +206,7 @@ namespace ModuleWorkFlow
         private void BindWaitingForKdState()
         {
             BindEmptyScanRecords();
+            currentApprovedRepackScanId = 0L;
             hidPackingId.Value = string.Empty;
             hidLockToken.Value = string.Empty;
             hidPackingCompleteMode.Value = string.Empty;
@@ -286,6 +417,8 @@ namespace ModuleWorkFlow
 
         private void BindPackingRecord(PackingRecordInfo record)
         {
+            currentPackingStage = SafeValue(record.PackingStage);
+            currentPackingLocked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
             hidPackingId.Value = record.Id.HasValue ? record.Id.Value.ToString() : string.Empty;
             txt_SupplyBatchNo.Text = SafeValue(record.SupplyBatchNo);
             txt_PartNo.Text = SafeValue(record.PartNo);
@@ -299,10 +432,10 @@ namespace ModuleWorkFlow
                 : (record.Status == 1 ? "已完成" : "装箱中");
             txt_ExceptionStatus.Text = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0 ? "异常暂停" : "正常";
 
-            bool locked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
+            bool locked = currentPackingLocked;
             bool completed = record.Status.HasValue && record.Status.Value == 1;
             pnlLocked.Visible = true;
-            pnlLocked.Style["display"] = locked ? "flex" : "none";
+            pnlLocked.Style["display"] = locked ? "flex !important" : "none";
             Label_LockMessage.Text = locked
                 ? string.Format("KD标签：{0}；箱号：{1}；该箱已锁定，等待主管审核解除。", SafeValue(record.KDQRCode), SafeValue(record.CartonNo))
                 : string.Empty;
@@ -310,6 +443,14 @@ namespace ModuleWorkFlow
             txt_MaterialNo.Enabled = !locked && !completed;
             txt_Qty.Enabled = !locked && !completed;
             SetScanTypeState(locked || completed, record.PackingStage);
+            if (locked)
+            {
+                ClientScript.RegisterStartupScript(
+                    GetType(),
+                    "PackingStatusPolling",
+                    "window.setTimeout(startPackingStatusPolling, 1500);",
+                    true);
+            }
         }
 
         private void SetScanTypeState(bool lockedOrCompleted, string packingStage = null)
@@ -409,11 +550,73 @@ namespace ModuleWorkFlow
 
         private void BindScanRecords(PackingRecordInfo record)
         {
+            currentApprovedRepackScanId = record != null && record.Id.HasValue
+                ? packingService.GetApprovedRepackTargetScanId(record.Id.Value)
+                : 0L;
+            if (currentApprovedRepackScanId > 0)
+            {
+                ApplyApprovedRepackState();
+                hidRepackScanId.Value = currentApprovedRepackScanId.ToString();
+            }
             List<PackingScanRecordInfo> records = record != null && record.Id.HasValue
                 ? packingService.GetScanRecordsByPackingId(record.Id.Value)
                 : new List<PackingScanRecordInfo>();
             gvScanRecords.DataSource = records ?? new List<PackingScanRecordInfo>();
             gvScanRecords.DataBind();
+        }
+
+        private void ApplyApprovedRepackState()
+        {
+            txt_ExceptionStatus.Text = "重新装箱待执行";
+            txt_ScanQRCode.Enabled = false;
+            txt_MaterialNo.Enabled = false;
+            txt_Qty.Enabled = false;
+            btn_packing_complete.Enabled = false;
+            foreach (System.Web.UI.WebControls.ListItem item in rblScanType.Items)
+            {
+                item.Enabled = false;
+            }
+            UpdateRadioStyles();
+        }
+
+        protected string GetRepackLinkText(object scanRecordId)
+        {
+            long rowScanId;
+            return long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) && rowScanId == currentApprovedRepackScanId
+                ? "重新装箱"
+                : "申请";
+        }
+
+        protected string GetRepackLinkToolTip(object scanRecordId)
+        {
+            return GetRepackLinkText(scanRecordId) == "重新装箱" ? "重新装箱" : "申请重新装箱审核";
+        }
+
+        protected string GetRepackClientClick(object scanRecordId)
+        {
+            long rowScanId;
+            if (!long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) || rowScanId != currentApprovedRepackScanId)
+            {
+                return string.Empty;
+            }
+            return "return openApprovedRepackModal(" + rowScanId + ");";
+        }
+
+        protected bool CanUseRepackLink(object scanRecordId)
+        {
+            if (currentPackingLocked || string.Equals(currentPackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            long rowScanId;
+            if (!long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId)) return false;
+            return currentApprovedRepackScanId <= 0 || currentApprovedRepackScanId == rowScanId;
+        }
+
+        protected bool IsMaterialScanRecord(object qrCodeType)
+        {
+            return string.Equals(SafeValue(Convert.ToString(qrCodeType)), PackingScanRecordQRCodeTypeInfo.MaterialLabel, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool CheckShippingGoodsExists(string supplyBatchNo, string partNo, string cartonNo)
@@ -451,5 +654,39 @@ namespace ModuleWorkFlow
 
         protected override void OnInit(EventArgs e) { InitializeComponent(); base.OnInit(e); }
         private void InitializeComponent() { Load += new EventHandler(Page_Load); }
+    }
+
+    /// <summary>装箱页面 AJAX 状态查询结果。</summary>
+    public sealed class PackingPageStatusResponse
+    {
+        public bool Success { get; set; }
+        public bool IsLocked { get; set; }
+        public bool ShouldReload { get; set; }
+        public long ApprovedRepackScanId { get; set; }
+        public string Message { get; set; }
+
+        public static PackingPageStatusResponse Ok(bool isLocked, bool shouldReload, long approvedRepackScanId)
+        {
+            return new PackingPageStatusResponse
+            {
+                Success = true,
+                IsLocked = isLocked,
+                ShouldReload = shouldReload,
+                ApprovedRepackScanId = approvedRepackScanId,
+                Message = string.Empty
+            };
+        }
+
+        public static PackingPageStatusResponse Fail(string message)
+        {
+            return new PackingPageStatusResponse
+            {
+                Success = false,
+                IsLocked = true,
+                ShouldReload = false,
+                ApprovedRepackScanId = 0L,
+                Message = message ?? string.Empty
+            };
+        }
     }
 }

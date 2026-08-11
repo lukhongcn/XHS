@@ -30,7 +30,7 @@ namespace XHS.Model
         /// <summary>锁定令牌。</summary>
         public string LockToken { get; set; }
 
-        /// <summary>状态：0=待审核，1=已审核通过，2=已驳回。</summary>
+        /// <summary>状态：0=待审核，1=已审核通过，2=已驳回，3=重新装箱已执行。</summary>
         public int? Status { get; set; }
 
         /// <summary>创建人。</summary>

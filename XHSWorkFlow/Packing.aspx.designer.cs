@@ -31,7 +31,12 @@
         protected global::System.Web.UI.WebControls.HiddenField hidPackingId;
         protected global::System.Web.UI.WebControls.HiddenField hidLockToken;
         protected global::System.Web.UI.WebControls.HiddenField hidPackingCompleteMode;
+        protected global::System.Web.UI.WebControls.HiddenField hidRepackScanId;
         protected global::System.Web.UI.WebControls.GridView gvScanRecords;
+        protected global::System.Web.UI.WebControls.Panel pnlRepackModal;
+        protected global::System.Web.UI.WebControls.Label Label_RepackQRCode;
+        protected global::System.Web.UI.WebControls.TextBox txt_RepackQRCode;
+        protected global::System.Web.UI.WebControls.LinkButton lnkbutton_repack_save;
         protected global::System.Web.UI.WebControls.Label Label_Message;
     }
 }
