@@ -54,6 +54,10 @@
     <Compile Include="ShippingGoods.cs" />
     <Compile Include="BatchRule.cs" />
     <Compile Include="LabelCodeRule.cs" />
+    <Compile Include="LabelBindingCustomer.cs" />
+    <Compile Include="LabelBindingFactory.cs" />
+    <Compile Include="LabelBindingFailure.cs" />
+    <Compile Include="ScanFlowStep.cs" />
     <Compile Include="UnRegularTableImportField.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

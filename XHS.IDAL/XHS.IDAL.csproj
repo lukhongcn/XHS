@@ -54,6 +54,10 @@
     <Compile Include="IShippingGoods.cs" />
     <Compile Include="IBatchRule.cs" />
     <Compile Include="ILabelCodeRule.cs" />
+    <Compile Include="ILabelBindingCustomer.cs" />
+    <Compile Include="ILabelBindingFactory.cs" />
+    <Compile Include="ILabelBindingFailure.cs" />
+    <Compile Include="IScanFlowStep.cs" />
     <Compile Include="IUnRegularTableImportField.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
