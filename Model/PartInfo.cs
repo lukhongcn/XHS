@@ -23,6 +23,10 @@ namespace XHS.Model
 
         public string ProcessOrderNo { get; set; }
 
+        public string SupplierCode { get; set; }
+
+        public string ProductDate { get; set; }
+
         public int JHSQty { get; set; }
     }
 }

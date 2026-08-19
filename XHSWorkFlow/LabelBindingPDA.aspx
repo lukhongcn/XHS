@@ -1,0 +1,43 @@
+﻿<%@ Page Language="C#" CodeBehind="LabelBindingPDA.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.LabelBindingPDA" MasterPageFile="~/DefaultPDASub.Master" %>
+<asp:Content ID="PdaContent" ContentPlaceHolderID="contentHolder" runat="server">
+    <asp:ScriptManager ID="PdaScriptManager" runat="server" />
+    <asp:UpdatePanel ID="upPdaContent" runat="server" UpdateMode="Conditional">
+        <ContentTemplate>
+    <style type="text/css">
+        .pda-section{margin:8px;padding:10px;border-radius:6px;background:#fff;border:1px solid #d8dee5}.pda-section h2{margin:0 0 8px;font-size:18px}
+        .pda-scan-dock{position:sticky;top:0;z-index:10;margin:8px;padding:10px;background:#f4f6f8}.pda-state{display:block;padding:13px 10px;border-radius:6px;color:#fff;text-align:center;font-size:22px;font-weight:800}.pda-state-customer{background:#1769aa}.pda-state-factory{background:#218739}
+        .pda-scan{width:100%;min-height:58px;padding:8px;font-size:20px;border:3px solid #1769aa;border-radius:5px;background:#fffbd9}.pda-scan:focus{outline:3px solid #ffb000;outline-offset:1px}.pda-scan:disabled{background:#d9dee3;color:#6b7280;border-color:#9aa4af;cursor:not-allowed;opacity:1}.pda-field{margin:7px 0}.pda-field label{display:block;margin-bottom:3px;font-weight:700}.pda-readonly{width:100%;min-height:40px;padding:7px;border:1px solid #c9d2dc;border-radius:4px;background:#f5f7f9;word-break:break-all}
+        .pda-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;text-align:center}.pda-summary div{padding:7px 2px;border-radius:4px;background:#eef2f5}.pda-summary strong{display:block;font-size:19px}.pda-progress{height:14px;margin-top:7px;background:#e4e9ee;border-radius:8px;overflow:hidden}.pda-progress span{display:block;height:100%;background:#218739;transition:width .15s}
+        .pda-status{display:block;margin:8px;padding:10px;border-radius:4px;font-weight:700}.pda-ok{color:#126b2e;background:#e5f6ea}.pda-error{color:#a51d18;background:#fde9e7}.pda-grid{width:100%;border-collapse:collapse;font-size:13px}.pda-grid th{background:#e8edf2;white-space:nowrap}.pda-grid th,.pda-grid td{padding:6px 4px;border:1px solid #cbd5df;vertical-align:top;word-break:break-all}.pda-button{width:100%;min-height:52px;margin-top:8px;border:0;border-radius:5px;font-size:18px;font-weight:700}.pda-primary{background:#1769aa;color:#fff}.pda-danger{background:#b42318;color:#fff}
+        .pda-modal-mask{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.62)}.pda-modal{width:100%;max-width:460px;padding:18px;border-radius:8px;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.35)}.pda-modal h3{margin:0 0 12px;color:#a51d18;font-size:24px}.pda-modal pre{white-space:pre-wrap;word-break:break-word;font-size:18px}
+    </style>
+    <div class="pda-scan-dock">
+        <asp:Label ID="labScanState" runat="server" CssClass="pda-state pda-state-customer"></asp:Label>
+        <asp:TextBox ID="txtPdaScan" runat="server" CssClass="pda-scan" AutoPostBack="true" OnTextChanged="txtPdaScan_TextChanged"></asp:TextBox>
+    </div>
+    <asp:Label ID="labMessage" runat="server" CssClass="pda-status"></asp:Label>
+    <div class="pda-section">
+        <h2>客户标签信息</h2>
+        <div class="pda-field"><label>客户标签原始内容</label><div class="pda-readonly"><asp:Label ID="labCustomerRaw" runat="server"></asp:Label></div></div>
+        <div class="pda-field"><label>客户物料号/本厂品号</label><div class="pda-readonly"><asp:Label ID="labCustomerMaterial" runat="server"></asp:Label>/<asp:Label ID="labExpectedPart" runat="server"></asp:Label></div></div>
+        <div class="pda-field"><label>客户批次 / 单位</label><div class="pda-readonly"><asp:Label ID="labCustomerBatch" runat="server"></asp:Label> / <asp:Label ID="labCustomerUnit" runat="server"></asp:Label></div></div>
+        <div class="pda-summary"><div>客户数量<strong><asp:Label ID="labCustomerQty" runat="server" Text="0"></asp:Label></strong></div><div>已绑定<strong><asp:Label ID="labBoundQty" runat="server" Text="0"></asp:Label></strong></div><div>剩余<strong><asp:Label ID="labRemainingQty" runat="server" Text="0"></asp:Label></strong></div></div>
+        <div class="pda-progress"><span id="progressBar" runat="server" style="width:0%"></span></div>
+    </div>
+    <div class="pda-section"><h2>已绑定明细（最新在上）</h2><asp:GridView ID="gvBindingRecords" runat="server" CssClass="pda-grid" AutoGenerateColumns="false"><Columns><asp:BoundField DataField="WorkOrderNo" HeaderText="工单号" /><asp:BoundField DataField="FactoryBarcode" HeaderText="本厂条码" /><asp:BoundField DataField="CodeType" HeaderText="类型" /><asp:BoundField DataField="SteelStampRelation" HeaderText="钢印关联" /><asp:BoundField DataField="JHSPartNo" HeaderText="本厂品号" /><asp:BoundField DataField="JHSBatchNo" HeaderText="批次" /><asp:BoundField DataField="BindQtyText" HeaderText="标签数量" /><asp:BoundField DataField="ScanTimeText" HeaderText="扫描时间" /></Columns></asp:GridView></div>
+    <div class="pda-actions"><asp:Button ID="btnEndStep" runat="server" Text="结束当前步骤" CssClass="pda-button pda-primary" Visible="false" OnClick="btnEndStep_Click" /><asp:Button ID="btnCompleteBinding" runat="server" Text="完成绑定" CssClass="pda-button pda-primary" Visible="false" OnClick="btnCompleteBinding_Click" /><asp:Button ID="btnClear" runat="server" Text="清空当前绑定" CssClass="pda-button pda-danger" OnClick="btnClear_Click" OnClientClick="return confirm('确定清空当前客户的全部绑定明细吗？');" /></div>
+    <asp:Panel ID="pnlFailureModal" runat="server" CssClass="pda-modal-mask" Visible="false"><div class="pda-modal" role="dialog" aria-modal="true"><h3><asp:Label ID="labFailureTitle" runat="server" Text="扫描失败" /></h3><pre><asp:Label ID="labFailureMessage" runat="server" /></pre><asp:Button ID="btnFailureOk" runat="server" Text="确定" CssClass="pda-button pda-primary" OnClick="btnFailureOk_Click" /></div></asp:Panel>
+    <asp:HiddenField ID="hidScanStage" runat="server" /><asp:HiddenField ID="hidCustomerQty" runat="server" Value="0" /><asp:HiddenField ID="hidBoundQty" runat="server" Value="0" /><asp:HiddenField ID="hidRemainingQty" runat="server" Value="0" />
+        </ContentTemplate>
+        <Triggers>
+            <asp:AsyncPostBackTrigger ControlID="txtPdaScan" EventName="TextChanged" />
+            <asp:AsyncPostBackTrigger ControlID="btnClear" EventName="Click" />
+            <asp:AsyncPostBackTrigger ControlID="btnEndStep" EventName="Click" />
+            <asp:AsyncPostBackTrigger ControlID="btnCompleteBinding" EventName="Click" />
+            <asp:AsyncPostBackTrigger ControlID="btnFailureOk" EventName="Click" />
+        </Triggers>
+    </asp:UpdatePanel>
+</asp:Content>
+<asp:Content ID="PdaScripts" ContentPlaceHolderID="JSHolder" runat="server"><script type="text/javascript">
+(function(){var busy=false,id='<%=txtPdaScan.ClientID%>';function box(){return document.getElementById(id)}function focusScan(){var e=box();if(e){e.focus();try{e.select()}catch(x){}e.scrollIntoView({block:'nearest'})}}function wire(){var e=box();if(!e||e.getAttribute('data-pda-wired')==='1')return;e.setAttribute('data-pda-wired','1');e.setAttribute('autocomplete','off');e.setAttribute('autocorrect','off');e.setAttribute('autocapitalize','off');e.setAttribute('spellcheck','false');e.onkeydown=function(ev){ev=ev||window.event;if(ev.keyCode===13){ev.preventDefault();if(busy)return false;busy=true;__doPostBack('<%=txtPdaScan.UniqueID%>','');return false}}}function ready(){wire();window.setTimeout(focusScan,30)}window.setPdaScanBusy=function(v){busy=!!v};if(window.Sys&&Sys.WebForms){var prm=Sys.WebForms.PageRequestManager.getInstance();prm.add_beginRequest(function(){busy=true});prm.add_endRequest(function(){busy=false;ready()})}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();window.setTimeout(ready,120)}());
+</script></asp:Content>

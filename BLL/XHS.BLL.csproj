@@ -87,6 +87,10 @@
     <Compile Include="QRCode.cs" />
     <Compile Include="RegexFieldParser.cs" />
     <Compile Include="FactoryBarcodeParser.cs" />
+    <Compile Include="ScanFlowScanRecord.cs" />
+    <Compile Include="ScanFlowStep.cs" />
+    <Compile Include="ScanStepHandlerRegistry.cs" />
+    <Compile Include="ScanFlow.cs" />
     <Compile Include="ShippingGoods.cs" />
     <Compile Include="UnRegularTableImport.cs" />
     <Compile Include="UnRegularTableImportField.cs" />

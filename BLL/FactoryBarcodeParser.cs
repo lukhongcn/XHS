@@ -14,14 +14,15 @@ namespace XHS.BLL
         private readonly RegexFieldParser regexParser = new RegexFieldParser();
 
         /// <summary>兼容装箱业务使用的出货二维码解析入口。</summary>
-        public ShippingGoodsInfo ParseShippingGoodsBarcode(string rawCode, string customerId)
+        public ShippingGoodsInfo ParseShippingGoodsBarcode(string rawCode)
         {
             return new XHS.BLL.QRCode().ParseShippingGoodsInfo(rawCode);
         }
 
         public PartInfo ParseFactoryBarcode(
      string rawCode,
-     string customerId)
+     string customerId,
+     string labelType)
         {
             rawCode = (rawCode ?? string.Empty)
                 .Replace("\r", string.Empty)
@@ -36,7 +37,7 @@ namespace XHS.BLL
             // 1. 优先匹配下方零件包装码
             List<LabelCodeRuleInfo> codeRuleInfos =
                 new LabelCodeRule()
-                    .GetLabelCodeRulesByCustomerId(customerId);
+                    .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
 
             if (codeRuleInfos != null)
             {
@@ -72,6 +73,14 @@ namespace XHS.BLL
                         packageResult.Fields,
                         "Qty");
 
+                    string supplierCode = GetFieldValue(
+                        packageResult.Fields,
+                        "SupplierCode");
+
+                    string productDate = GetFieldValue(
+                        packageResult.Fields,
+                        "ProductDate");
+
                     int qty;
                     if (!int.TryParse(qtyText, out qty))
                     {
@@ -91,6 +100,9 @@ namespace XHS.BLL
 
                     // PartInfo 增加 JHSQty 属性后启用
                     partInfo.JHSQty = qty;
+
+                    partInfo.SupplierCode = supplierCode;
+                    partInfo.ProductDate = productDate;
 
                     return partInfo;
                 }

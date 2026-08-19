@@ -59,8 +59,10 @@
     <Compile Include="PackingScanRecordQRCodeTypeInfo.cs" />
     <Compile Include="PackingStageInfo.cs" />
     <Compile Include="ParamterInfo.cs" />
-    <Compile Include="LabelBindingCustomerInfo.cs" />
-    <Compile Include="LabelBindingFactoryInfo.cs" />
+    <Compile Include="ScanFlowScanRecordInfo.cs" />
+    <Compile Include="LabelBindingPdaScanFailureInfo.cs" />
+    <Compile Include="ScanFlowStepInfo.cs" />
+    <Compile Include="ScanFlowInfo.cs" />
     <Compile Include="PartInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
