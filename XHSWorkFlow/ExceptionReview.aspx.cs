@@ -114,7 +114,7 @@ namespace ModuleWorkFlow
         {
             int status;
             if (!int.TryParse(Convert.ToString(value), out status)) return "未知";
-            return status == 1 ? "通过" : (status == 2 ? "取消" : (status == 3 ? "已执行" : "暂停/待处理"));
+            return status == 1 ? "通过" : (status == 2 ? "已取消" : (status == 3 ? "已删除" : "暂停/待处理"));
         }
 
         private void BindExceptions()

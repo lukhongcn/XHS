@@ -15,6 +15,7 @@ namespace ModuleWorkFlow
     {
         private const string ContextKey = "LabelBindingPdaContext";
         private const string FlowName = "光束标签绑定流程";
+        private const string FlowCode = "LABEL_BINDING";
         private readonly FactoryBarcodeParser barcodeParser = new FactoryBarcodeParser();
 
         [Serializable]
@@ -113,7 +114,6 @@ namespace ModuleWorkFlow
             txtPdaScan.Text = string.Empty;
             if (raw.Length == 0) { ShowScanFailure("Empty", "请扫描条码。", raw, null); return; }
 
-            if (IsFastDuplicateSuccess(context, raw)) return;
             try
             {
                 ScanFlowStepInfo step = GetCurrentStep(context);
@@ -199,7 +199,7 @@ namespace ModuleWorkFlow
                 new ScanFlowScanRecordInfo
                 {
                     FlowId = context.FlowId,
-                    ScanName = FlowName,
+                    FlowCode = FlowCode,
                     BindingTaskId = context.BindingTaskId,
                     StepId = null,
                     StepCode = "CLEAR",
@@ -377,17 +377,6 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            if (Current.Rows.Any(x => string.Equals(x.FactoryBarcode, raw, StringComparison.Ordinal)))
-            {
-                ShowScanFailure("DuplicateCurrent", "本厂条码已在当前绑定中，不能重复扫描。", raw, part, type);
-                return;
-            }
-            if (new ScanFlowScanRecord().IsFactoryBarcodeRecorded(Current.FlowId, raw))
-            {
-                ShowScanFailure("DuplicateExisting", "本厂条码已经绑定过其他客户标签。", raw, part, type);
-                return;
-            }
-
             decimal remaining = Current.CustomerQty - Current.Rows.Sum(x => x.BindQty);
             if (labelQty > remaining)
             {
@@ -542,7 +531,7 @@ namespace ModuleWorkFlow
         private bool InitializeWorkflow()
         {
             PdaContext context = Current;
-            List<ScanFlowStepInfo> steps = new ScanFlowStep().GetStepsByFlowName(FlowName);
+            List<ScanFlowStepInfo> steps = new ScanFlowStep().GetStepsByFlowCode(FlowCode);
             if (steps == null || steps.Count == 0)
             {
                 Message("扫描流程没有配置步骤：" + FlowName, false);
@@ -617,7 +606,7 @@ namespace ModuleWorkFlow
             return new ScanFlowScanRecordInfo
             {
                 FlowId = context.FlowId,
-                ScanName = FlowName,
+                FlowCode = FlowCode,
                 BindingTaskId = context.BindingTaskId,
                 StepId = step == null ? (int?)null : step.StepId,
                 StepCode = stepCode,
@@ -638,7 +627,6 @@ namespace ModuleWorkFlow
             return info == null || string.IsNullOrWhiteSpace(info.HasSteelStamp) ? "未维护" : info.HasSteelStamp;
         }
         private static void MarkSuccess(PdaContext context, string raw) { ScanFlowStepInfo step = GetCurrentStep(context); context.LastSuccessfulRaw = raw; context.LastSuccessfulStage = step == null ? string.Empty : step.StepCode; context.LastSuccessfulAt = DateTime.Now; }
-        private static bool IsFastDuplicateSuccess(PdaContext context, string raw) { ScanFlowStepInfo step = GetCurrentStep(context); string stepCode = step == null ? string.Empty : step.StepCode; return string.Equals(context.LastSuccessfulRaw, raw, StringComparison.Ordinal) && string.Equals(context.LastSuccessfulStage, stepCode, StringComparison.Ordinal) && (DateTime.Now - context.LastSuccessfulAt).TotalSeconds < 2; }
         private void Message(string text, bool ok) { labMessage.Text = text; labMessage.CssClass = "pda-status " + (ok ? "pda-ok" : "pda-error"); }
         private void Focus(Control control) { ScriptManager.RegisterStartupScript(this, GetType(), "pdaFocus", "window.setTimeout(function(){var e=document.getElementById('" + control.ClientID + "');if(e){e.focus();try{e.select();}catch(x){}}},50);", true); }
         private static string NormalizeScan(string value) { return (value ?? string.Empty).Trim('\r', '\n', ' ', '\t'); }

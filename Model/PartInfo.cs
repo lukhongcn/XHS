@@ -3,23 +3,15 @@ namespace XHS.Model
     /// <summary>
     /// 零件信息。
     /// </summary>
-    public class PartInfo
+    public class PartInfo : PartMasterInfo
     {
         public int Seq { get; set; }
-
-        public string MaterialNo { get; set; }
-
-        public string MaterialName { get; set; }
 
         public string JHSMaterialNo { get; set; }
 
         public string JHSBatchNo { get; set; }
 
         public string PartType { get; set; }
-
-        public string LabelInfo { get; set; }
-
-        public bool? HasSteelStamp { get; set; }
 
         public string ProcessOrderNo { get; set; }
 
@@ -28,5 +20,11 @@ namespace XHS.Model
         public string ProductDate { get; set; }
 
         public int JHSQty { get; set; }
+
+        // 通用条码解析字段，保留历史字段以兼容现有业务。
+        public string BatchNo { get; set; }
+        public string Unit { get; set; }
+        public decimal Qty { get; set; }
+        public string BarcodeType { get; set; }
     }
 }

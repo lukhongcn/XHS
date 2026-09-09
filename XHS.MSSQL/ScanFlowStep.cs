@@ -19,7 +19,25 @@ namespace XHS.MSSQL
         public List<ScanFlowStepInfo> GetStepsByFlowId(int flowId)
         {
             const string sql = "select " + SelectColumns + " from tb_ScanFlowStep where FlowId=@FlowId order by StepNo asc";
-            return GetStepsBySql(sql, new[] { new SqlParameter("@FlowId", SqlDbType.Int) { Value = flowId } });
+            return _getScanFlowStepInfo(sql, new[] { new SqlParameter("@FlowId", SqlDbType.Int) { Value = flowId } });
+        }
+
+        public List<ScanFlowStepInfo> GetStepsByFlowName(string flowName)
+        {
+            string queryString = "select s.StepId,s.FlowId,s.StepNo,s.StepCode,s.StepName,s.ScanType,s.RuleName,s.CustomerId,s.LabelType,s.AllowRepeat,s.EndControlId,s.EndCompareControlId from tb_ScanFlow f inner join tb_ScanFlowStep s on f.FlowId=s.FlowId where f.FlowName=@FlowName and f.Enabled=1 order by s.StepNo asc";
+            return _getScanFlowStepInfo(queryString, new[]
+            {
+                new SqlParameter("@FlowName", SqlDbType.NVarChar, 100) { Value = flowName.Trim() }
+            });
+        }
+
+        public List<ScanFlowStepInfo> GetStepsByFlowCode(string flowCode)
+        {
+            string queryString = "select s.StepId,s.FlowId,s.StepNo,s.StepCode,s.StepName,s.ScanType,s.RuleName,s.CustomerId,s.LabelType,s.AllowRepeat,s.EndControlId,s.EndCompareControlId from tb_ScanFlow f inner join tb_ScanFlowStep s on f.FlowId=s.FlowId where f.FlowCode=@FlowCode and f.Enabled=1 order by s.StepNo asc";
+            return _getScanFlowStepInfo(queryString, new[]
+            {
+                new SqlParameter("@FlowCode", SqlDbType.VarChar, 50) { Value = flowCode.Trim() }
+            });
         }
 
         public ParamterInfo InsertSteps(List<ScanFlowStepInfo> infos)
@@ -40,7 +58,7 @@ namespace XHS.MSSQL
             return BuildParamterInfo(infos, sql, info => new[] { new SqlParameter("@StepId", SqlDbType.Int) { Value = ToDbValue(info.StepId) } });
         }
 
-        private static List<ScanFlowStepInfo> GetStepsBySql(string sql, SqlParameter[] parameters)
+        private static List<ScanFlowStepInfo> _getScanFlowStepInfo(string sql, SqlParameter[] parameters)
         {
             DataSet dataSet = Data.getDataSet(sql, parameters);
             List<ScanFlowStepInfo> result = new List<ScanFlowStepInfo>();

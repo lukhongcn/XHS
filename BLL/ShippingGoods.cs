@@ -4,6 +4,7 @@ using ModuleWorkFlow.business;
 using XHS.IDAL;
 using System.Collections;
 using System;
+using System.Linq;
 
 namespace BLL
 {
@@ -44,6 +45,88 @@ namespace BLL
             return dal.GetShippingGoodsByBusinessKey(supplyBatchNo, partNo, cartonNo);
         }
 
+        public List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo)
+        {
+            return dal.GetShippingGoodsByBusinessKey(supplyBatchNo, partNo, cartonNo, deliveryNo);
+        }
+
+        public string GetNextAutoDeliveryNo(DateTime date)
+        {
+            return dal.GetNextAutoDeliveryNo(date);
+        }
+
+        public List<ShippingGoodsInfo> BuildNewShippingGoodsInfos(
+            ShippingGoodsInfo templateShippingGoodsInfo,
+            int orderQuantity,
+            int boxQuantity,
+            int boxCount)
+        {
+            if (templateShippingGoodsInfo == null)
+            {
+                throw new ArgumentNullException("templateShippingGoodsInfo");
+            }
+
+            if (orderQuantity <= 0)
+            {
+                throw new ArgumentException("订单数量必须为大于 0 的整数。", "orderQuantity");
+            }
+
+            if (boxQuantity <= 0)
+            {
+                throw new ArgumentException("数量必须为大于 0 的整数。", "boxQuantity");
+            }
+
+            if (boxCount <= 0)
+            {
+                throw new ArgumentException("纸箱数量必须为大于 0 的整数。", "boxCount");
+            }
+
+            var shippingGoodsInfos = new List<ShippingGoodsInfo>();
+            int producedQuantity = 0;
+            for (int i = 1; i <= boxCount; i++)
+            {
+                int currentQuantity = i == boxCount
+                    ? orderQuantity - producedQuantity
+                    : boxQuantity;
+
+                if (currentQuantity <= 0)
+                {
+                    throw new ArgumentException("订单数量不足以生成指定的纸箱数量。", "orderQuantity");
+                }
+
+                shippingGoodsInfos.Add(new ShippingGoodsInfo
+                {
+                    SupplierCode = templateShippingGoodsInfo.SupplierCode,
+                    PartNo = templateShippingGoodsInfo.PartNo,
+                    PartChineseName = templateShippingGoodsInfo.PartChineseName,
+                    PartEnglishName = templateShippingGoodsInfo.PartEnglishName,
+                    Quantity = currentQuantity,
+                    SupplyBatchNo = templateShippingGoodsInfo.SupplyBatchNo,
+                    DeliveryNo = templateShippingGoodsInfo.DeliveryNo,
+                    StackLayerCount = templateShippingGoodsInfo.StackLayerCount,
+                    ProductionDate = templateShippingGoodsInfo.ProductionDate,
+                    InspectionConfirmDate = templateShippingGoodsInfo.InspectionConfirmDate,
+                    CartonNo = boxCount.ToString() + "-" + i.ToString(),
+                    QrCode = templateShippingGoodsInfo.QrCode,
+                    OutBoxQRCode = templateShippingGoodsInfo.OutBoxQRCode,
+                    Status = templateShippingGoodsInfo.Status,
+                    PrintCount = templateShippingGoodsInfo.PrintCount,
+                    Creater = templateShippingGoodsInfo.Creater,
+                    CreatDate = templateShippingGoodsInfo.CreatDate,
+                    SingleBoxGrossWeight = templateShippingGoodsInfo.SingleBoxGrossWeight
+                });
+
+                producedQuantity += currentQuantity;
+            }
+
+            if (producedQuantity != orderQuantity)
+            {
+                throw new ArgumentException("生成的出货数量合计与订单数量不一致。", "orderQuantity");
+            }
+
+            return shippingGoodsInfos;
+        }
+
         public string InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             NormalizeShippingGoods(shippingGoodsInfos);
@@ -66,14 +149,52 @@ namespace BLL
             return dal.UpdateShippingGoods(shippingGoodsInfos);
         }
 
-        public string UpdateShippingGoodsClose(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public ParamterInfo UpdateShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos, string deliveryNo)
         {
-            if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
+            NormalizeShippingGoods(shippingGoodsInfos);
+            return dal.UpdateShippingGoodsByBusinessKey(shippingGoodsInfos, deliveryNo);
+        }
+
+        public string UpdatePrintedDeliveryNo(string supplyBatchNo, string partNo, string cartonNo, string oldDeliveryNo, string newDeliveryNo)
+        {
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo) || string.IsNullOrWhiteSpace(cartonNo))
             {
-                return "没有可结案的出货货品数据。";
+                return "编辑模式缺少供货批次号、零件编号或箱号。";
             }
 
-            ParamterInfo paramterInfo = dal.UpdateShippingGoodsClose(shippingGoodsInfos);
+            List<ShippingGoodsInfo> infos = dal.GetShippingGoods(partNo.Trim(), string.Empty, supplyBatchNo.Trim());
+            infos = infos == null
+                ? new List<ShippingGoodsInfo>()
+                : infos.FindAll(info => info != null && string.Equals((info.DeliveryNo ?? string.Empty).Trim(), (oldDeliveryNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase));
+            if (infos == null || infos.Count == 0)
+            {
+                return "未找到对应的已打印出货货品数据。";
+            }
+
+            if (infos.Any(info => (info.PrintCount ?? 0) <= 0 && !string.Equals(info.Status, ShippingGoodsStatusInfo.Printed, StringComparison.OrdinalIgnoreCase)))
+            {
+                return "当前出货货品尚未打印，请使用普通编辑。";
+            }
+
+            IList source = new ArrayList { dal.UpdatePrintedDeliveryNo(supplyBatchNo.Trim(), partNo.Trim(), cartonNo.Trim(), oldDeliveryNo ?? string.Empty, newDeliveryNo ?? string.Empty) };
+            return Common.Save(source) ? string.Empty : "保存失败。";
+        }
+
+        public string UpdateShippingGoodsClose(string supplyBatchNo, string partNo, string deliveryNo, string closer, DateTime closeDate)
+        {
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) ||
+                string.IsNullOrWhiteSpace(partNo) ||
+                string.IsNullOrWhiteSpace(deliveryNo))
+            {
+                return "结案缺少供货批次号、零件编号或配送单号。";
+            }
+
+            ParamterInfo paramterInfo = dal.UpdateShippingGoodsClose(
+                supplyBatchNo.Trim(),
+                partNo.Trim(),
+                deliveryNo.Trim(),
+                closer == null ? string.Empty : closer.Trim(),
+                closeDate);
             IList source = new ArrayList();
             source.Add(paramterInfo);
 
@@ -85,21 +206,30 @@ namespace BLL
             return dal.DeleteShippingGoods(shippingGoodsInfos);
         }
 
+        public ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos, string deliveryNo)
+        {
+            return dal.DeleteShippingGoodsByBusinessKey(shippingGoodsInfos, deliveryNo);
+        }
+
         public ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             return dal.DeleteShippingGoodsByBusinessKey(shippingGoodsInfos);
         }
 
-        public string SaveDeleteShippingGoods(string supplyBatchNo, string partNo)
+        public string SaveDeleteShippingGoods(string supplyBatchNo, string partNo, string deliveryNo)
         {
-            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo))
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo) || string.IsNullOrWhiteSpace(deliveryNo))
             {
-                return "删除模式缺少供货批次号或零件编号。";
+                return "删除模式缺少供货批次号、零件编号或配送单号。";
             }
 
             string normalizedSupplyBatchNo = supplyBatchNo.Trim();
             string normalizedPartNo = partNo.Trim();
+            string normalizedDeliveryNo = deliveryNo.Trim();
             List<ShippingGoodsInfo> existingPartShippingGoodsInfos = dal.GetShippingGoods(normalizedPartNo, string.Empty, normalizedSupplyBatchNo);
+            existingPartShippingGoodsInfos = existingPartShippingGoodsInfos == null
+                ? new List<ShippingGoodsInfo>()
+                : existingPartShippingGoodsInfos.FindAll(info => string.Equals((info.DeliveryNo ?? string.Empty).Trim(), normalizedDeliveryNo, StringComparison.OrdinalIgnoreCase));
             if (existingPartShippingGoodsInfos == null || existingPartShippingGoodsInfos.Count == 0)
             {
                 return string.Format("未找到批次“{0}”下零件编号“{1}”的出货货品数据。", normalizedSupplyBatchNo, normalizedPartNo);
@@ -123,8 +253,14 @@ namespace BLL
                 }
             }
 
-            ParamterInfo paramterInfo = dal.DeleteShippingGoodsByBusinessKey(existingPartShippingGoodsInfos);
+            ParamterInfo printRecordDelete = XHS.DALFactory.PrintRecord.Create().DeletePrintRecordsByBusinessKey(normalizedSupplyBatchNo, normalizedPartNo, normalizedDeliveryNo);
+            ParamterInfo packingScanDelete = XHS.DALFactory.PackingScanRecord.Create().DeletePackingScanRecordsByBusinessKey(normalizedSupplyBatchNo, normalizedPartNo, normalizedDeliveryNo);
+            ParamterInfo packingRecordDelete = XHS.DALFactory.PackingRecord.Create().DeletePackingRecordsByBusinessKey(normalizedSupplyBatchNo, normalizedPartNo, normalizedDeliveryNo);
+            ParamterInfo paramterInfo = dal.DeleteShippingGoodsByBusinessKey(existingPartShippingGoodsInfos, normalizedDeliveryNo);
             IList source = new ArrayList();
+            source.Add(printRecordDelete);
+            source.Add(packingScanDelete);
+            source.Add(packingRecordDelete);
             source.Add(paramterInfo);
 
             return Common.Save(source) ? string.Empty : "保存失败。";
@@ -283,9 +419,9 @@ namespace BLL
             return Common.Save(source) ? string.Empty : "保存失败。";
         }
 
-        public string CompleteShippingGoodsPrint(string supplyBatchNo, string partNo, string cartonNo)
+        public string CompleteShippingGoodsPrint(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo)
         {
-            List<ShippingGoodsInfo> shippingGoodsInfos = dal.GetShippingGoodsByBusinessKey(supplyBatchNo, partNo, cartonNo);
+            List<ShippingGoodsInfo> shippingGoodsInfos = dal.GetShippingGoodsByBusinessKey(supplyBatchNo, partNo, cartonNo, deliveryNo);
             if (shippingGoodsInfos == null || shippingGoodsInfos.Count == 0)
             {
                 return "未找到对应的出货货品数据。";
@@ -302,7 +438,7 @@ namespace BLL
                 shippingGoodsInfo.PrintCount = (shippingGoodsInfo.PrintCount ?? 0) + 1;
             }
 
-            ParamterInfo paramterInfo = dal.UpdateShippingGoods(shippingGoodsInfos);
+            ParamterInfo paramterInfo = dal.UpdateShippingGoodsByBusinessKey(shippingGoodsInfos, deliveryNo);
             IList source = new ArrayList();
             source.Add(paramterInfo);
 

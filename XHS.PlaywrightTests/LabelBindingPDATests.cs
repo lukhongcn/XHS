@@ -45,6 +45,32 @@ public class LabelBindingPDATests : PageTest
         StringAssert.Contains("add_endRequest", combined);
     }
 
+    [Test]
+    public async Task PdaWorkflowSavesBindingRecordAndRecordListLoads()
+    {
+        await Page.GotoAsync($"{BaseUrl}/LabelBindingPDA.aspx");
+        await LoginAsPdaAdmin();
+
+        var scanner = Page.Locator("[id$='_txtPdaScan']");
+        var state = Page.Locator("[id$='_labScanState']");
+
+        await scanner.FillAsync("P2026061705592/CAQPL/5401995XNY03A02&120&EA&260602");
+        await scanner.PressAsync("Enter");
+        await Expect(state).ToContainTextAsync("工单");
+
+        await scanner.FillAsync("5104-20260702020");
+        await scanner.PressAsync("Enter");
+        await Expect(state).ToContainTextAsync("本厂");
+
+        await scanner.FillAsync("26J073|260602|120");
+        await scanner.PressAsync("Enter");
+        await Expect(Page.Locator("[id$='_txtPdaScan']")).ToBeDisabledAsync();
+
+        await Page.GotoAsync($"{BaseUrl}/LabelBindingRecordList.aspx");
+        await Expect(Page.Locator("[id$='_MainDataGrid']")).ToBeAttachedAsync();
+        await Expect(Page.Locator("[id$='_Label_Message']")).ToContainTextAsync("绑定记录");
+    }
+
     private async Task LoginAsPdaAdmin()
     {
         var dialog = Page.GetByRole(AriaRole.Dialog, new() { Name = "PDA 登录" });

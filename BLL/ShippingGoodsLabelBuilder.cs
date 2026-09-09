@@ -44,7 +44,7 @@ namespace XHS.BLL
 
             if (!string.IsNullOrWhiteSpace(labelInfo.GrossWeight))
             {
-                labelInfo.QrContent += "$" + labelInfo.GrossWeight;
+                labelInfo.QrContent += labelInfo.GrossWeight;
             }
 
             return labelInfo;

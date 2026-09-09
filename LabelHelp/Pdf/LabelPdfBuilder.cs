@@ -27,17 +27,35 @@ namespace LabelHelp.Pdf
                 singleConfig);
         }
 
+        /// <summary>
+        /// 生成多页单标签 PDF，每页一张独立的标签。
+        /// </summary>
+        public string GenerateMultiPageSingleLabelPdf(List<LabelInfo> labelList, LabelTemplateType templateType, LabelPrintConfig config)
+        {
+            if (labelList == null || labelList.Count == 0)
+            {
+                throw new ArgumentException("labelList 不能为空。", "labelList");
+            }
+
+            LabelPrintConfig singleConfig = CloneForSingleLabel(config);
+
+            return new A4SheetBuilder().GenerateA4Pdf(labelList, templateType, singleConfig);
+        }
+
         private LabelPrintConfig CloneForSingleLabel(LabelPrintConfig config)
         {
+            float tableMarginV = 2f;
+            float tableMarginLeft = 3f;
+
             return new LabelPrintConfig
             {
-                LabelWidth = config.LabelWidth,
-                LabelHeight = config.LabelHeight,
+                LabelWidth = config.LabelWidth - tableMarginV * 2f,
+                LabelHeight = config.LabelHeight - tableMarginV * 2f,
 
                 A4PageWidth = config.LabelWidth,
                 A4PageHeight = config.LabelHeight,
-                A4MarginLeft = 0f,
-                A4MarginTop = 0f,
+                A4MarginLeft = tableMarginLeft,
+                A4MarginTop = tableMarginV,
                 A4Columns = 1,
                 A4Rows = 1,
                 A4ColumnGap = 0f,

@@ -23,45 +23,91 @@ namespace XHS.MSSQL
         public List<PackingExceptionInfo> GetExPackingExceptions(string boxCode)
         {
             string queryString = "select " + PackingExceptionSelectColumns + " from tb_PackingException where 1=1";
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             if (!string.IsNullOrWhiteSpace(boxCode))
             {
-                queryString += string.Format(" and BoxCode='{0}'", (boxCode ?? string.Empty).Replace("'", "''"));
+                queryString += " and BoxCode=@BoxCode";
+                parameters.Add(new SqlParameter("@BoxCode", SqlDbType.NVarChar, 50) { Value = boxCode.Trim() });
             }
 
             queryString += PackingExceptionOrderBy;
-            return GetPackingExceptionsBySql(queryString);
+            return _getPackingExceptionInfo(queryString, parameters.ToArray());
         }
 
         public List<PackingExceptionInfo> SearchPackingExceptions(string kdCode, int? status)
         {
             string queryString = "select " + PackingExceptionJoinSelectColumns + " from tb_PackingException e inner join tb_PackingRecord p on e.PackingId=p.Id where 1=1";
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             if (!string.IsNullOrWhiteSpace(kdCode))
             {
-                queryString += string.Format(" and p.KDQRCode like '%{0}%'", (kdCode ?? string.Empty).Replace("'", "''"));
+                queryString += " and p.KDQRCode like @KDCode";
+                parameters.Add(new SqlParameter("@KDCode", SqlDbType.NVarChar, 100) { Value = "%" + kdCode.Trim() + "%" });
             }
 
             if (status.HasValue)
             {
-                queryString += string.Format(" and e.Status={0}", status.Value);
+                queryString += " and e.Status=@Status";
+                parameters.Add(new SqlParameter("@Status", SqlDbType.Int) { Value = status.Value });
             }
 
             queryString += " order by e.CreateTime desc, e.Id desc";
-            return GetPackingExceptionsJoinBySql(queryString);
+            return _getPackingExceptionInfo(queryString, parameters.ToArray());
+        }
+
+        public List<PackingExceptionInfo> SearchPackingExceptions(string kdCode, string partNo, DateTime? dateFrom, DateTime? dateTo, int? status)
+        {
+            string queryString = "select " + PackingExceptionJoinSelectColumns + " from tb_PackingException e inner join tb_PackingRecord p on e.PackingId=p.Id where 1=1";
+            List<SqlParameter> parameters = new List<SqlParameter>();
+
+            if (!string.IsNullOrWhiteSpace(kdCode))
+            {
+                queryString += " and p.KDQRCode like @KDCode";
+                parameters.Add(new SqlParameter("@KDCode", SqlDbType.NVarChar, 100) { Value = "%" + kdCode.Trim() + "%" });
+            }
+
+            if (!string.IsNullOrWhiteSpace(partNo))
+            {
+                queryString += " and p.PartNo like @PartNo";
+                parameters.Add(new SqlParameter("@PartNo", SqlDbType.NVarChar, 100) { Value = "%" + partNo.Trim() + "%" });
+            }
+
+            if (dateFrom.HasValue)
+            {
+                queryString += " and e.CreateTime>=@DateFrom";
+                parameters.Add(new SqlParameter("@DateFrom", SqlDbType.DateTime) { Value = dateFrom.Value });
+            }
+
+            if (dateTo.HasValue)
+            {
+                queryString += " and e.CreateTime<@DateTo";
+                parameters.Add(new SqlParameter("@DateTo", SqlDbType.DateTime) { Value = dateTo.Value.AddDays(1) });
+            }
+
+            if (status.HasValue)
+            {
+                queryString += " and e.Status=@Status";
+                parameters.Add(new SqlParameter("@Status", SqlDbType.Int) { Value = status.Value });
+            }
+
+            queryString += " order by e.CreateTime desc, e.Id desc";
+            return _getPackingExceptionInfo(queryString, parameters.ToArray());
         }
 
         public List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken)
         {
             string queryString = "select " + PackingExceptionSelectColumns + " from tb_PackingException where 1=1";
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             if (!string.IsNullOrWhiteSpace(lockToken))
             {
-                queryString += string.Format(" and LockToken='{0}'", (lockToken ?? string.Empty).Replace("'", "''"));
+                queryString += " and LockToken=@LockToken";
+                parameters.Add(new SqlParameter("@LockToken", SqlDbType.NVarChar, 100) { Value = lockToken.Trim() });
             }
 
             queryString += PackingExceptionOrderBy;
-            return GetPackingExceptionsBySql(queryString);
+            return _getPackingExceptionInfo(queryString, parameters.ToArray());
         }
 
         public ParamterInfo InsertPackingException(List<PackingExceptionInfo> packingExceptionInfos)
@@ -214,26 +260,18 @@ namespace XHS.MSSQL
             return rows > 0;
         }
 
-        private List<PackingExceptionInfo> GetPackingExceptionsBySql(string queryString)
+        private List<PackingExceptionInfo> _getPackingExceptionInfo(string querystring, SqlParameter[] pars)
         {
-            DataSet dataSet = Data.getDataSet(queryString);
-            List<PackingExceptionInfo> result = new List<PackingExceptionInfo>();
-            if (dataSet == null || dataSet.Tables.Count == 0)
+            DataSet dataSet;
+            if (pars != null)
             {
-                return result;
+                dataSet = Data.getDataSet(querystring, pars);
+            }
+            else
+            {
+                dataSet = Data.getDataSet(querystring);
             }
 
-            foreach (DataRow row in dataSet.Tables[0].Rows)
-            {
-                result.Add(BuildPackingExceptionFromRow(row));
-            }
-
-            return result;
-        }
-
-        private List<PackingExceptionInfo> GetPackingExceptionsJoinBySql(string queryString)
-        {
-            DataSet dataSet = Data.getDataSet(queryString);
             List<PackingExceptionInfo> result = new List<PackingExceptionInfo>();
             if (dataSet == null || dataSet.Tables.Count == 0)
             {
@@ -243,7 +281,11 @@ namespace XHS.MSSQL
             foreach (DataRow row in dataSet.Tables[0].Rows)
             {
                 PackingExceptionInfo info = BuildPackingExceptionFromRow(row);
-                info.KDQRCode = row.IsNull("KDQRCode") ? null : Convert.ToString(row["KDQRCode"]);
+                if (dataSet.Tables[0].Columns.Contains("KDQRCode"))
+                {
+                    info.KDQRCode = row.IsNull("KDQRCode") ? null : Convert.ToString(row["KDQRCode"]);
+                }
+
                 result.Add(info);
             }
 

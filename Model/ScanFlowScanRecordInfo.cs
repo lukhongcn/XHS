@@ -10,7 +10,7 @@ namespace XHS.Model
     {
         public long? RecordId { get; set; }
         public int? FlowId { get; set; }
-        public string ScanName { get; set; }
+        public string FlowCode { get; set; }
         public string BindingTaskId { get; set; }
         public int? StepId { get; set; }
         public string StepCode { get; set; }

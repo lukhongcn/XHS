@@ -9,6 +9,8 @@ namespace XHS.IDAL
     public interface IScanFlowStep
     {
         List<ScanFlowStepInfo> GetStepsByFlowId(int flowId);
+        List<ScanFlowStepInfo> GetStepsByFlowName(string flowName);
+        List<ScanFlowStepInfo> GetStepsByFlowCode(string flowCode);
         ParamterInfo InsertSteps(List<ScanFlowStepInfo> infos);
         ParamterInfo UpdateSteps(List<ScanFlowStepInfo> infos);
         ParamterInfo DeleteSteps(List<ScanFlowStepInfo> infos);

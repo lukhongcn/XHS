@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 using Utility;
 using XHS.Model;
 
@@ -19,10 +20,17 @@ namespace XHS.BLL
             return new XHS.BLL.QRCode().ParseShippingGoodsInfo(rawCode);
         }
 
+        /// <summary>按 KD 标签规则解析出货二维码（保留客户规则参数兼容入口）。</summary>
+        public ShippingGoodsInfo ParseShippingGoodsBarcode(string rawCode, string customerId)
+        {
+            return new XHS.BLL.QRCode().ParseShippingGoodsInfo(rawCode);
+        }
+
         public PartInfo ParseFactoryBarcode(
      string rawCode,
      string customerId,
-     string labelType)
+     string labelType,
+     string ruleName = null)
         {
             rawCode = (rawCode ?? string.Empty)
                 .Replace("\r", string.Empty)
@@ -41,7 +49,9 @@ namespace XHS.BLL
 
             if (codeRuleInfos != null)
             {
-                foreach (LabelCodeRuleInfo codeRuleInfo in codeRuleInfos)
+                foreach (LabelCodeRuleInfo codeRuleInfo in codeRuleInfos
+                    .Where(x => x != null && (!x.Enabled.HasValue || x.Enabled.Value))
+                    .OrderByDescending(x => RuleMatches(x.RuleName, ruleName)))
                 {
                     if (codeRuleInfo == null ||
                         string.IsNullOrWhiteSpace(codeRuleInfo.MatchRegex))
@@ -61,17 +71,14 @@ namespace XHS.BLL
                         continue;
                     }
 
-                    string materialNo = GetFieldValue(
-                        packageResult.Fields,
-                        "MaterialNo");
+                    string materialNo = GetFieldValue(packageResult.Fields, "MaterialNo")
+                        ?? GetFieldValue(packageResult.Fields, "JHSMaterialNo");
 
-                    string batchNo = GetFieldValue(
-                        packageResult.Fields,
-                        "BatchNo");
+                    string batchNo = GetFieldValue(packageResult.Fields, "BatchNo")
+                        ?? GetFieldValue(packageResult.Fields, "JHSBatchNo");
 
-                    string qtyText = GetFieldValue(
-                        packageResult.Fields,
-                        "Qty");
+                    string qtyText = GetFieldValue(packageResult.Fields, "Qty")
+                        ?? GetFieldValue(packageResult.Fields, "JHSQty");
 
                     string supplierCode = GetFieldValue(
                         packageResult.Fields,
@@ -94,12 +101,15 @@ namespace XHS.BLL
 
                     // 年月日批号或年周批号
                     partInfo.JHSBatchNo = batchNo;
+                    partInfo.BatchNo = batchNo;
 
                     // 原始条码
                     partInfo.LabelInfo = rawCode;
 
                     // PartInfo 增加 JHSQty 属性后启用
                     partInfo.JHSQty = qty;
+                    partInfo.Qty = qty;
+                    partInfo.BarcodeType = "FACTORY";
 
                     partInfo.SupplierCode = supplierCode;
                     partInfo.ProductDate = productDate;
@@ -108,27 +118,90 @@ namespace XHS.BLL
                 }
             }
 
-            // 2. 再匹配上方工单码
-            FactoryBarcodeResultInfo workOrderResult =
-                TryMatchRule(
-                    rawCode,
-                    "FACTORY_WORK_ORDER",
-                    FactoryBarcodeType.WorkOrder,
-                    @"^(?<WorkOrderNo>\d{4}-\d{11})$");
+            // 当前步骤没有匹配到其配置的规则时，不能使用固定格式兜底。
+            return null;
+        }
 
-            if (workOrderResult.Success)
+        public PartInfo ParseWorkOrderBarcode(string rawCode, string customerId, string labelType, string ruleName)
+        {
+            rawCode = (rawCode ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
+            if (string.IsNullOrEmpty(rawCode)) return null;
+
+            List<LabelCodeRuleInfo> rules = new LabelCodeRule()
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
+            if (rules == null) return null;
+
+            foreach (LabelCodeRuleInfo rule in rules.Where(x => x != null
+                && (!x.Enabled.HasValue || x.Enabled.Value))
+                .OrderByDescending(x => RuleMatches(x.RuleName, ruleName)))
             {
+                if (string.IsNullOrWhiteSpace(rule.MatchRegex)) continue;
+                IDictionary<string, string> fields;
+                if (!regexParser.TryParse(rawCode, rule.MatchRegex, out fields)) continue;
+
+                string orderNo = GetFieldValue(fields, "ProcessOrderNo")
+                    ?? GetFieldValue(fields, "WorkOrderNo");
+                if (string.IsNullOrWhiteSpace(orderNo)) continue;
+
                 return new PartInfo
                 {
-                    ProcessOrderNo = GetFieldValue(
-                        workOrderResult.Fields,
-                        "WorkOrderNo"),
-
+                    ProcessOrderNo = orderNo,
+                    BarcodeType = "WORKORDER",
                     LabelInfo = rawCode
                 };
             }
 
-            // 两种条码都无法识别
+            return null;
+        }
+
+        /// <summary>
+        /// 按流程步骤配置的规则解析客户标签，结果统一返回 PartInfo。
+        /// </summary>
+        public PartInfo ParseCustomerBarcode(string rawCode, string customerId, string labelType, string ruleName)
+        {
+            rawCode = (rawCode ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
+            if (string.IsNullOrEmpty(rawCode)) return null;
+
+            List<LabelCodeRuleInfo> rules = new LabelCodeRule()
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
+            if (rules == null) return null;
+
+            foreach (LabelCodeRuleInfo rule in rules
+                .Where(x => x != null && (!x.Enabled.HasValue || x.Enabled.Value))
+                .OrderByDescending(x => string.Equals(x.RuleName, ruleName, StringComparison.Ordinal)))
+            {
+                if (string.IsNullOrWhiteSpace(rule.MatchRegex)) continue;
+
+                IDictionary<string, string> fields;
+                if (!regexParser.TryParse(rawCode, rule.MatchRegex, out fields)) continue;
+
+                string materialNo = GetFieldValue(fields, "MaterialNo")
+                    ?? GetFieldValue(fields, "CustomerMaterialNo");
+                string batchNo = GetFieldValue(fields, "BatchNo")
+                    ?? GetFieldValue(fields, "CustomerBatchNo");
+                string unit = GetFieldValue(fields, "Unit")
+                    ?? GetFieldValue(fields, "CustomerUnit");
+                string qtyText = GetFieldValue(fields, "Qty")
+                    ?? GetFieldValue(fields, "CustomerQty");
+                decimal qty;
+                if (string.IsNullOrWhiteSpace(materialNo)
+                    || !decimal.TryParse(qtyText, NumberStyles.Any, CultureInfo.InvariantCulture, out qty)
+                    || qty <= 0)
+                {
+                    continue;
+                }
+
+                return new PartInfo
+                {
+                    MaterialNo = materialNo,
+                    BatchNo = batchNo,
+                    Unit = unit,
+                    Qty = qty,
+                    LabelInfo = rawCode,
+                    BarcodeType = "CUSTOMER"
+                };
+            }
+
             return null;
         }
 
@@ -150,6 +223,15 @@ namespace XHS.BLL
             }
 
             return null;
+        }
+
+        private static bool RuleMatches(string configuredRuleName, string stepRuleName)
+        {
+            return string.IsNullOrWhiteSpace(stepRuleName)
+                || string.Equals(
+                    (configuredRuleName ?? string.Empty).Trim(),
+                    stepRuleName.Trim(),
+                    StringComparison.OrdinalIgnoreCase);
         }
 
         private FactoryBarcodeResultInfo TryMatchRule(

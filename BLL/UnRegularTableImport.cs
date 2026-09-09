@@ -139,7 +139,20 @@ namespace BLL
 
                 if (!string.IsNullOrWhiteSpace(cellText) && Reflector.hasPropertyMember(item, field.FieldProperty))
                 {
-                    Reflector.SetProperty(item, field.FieldProperty, ConvertValue(Reflector.getPropertyType(item, field.FieldProperty), cellText));
+                    try
+                    {
+                        Reflector.SetProperty(item, field.FieldProperty, ConvertValue(Reflector.getPropertyType(item, field.FieldProperty), cellText));
+                    }
+                    catch (FormatException)
+                    {
+                        messageList.Add(GetPosition(sheet, keyRow + (field.OffsetRow ?? 0), keyColumn + (field.OffsetColumn ?? 0)) + " 字段格式不正确：" + GetFormatMessage(field, cellText));
+                        return false;
+                    }
+                    catch (OverflowException)
+                    {
+                        messageList.Add(GetPosition(sheet, keyRow + (field.OffsetRow ?? 0), keyColumn + (field.OffsetColumn ?? 0)) + " 字段数值超出范围：" + field.ColumnName);
+                        return false;
+                    }
                 }
             }
 
@@ -207,6 +220,23 @@ namespace BLL
             }
 
             return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
+        }
+
+        private static string GetFormatMessage(UnRegularTableImportFieldInfo field, string value)
+        {
+            string property = field == null ? string.Empty : field.FieldProperty ?? string.Empty;
+            if (property.Equals("ProductionDate", StringComparison.OrdinalIgnoreCase) ||
+                property.Equals("InspectionConfirmDate", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Format("{0}，请输入有效日期（例如 2026/09/05）。当前值：{1}", field.ColumnName, value);
+            }
+
+            if (property.Equals("SingleBoxGrossWeight", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Format("{0}，请输入有效数字（例如 12.5 或 12.5g）。当前值：{1}", field.ColumnName, value);
+            }
+
+            return string.Format("{0}，当前值：{1}", field.ColumnName, value);
         }
 
         private static string GetTemplateCode<T>()

@@ -151,6 +151,13 @@
       <DependentUpon>LabelBindingPDA.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
+    <Compile Include="LabelBindingRecordList.aspx.cs">
+      <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="LabelBindingRecordList.aspx.designer.cs">
+      <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="LabelBindingPDA.aspx.designer.cs">
       <DependentUpon>LabelBindingPDA.aspx</DependentUpon>
     </Compile>
@@ -352,6 +359,7 @@
     <Content Include="DefaultSub.Master" />
     <Content Include="DefaultPDASub.Master" />
     <Content Include="LabelBindingPDA.aspx" />
+    <Content Include="LabelBindingRecordList.aspx" />
     <Content Include="ScanFlowStep.aspx" />
   </ItemGroup>
   <ItemGroup />

@@ -28,9 +28,14 @@ namespace XHS.BLL
             return dal.GetPartMaster(partMasterId);
         }
 
-        public PartMasterInfo GetPartMasterByJHSPartNo(string jhsPartNo)
+        public PartInfo GetPartMasterByJHSPartNo(string jhsPartNo)
         {
             return dal.GetPartMasterByJHSPartNo(jhsPartNo);
+        }
+
+        public PartInfo GetPartMasterByCustomerMaterialNo(string customerMaterialNo)
+        {
+            return dal.GetPartMasterByCustomerMaterialNo(customerMaterialNo);
         }
 
         public string InsertPartMasters(List<PartMasterInfo> infos)

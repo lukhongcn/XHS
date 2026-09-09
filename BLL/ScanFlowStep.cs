@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
+using System;
 using ModuleWorkFlow.business;
 using XHS.IDAL;
 using XHS.Model;
@@ -18,6 +20,65 @@ namespace BLL
         public List<ScanFlowStepInfo> GetStepsByFlowId(int flowId)
         {
             return flowId <= 0 ? new List<ScanFlowStepInfo>() : dal.GetStepsByFlowId(flowId);
+        }
+
+        public List<ScanFlowStepInfo> GetStepsByFlowName(string flowName)
+        {
+            return string.IsNullOrWhiteSpace(flowName)
+                ? new List<ScanFlowStepInfo>()
+                : dal.GetStepsByFlowName(flowName.Trim());
+        }
+
+        public List<ScanFlowStepInfo> GetStepsByFlowCode(string flowCode)
+        {
+            return string.IsNullOrWhiteSpace(flowCode)
+                ? new List<ScanFlowStepInfo>()
+                : dal.GetStepsByFlowCode(flowCode.Trim());
+        }
+
+        /// <summary>
+        /// 判断当前流程步骤是否已经完成。
+        /// 非重复步骤一次扫描成功即完成；重复步骤比较页面传入的两个结束值。
+        /// </summary>
+        public bool IsStepCompleted(ScanFlowStepInfo step, string endValue, string compareValue)
+        {
+            return IsStepCompleted(step, endValue, compareValue, false);
+        }
+
+        public bool IsStepCompleted(ScanFlowStepInfo step, string endValue, string compareValue, bool manualEnd)
+        {
+            if (step == null)
+            {
+                return false;
+            }
+
+            if (manualEnd)
+            {
+                return true;
+            }
+
+            if (!step.AllowRepeat)
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(step.EndControlId)
+                || string.IsNullOrWhiteSpace(step.EndCompareControlId)
+                || endValue == null
+                || compareValue == null)
+            {
+                return false;
+            }
+
+            decimal endNumber;
+            decimal compareNumber;
+            if (decimal.TryParse(endValue.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out endNumber)
+                && decimal.TryParse(compareValue.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out compareNumber))
+            {
+                return endNumber == compareNumber;
+            }
+
+            return string.Equals(endValue.Trim(), compareValue.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         public string InsertSteps(List<ScanFlowStepInfo> infos)

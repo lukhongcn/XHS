@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using BLL;
@@ -28,16 +29,29 @@ namespace XHS.BLL
         {
             List<PackingExceptionInfo> records = dal.SearchPackingExceptions(kdCode, status) ?? new List<PackingExceptionInfo>();
             // 从 KD 标签解析零件编号
+            ParseKDPartNo(records);
+            return records;
+        }
+
+        public List<PackingExceptionInfo> SearchPackingExceptions(string kdCode, string partNo, DateTime? dateFrom, DateTime? dateTo, int? status)
+        {
+            List<PackingExceptionInfo> records = dal.SearchPackingExceptions(kdCode, partNo, dateFrom, dateTo, status) ?? new List<PackingExceptionInfo>();
+            // 从 KD 标签解析零件编号
+            ParseKDPartNo(records);
+            return records;
+        }
+
+        private static void ParseKDPartNo(List<PackingExceptionInfo> records)
+        {
             var barcodeParser = new FactoryBarcodeParser();
             foreach (PackingExceptionInfo record in records)
             {
                 if (!string.IsNullOrWhiteSpace(record.KDQRCode))
                 {
-                    ShippingGoodsInfo kdInfo = barcodeParser.ParseShippingGoodsBarcode(record.KDQRCode, "XHSFZKD");
+                    ShippingGoodsInfo kdInfo = barcodeParser.ParseShippingGoodsBarcode(record.KDQRCode);
                     record.KDPartNo = kdInfo != null ? kdInfo.PartNo : string.Empty;
                 }
             }
-            return records;
         }
 
         public List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken)

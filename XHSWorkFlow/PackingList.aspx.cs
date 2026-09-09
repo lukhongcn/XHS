@@ -108,6 +108,11 @@ namespace ModuleWorkFlow
             return PackingDetailResponse.From(record, scanRecords);
         }
 
+        protected string GetPackingStageText(object value)
+        {
+            return PackingStageInfo.GetStatusName(Convert.ToString(value));
+        }
+
         protected string GetShortCode(object value)
         {
             string code = Convert.ToString(value);

@@ -10,7 +10,7 @@ public class PackingTests : PageTest
         get
         {
             string? value = Environment.GetEnvironmentVariable("XHS_BASE_URL");
-            return string.IsNullOrWhiteSpace(value) ? "http://localhost:55426" : value.TrimEnd('/');
+            return string.IsNullOrWhiteSpace(value) ? "http://localhost/XHS" : value.TrimEnd('/');
         }
     }
 
@@ -51,7 +51,7 @@ public class PackingTests : PageTest
         for (int index = 0; index < await repackLinks.CountAsync(); index++)
         {
             string text = (await repackLinks.Nth(index).InnerTextAsync()).Trim();
-            Assert.That(text, Is.EqualTo("申请").Or.EqualTo("重新装箱"));
+            Assert.That(text, Is.EqualTo("删除").Or.EqualTo("重新装箱"));
         }
     }
 }

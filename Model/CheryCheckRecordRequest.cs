@@ -7,6 +7,7 @@ namespace XHS.Model
         public string supplNo { get; set; }
         public string baseNo { get; set; }
         public string deliveryType { get; set; }
+        public string operateType { get; set; }
         public string deliveryNo { get; set; }
         public string sxCardSeq { get; set; }
         public string materialNo { get; set; }
