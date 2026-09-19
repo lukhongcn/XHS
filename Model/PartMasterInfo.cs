@@ -13,6 +13,8 @@ namespace XHS.Model
 
         public string CustomerMaterialNo { get; set; }
 
+        public string CustomerAbbr { get; set; }
+
         public string MaterialName { get; set; }
 
         public string ProcessType { get; set; }
