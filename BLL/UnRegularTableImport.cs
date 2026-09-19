@@ -39,8 +39,12 @@ namespace BLL
                 return result;
             }
 
-            int maxOffsetColumn = GetAppSettingInt("UnRegularTableImportMaxOffsetColumn");
-            int maxOffsetRow = GetAppSettingInt("UnRegularTableImportMaxOffsetRow");
+            int maxOffsetColumn = Math.Max(
+                GetAppSettingInt("UnRegularTableImportMaxOffsetColumn"),
+                fields.Max(field => (field.ColumnIndex ?? 0) + (field.OffsetColumn ?? 0)));
+            int maxOffsetRow = Math.Max(
+                GetAppSettingInt("UnRegularTableImportMaxOffsetRow"),
+                fields.Max(field => (field.RowIndex ?? 0) + (field.OffsetRow ?? 0)));
             UnRegularTableImportFieldInfo startField = fields[0];
 
             using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
