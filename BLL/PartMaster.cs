@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -28,6 +28,11 @@ namespace XHS.BLL
             return dal.GetPartMasters();
         }
 
+        public List<PartMasterInfo> GetPartMasters(string jhsPartNo, string customerMaterialNo)
+        {
+            return dal.GetPartMasters(jhsPartNo, customerMaterialNo);
+        }
+
         public PartMasterInfo GetPartMaster(int partMasterId)
         {
             return dal.GetPartMaster(partMasterId);
@@ -41,6 +46,83 @@ namespace XHS.BLL
         public PartInfo GetPartMasterByCustomerMaterialNo(string customerMaterialNo)
         {
             return dal.GetPartMasterByCustomerMaterialNo(customerMaterialNo);
+        }
+
+        /// <summary>
+        /// 使用标签编码规则校验光束零件主数据中的拆分编码字段。
+        /// </summary>
+        public string ValidateGSPartMasterCodes(
+            List<PartMasterInfo> infos,
+            string customerId,
+            string jhsPartNoLabelType,
+            string customerMaterialNoLabelType,
+            string jhsPartNoRuleName = null,
+            string customerMaterialNoRuleName = null)
+        {
+            if (infos == null || infos.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(customerId))
+            {
+                return "未配置光束零件主数据编码规则的客户编号。";
+            }
+
+            if (string.IsNullOrWhiteSpace(jhsPartNoLabelType)
+                || string.IsNullOrWhiteSpace(customerMaterialNoLabelType))
+            {
+                return "未配置光束零件主数据编码规则类型。";
+            }
+
+            LabelCodeRule labelCodeRule = new LabelCodeRule();
+            List<LabelCodeRuleInfo> jhsRules = labelCodeRule
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, jhsPartNoLabelType);
+            List<LabelCodeRuleInfo> customerRules = labelCodeRule
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, customerMaterialNoLabelType);
+
+            if (!HasEnabledRule(jhsRules))
+            {
+                return "未配置本厂零件编号编码规则：" + jhsPartNoLabelType + "。";
+            }
+
+            if (!HasEnabledRule(customerRules))
+            {
+                return "未配置客户零件编号编码规则：" + customerMaterialNoLabelType + "。";
+            }
+
+            FactoryBarcodeParser barcodeParser = new FactoryBarcodeParser();
+            List<string> messages = new List<string>();
+            foreach (PartMasterInfo info in infos)
+            {
+                if (info == null)
+                {
+                    continue;
+                }
+
+                string rowText = info.SourceRowNumber.HasValue
+                    ? "第 " + info.SourceRowNumber.Value + " 行"
+                    : "零件主数据";
+                if (!barcodeParser.IsConfiguredFieldMatch(
+                    info.JHSPartNo,
+                    jhsRules,
+                    "JHSMaterialNo",
+                    jhsPartNoRuleName))
+                {
+                    messages.Add(rowText + "【JHS 品号】不符合编码规则。值：" + (info.JHSPartNo ?? string.Empty));
+                }
+
+                if (!barcodeParser.IsConfiguredFieldMatch(
+                    info.CustomerMaterialNo,
+                    customerRules,
+                    "CustomerMaterialNo",
+                    customerMaterialNoRuleName))
+                {
+                    messages.Add(rowText + "【物料编号】不符合编码规则。值：" + (info.CustomerMaterialNo ?? string.Empty));
+                }
+            }
+
+            return string.Join("<br />", messages.ToArray());
         }
 
         public string InsertPartMasters(List<PartMasterInfo> infos)
@@ -83,45 +165,148 @@ namespace XHS.BLL
         {
             messageList = new List<string>();
             List<PartMasterInfo> result = new List<PartMasterInfo>();
-            if (!File.Exists(fileName)) { messageList.Add("File not found."); return result; }
+            if (!File.Exists(fileName))
+            {
+                messageList.Add("文件不存在：" + fileName);
+                return result;
+            }
+
             using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 IWorkbook workbook = WorkbookFactory.Create(stream);
-                if (workbook.NumberOfSheets < 2) { messageList.Add("Excel must contain two worksheets."); return result; }
+                if (workbook.NumberOfSheets < 1)
+                {
+                    messageList.Add("Excel 文件至少需要包含一个工作表。");
+                    return result;
+                }
+
                 string[] sheet1Headers = { "\u5e8f\u53f7", "\u7269\u6599\u7f16\u53f7", "\u7269\u6599\u540d\u79f0", "JHS\u54c1\u53f7", "\u7c7b\u578b", "\u6807\u7b7e\u4fe1\u606f", "\u94a2\u5370\u6709\u65e0\u5173\u8054" };
                 string[] formatHeaders = { "\u7269\u6599\u7f16\u53f7", "JHS\u54c1\u53f7", "\u6807\u7b7e\u683c\u5f0f\uff08\u5355\u88c5/\u6df7\u88c5\uff09" };
                 Dictionary<string, int> columns1;
-                Dictionary<string, int> columns2;
                 int header1 = FindGSHeaderRow(workbook.GetSheetAt(0), sheet1Headers, messageList, out columns1);
-                int header2 = FindGSHeaderRow(workbook.GetSheetAt(1), formatHeaders, messageList, out columns2);
-                if (header1 < 0 || header2 < 0) return result;
+                if (header1 < 0)
+                {
+                    return result;
+                }
+
                 Dictionary<string, PartMasterInfo> parts = new Dictionary<string, PartMasterInfo>(StringComparer.OrdinalIgnoreCase);
                 ISheet sheet1 = workbook.GetSheetAt(0);
                 for (int rowIndex = header1 + 1; rowIndex <= sheet1.LastRowNum; rowIndex++)
                 {
-                    IRow row = sheet1.GetRow(rowIndex); if (row == null) continue;
+                    IRow row = sheet1.GetRow(rowIndex);
+                    if (row == null)
+                    {
+                        break;
+                    }
+
+                    string sequence = GetGSCellText(row.GetCell(columns1["\u5e8f\u53f7"]));
                     string material = GetGSCellText(row.GetCell(columns1["\u7269\u6599\u7f16\u53f7"]));
+                    string materialName = GetGSCellText(row.GetCell(columns1["\u7269\u6599\u540d\u79f0"]));
                     string jhs = GetGSCellText(row.GetCell(columns1["JHS\u54c1\u53f7"]));
-                    if (material.Length == 0 && jhs.Length == 0) continue;
-                    if (material.Length == 0 || jhs.Length == 0) { messageList.Add("Incomplete material row " + (rowIndex + 1)); continue; }
+                    string processType = GetGSCellText(row.GetCell(columns1["\u7c7b\u578b"]));
+                    string labelInfo = GetGSCellText(row.GetCell(columns1["\u6807\u7b7e\u4fe1\u606f"]));
+                    string hasSteelStamp = GetGSCellText(row.GetCell(columns1["\u94a2\u5370\u6709\u65e0\u5173\u8054"]));
+                    if (string.IsNullOrWhiteSpace(sequence) && string.IsNullOrWhiteSpace(material) && string.IsNullOrWhiteSpace(materialName) && string.IsNullOrWhiteSpace(jhs) && string.IsNullOrWhiteSpace(processType) && string.IsNullOrWhiteSpace(labelInfo) && string.IsNullOrWhiteSpace(hasSteelStamp))
+                    {
+                        break;
+                    }
+
+                    if (material.Length == 0 || jhs.Length == 0)
+                    {
+                        messageList.Add(string.Format("第 {0} 行物料编号和 JHS 品号必须同时填写。", rowIndex + 1));
+                        continue;
+                    }
+
                     string key = BuildGSKey(material, jhs);
-                    if (parts.ContainsKey(key)) { messageList.Add("Duplicate material key at row " + (rowIndex + 1)); continue; }
+                    if (parts.ContainsKey(key))
+                    {
+                        messageList.Add(string.Format("第 {0} 行物料编号和 JHS 品号重复。", rowIndex + 1));
+                        continue;
+                    }
+
                     int sortOrder;
-                    if (!int.TryParse(GetGSCellText(row.GetCell(columns1["\u5e8f\u53f7"])), NumberStyles.Integer, CultureInfo.InvariantCulture, out sortOrder)) { messageList.Add("Invalid sequence at row " + (rowIndex + 1)); continue; }
-                    parts.Add(key, new PartMasterInfo { CustomerMaterialNo = material, JHSPartNo = jhs, CustomerAbbr = customerAbbr, MaterialName = GetGSCellText(row.GetCell(columns1["\u7269\u6599\u540d\u79f0"])), ProcessType = GetGSCellText(row.GetCell(columns1["\u7c7b\u578b"])), LabelInfo = GetGSCellText(row.GetCell(columns1["\u6807\u7b7e\u4fe1\u606f"])), HasSteelStamp = GetGSCellText(row.GetCell(columns1["\u94a2\u5370\u6709\u65e0\u5173\u8054"])), SortOrder = sortOrder });
+                    if (!int.TryParse(sequence, NumberStyles.Integer, CultureInfo.InvariantCulture, out sortOrder))
+                    {
+                        messageList.Add(string.Format("第 {0} 行序号格式不正确。", rowIndex + 1));
+                        continue;
+                    }
+
+                    parts.Add(key, new PartMasterInfo
+                    {
+                        SourceRowNumber = rowIndex + 1,
+                        CustomerMaterialNo = material,
+                        JHSPartNo = jhs,
+                        CustomerAbbr = customerAbbr,
+                        MaterialName = materialName,
+                        ProcessType = processType,
+                        LabelInfo = labelInfo,
+                        HasSteelStamp = hasSteelStamp,
+                        SortOrder = sortOrder
+                    });
                 }
+
                 Dictionary<string, string> formats = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                ISheet sheet2 = workbook.GetSheetAt(1);
-                string formatHeader = "\u6807\u7b7e\u683c\u5f0f\uff08\u5355\u88c5/\u6df7\u88c5\uff09";
-                for (int rowIndex = header2 + 1; rowIndex <= sheet2.LastRowNum; rowIndex++)
+                bool hasFormatSheet = workbook.NumberOfSheets > 1;
+                if (hasFormatSheet)
                 {
-                    IRow row = sheet2.GetRow(rowIndex); if (row == null) continue;
-                    string material = GetGSCellText(row.GetCell(columns2["\u7269\u6599\u7f16\u53f7"])); string jhs = GetGSCellText(row.GetCell(columns2["JHS\u54c1\u53f7"])); string format = GetGSCellText(row.GetCell(columns2[formatHeader]));
-                    if (material.Length == 0 && jhs.Length == 0 && format.Length == 0) continue;
-                    if (material.Length == 0 || jhs.Length == 0 || format.Length == 0) { messageList.Add("Incomplete format row " + (rowIndex + 1)); continue; }
-                    string key = BuildGSKey(material, jhs); if (formats.ContainsKey(key)) { messageList.Add("Duplicate format key at row " + (rowIndex + 1)); continue; } formats.Add(key, format);
+                    Dictionary<string, int> columns2;
+                    int header2 = FindGSHeaderRow(workbook.GetSheetAt(1), formatHeaders, messageList, out columns2);
+                    if (header2 < 0)
+                    {
+                        return result;
+                    }
+
+                    ISheet sheet2 = workbook.GetSheetAt(1);
+                    string formatHeader = "\u6807\u7b7e\u683c\u5f0f\uff08\u5355\u88c5/\u6df7\u88c5\uff09";
+                    for (int rowIndex = header2 + 1; rowIndex <= sheet2.LastRowNum; rowIndex++)
+                    {
+                        IRow row = sheet2.GetRow(rowIndex);
+                        if (row == null)
+                        {
+                            break;
+                        }
+
+                        string material = GetGSCellText(row.GetCell(columns2["\u7269\u6599\u7f16\u53f7"]));
+                        string jhs = GetGSCellText(row.GetCell(columns2["JHS\u54c1\u53f7"]));
+                        string format = GetGSCellText(row.GetCell(columns2[formatHeader]));
+                        if (string.IsNullOrWhiteSpace(material) && string.IsNullOrWhiteSpace(jhs) && string.IsNullOrWhiteSpace(format))
+                        {
+                            break;
+                        }
+
+                        if (material.Length == 0 || jhs.Length == 0 || format.Length == 0)
+                        {
+                            messageList.Add(string.Format("标签格式工作表第 {0} 行数据不完整。", rowIndex + 1));
+                            continue;
+                        }
+
+                        string key = BuildGSKey(material, jhs);
+                        if (formats.ContainsKey(key))
+                        {
+                            messageList.Add(string.Format("标签格式工作表第 {0} 行物料编号和 JHS 品号重复。", rowIndex + 1));
+                            continue;
+                        }
+
+                        formats.Add(key, format);
+                    }
                 }
-                foreach (KeyValuePair<string, PartMasterInfo> entry in parts) { string format; if (!formats.TryGetValue(entry.Key, out format)) { messageList.Add("Missing label format for key: " + entry.Key.Replace("\u001f", " / ")); continue; } entry.Value.LabelFormat = format; result.Add(entry.Value); }
+
+                foreach (KeyValuePair<string, PartMasterInfo> entry in parts)
+                {
+                    if (hasFormatSheet)
+                    {
+                        string format;
+                        if (!formats.TryGetValue(entry.Key, out format))
+                        {
+                            messageList.Add("标签格式工作表中未找到对应的标签格式：" + entry.Key.Replace("\u001f", " / "));
+                            continue;
+                        }
+
+                        entry.Value.LabelFormat = format;
+                    }
+
+                    result.Add(entry.Value);
+                }
             }
             return messageList.Count == 0 ? result : new List<PartMasterInfo>();
         }
@@ -173,6 +358,13 @@ namespace XHS.BLL
             }
 
             return string.Empty;
+        }
+
+        private static bool HasEnabledRule(List<LabelCodeRuleInfo> rules)
+        {
+            return rules != null && rules.Any(rule => rule != null
+                && (!rule.Enabled.HasValue || rule.Enabled.Value)
+                && !string.IsNullOrWhiteSpace(rule.MatchRegex));
         }
     }
 }
