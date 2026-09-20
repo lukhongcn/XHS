@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using XHS.Model;
 
 namespace XHS.BLL
@@ -46,3 +46,4 @@ namespace XHS.BLL
         }
     }
 }
+

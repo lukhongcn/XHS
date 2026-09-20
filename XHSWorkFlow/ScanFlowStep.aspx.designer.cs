@@ -1,4 +1,4 @@
-namespace ModuleWorkFlow
+﻿namespace ModuleWorkFlow
 {
     public partial class ScanFlowStepPage
     {
@@ -9,3 +9,4 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.GridView gvSteps;
     }
 }
+

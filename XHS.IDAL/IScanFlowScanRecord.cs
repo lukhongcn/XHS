@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System;
 using System.Data;
 using XHS.Model;
@@ -12,3 +12,4 @@ namespace XHS.IDAL
         ParamterInfo InsertRecords(List<ScanFlowScanRecordInfo> infos);
     }
 }
+

@@ -1,4 +1,4 @@
-namespace XHS.Model
+﻿namespace XHS.Model
 {
     /// <summary>
     /// 标签编码解析规则。
@@ -26,3 +26,4 @@ namespace XHS.Model
         public string Remark { get; set; }
     }
 }
+

@@ -132,11 +132,6 @@
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="DefaultSub.Master.designer.cs" />
-    <Compile Include="DefaultPDASub.Master.cs">
-      <DependentUpon>DefaultPDASub.Master</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="DefaultPDASub.Master.designer.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -147,26 +142,19 @@
     <Compile Include="LabelBinding.aspx.designer.cs">
       <DependentUpon>LabelBinding.aspx</DependentUpon>
     </Compile>
-    <Compile Include="LabelBindingPDA.aspx.cs">
-      <DependentUpon>LabelBindingPDA.aspx</DependentUpon>
+    <Compile Include="GSPartMasterUpload.aspx.cs">
+      <DependentUpon>GSPartMasterUpload.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="LabelBindingRecordList.aspx.cs">
-      <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
+    <Compile Include="GSPartMasterUpload.aspx.designer.cs">
+      <DependentUpon>GSPartMasterUpload.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="GSPartMasterList.aspx.cs">
+      <DependentUpon>GSPartMasterList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="LabelBindingRecordList.aspx.designer.cs">
-      <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="LabelBindingPDA.aspx.designer.cs">
-      <DependentUpon>LabelBindingPDA.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="ScanFlowStep.aspx.cs">
-      <DependentUpon>ScanFlowStep.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="ScanFlowStep.aspx.designer.cs">
-      <DependentUpon>ScanFlowStep.aspx</DependentUpon>
+    <Compile Include="GSPartMasterList.aspx.designer.cs">
+      <DependentUpon>GSPartMasterList.aspx</DependentUpon>
     </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
@@ -223,13 +211,6 @@
     <Compile Include="ExceptionReview.aspx.designer.cs">
       <DependentUpon>ExceptionReview.aspx</DependentUpon>
     </Compile>
-    <Compile Include="PackingExceptionList.aspx.cs">
-      <DependentUpon>PackingExceptionList.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="PackingExceptionList.aspx.designer.cs">
-      <DependentUpon>PackingExceptionList.aspx</DependentUpon>
-    </Compile>
     <Compile Include="ShippingGoodsUpload.aspx.cs">
       <DependentUpon>ShippingGoodsUpload.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -279,6 +260,41 @@
     <Compile Include="ShippingGoodsList.aspx.designer.cs">
       <DependentUpon>ShippingGoodsList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="DefaultPDASub.Master.cs">
+      <DependentUpon>DefaultPDASub.Master</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DefaultPDASub.Master.designer.cs">
+      <DependentUpon>DefaultPDASub.Master</DependentUpon>
+    </Compile>
+    <Compile Include="LabelBindingPDA.aspx.cs">
+      <DependentUpon>LabelBindingPDA.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="LabelBindingPDA.aspx.designer.cs">
+      <DependentUpon>LabelBindingPDA.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="LabelBindingRecordList.aspx.cs">
+      <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="LabelBindingRecordList.aspx.designer.cs">
+      <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ScanFlowStep.aspx.cs">
+      <DependentUpon>ScanFlowStep.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ScanFlowStep.aspx.designer.cs">
+      <DependentUpon>ScanFlowStep.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PackingExceptionList.aspx.cs">
+      <DependentUpon>PackingExceptionList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PackingExceptionList.aspx.designer.cs">
+      <DependentUpon>PackingExceptionList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -292,6 +308,11 @@
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
     <Content Include="LabelBinding.aspx" />
+    <Content Include="DefaultPDASub.Master" />
+    <Content Include="LabelBindingPDA.aspx" />
+    <Content Include="ScanFlowStep.aspx" />
+    <Content Include="GSPartMasterUpload.aspx" />
+    <Content Include="GSPartMasterList.aspx" />
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
     <Content Include="api\print\pending.ashx" />
@@ -304,7 +325,6 @@
     <Content Include="PackingList.aspx" />
     <Content Include="DeliveryUpload.aspx" />
     <Content Include="ExceptionReview.aspx" />
-    <Content Include="PackingExceptionList.aspx" />
     <Content Include="ShippingGoodsList.aspx" />
     <Content Include="PrintRecordList.aspx" />
     <Content Include="ShippingGoodsPrintList.aspx" />
@@ -357,10 +377,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="DefaultSub.Master" />
-    <Content Include="DefaultPDASub.Master" />
-    <Content Include="LabelBindingPDA.aspx" />
-    <Content Include="LabelBindingRecordList.aspx" />
-    <Content Include="ScanFlowStep.aspx" />
   </ItemGroup>
   <ItemGroup />
   <PropertyGroup>

@@ -1,4 +1,4 @@
-<%@ Page Language="C#" CodeBehind="ScanFlowStep.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.ScanFlowStepPage" MasterPageFile="~/DefaultSub.Master" %>
+﻿<%@ Page Language="C#" CodeBehind="ScanFlowStep.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.ScanFlowStepPage" MasterPageFile="~/DefaultSub.Master" %>
 <asp:Content ID="MainContent" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="container mt-3">
         <h4>扫描流程步骤</h4>
@@ -24,3 +24,4 @@
         </asp:GridView>
     </div>
 </asp:Content>
+

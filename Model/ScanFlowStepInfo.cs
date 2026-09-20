@@ -1,4 +1,4 @@
-namespace XHS.Model
+﻿namespace XHS.Model
 {
     /// <summary>
     /// 可配置扫描流程步骤。
@@ -19,3 +19,4 @@ namespace XHS.Model
         public string EndCompareControlId { get; set; }
     }
 }
+

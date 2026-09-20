@@ -24,6 +24,23 @@ namespace XHS.MSSQL
             return BuildPartMasters(dataSet);
         }
 
+        public List<PartMasterInfo> GetPartMasters(string jhsPartNo, string customerMaterialNo)
+        {
+            const string sql =
+                "select " + SelectColumns + " from tb_PartMaster " +
+                "where (@JHSPartNo = '' or JHSPartNo like @JHSPartNo) " +
+                "and (@CustomerMaterialNo = N'' or CustomerMaterialNo like @CustomerMaterialNo) " +
+                "order by SortOrder asc";
+            string normalizedJhsPartNo = (jhsPartNo ?? string.Empty).Trim();
+            string normalizedCustomerMaterialNo = (customerMaterialNo ?? string.Empty).Trim();
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@JHSPartNo", SqlDbType.VarChar, 20) { Value = string.IsNullOrWhiteSpace(normalizedJhsPartNo) ? string.Empty : "%" + normalizedJhsPartNo + "%" },
+                new SqlParameter("@CustomerMaterialNo", SqlDbType.NVarChar, 100) { Value = string.IsNullOrWhiteSpace(normalizedCustomerMaterialNo) ? string.Empty : "%" + normalizedCustomerMaterialNo + "%" }
+            };
+            return BuildPartMasters(Data.getDataSet(sql, parameters));
+        }
+
         public PartMasterInfo GetPartMaster(int partMasterId)
         {
             List<PartMasterInfo> result = BuildPartMasters(Data.getDataSet(

@@ -1,4 +1,4 @@
-using XHS.Model;
+﻿using XHS.Model;
 
 namespace XHS.IDAL
 {
@@ -7,3 +7,4 @@ namespace XHS.IDAL
         bool Insert(LabelBindingPdaScanFailureInfo info);
     }
 }
+

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using XHS.Model;
 
 namespace XHS.IDAL
@@ -19,3 +19,4 @@ namespace XHS.IDAL
         ParamterInfo DeleteFieldTypes(List<FieldTypeInfo> fieldTypeInfos);
     }
 }
+

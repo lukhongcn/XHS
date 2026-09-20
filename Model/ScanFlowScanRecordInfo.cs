@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace XHS.Model
 {
@@ -23,3 +23,4 @@ namespace XHS.Model
         public DateTime? ScanTime { get; set; }
     }
 }
+

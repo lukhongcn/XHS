@@ -1,4 +1,4 @@
-namespace XHS.Model
+﻿namespace XHS.Model
 {
     /// <summary>
     /// 批次规则信息。
@@ -16,3 +16,4 @@ namespace XHS.Model
         public string Remark { get; set; }
     }
 }
+

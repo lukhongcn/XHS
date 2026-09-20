@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace XHS.Model
 {
@@ -24,3 +24,4 @@ namespace XHS.Model
         public bool IsProcessed { get; set; }
     }
 }
+

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Web.UI;
+using System.Configuration;
 
 using System.Collections;
 using System.Data;
@@ -136,7 +137,7 @@ namespace ModuleWorkFlow
             Session["departmentid"] = row["DepartmentId"];
             Session["isadmin"] = Convert.ToInt32(row["isadmin"]) == 1;
             Session["iprivate"] = privateList;
-            Session["custome"] = "FZXHS";
+            Session["custome"] = ConfigurationManager.AppSettings["GSPartMaster.CustomerId"];
             return true;
         }
     }

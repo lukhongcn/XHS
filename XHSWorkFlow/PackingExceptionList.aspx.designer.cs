@@ -22,3 +22,4 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.Label Label_Message;
     }
 }
+

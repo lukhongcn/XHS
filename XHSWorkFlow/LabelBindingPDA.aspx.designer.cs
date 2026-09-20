@@ -1,4 +1,4 @@
-namespace ModuleWorkFlow
+﻿namespace ModuleWorkFlow
 {
     public partial class LabelBindingPDA
     {
@@ -32,3 +32,4 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.HiddenField hidRemainingQty;
     }
 }
+

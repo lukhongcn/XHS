@@ -46,24 +46,24 @@
     <Compile Include="ShippingGoodsStatusInfo.cs" />
     <Compile Include="UnRegularTableImportFieldInfo.cs" />
     <Compile Include="Label\LabelInfo.cs" />
-    <Compile Include="LabelCodeInfo.cs" />
     <Compile Include="LabelCodeRuleFieldInfo.cs" />
-    <Compile Include="FieldTypeInfo.cs" />
     <Compile Include="PackingDetailInfo.cs" />
     <Compile Include="PackingExceptionInfo.cs" />
     <Compile Include="PackingExceptionTypeInfo.cs" />
     <Compile Include="PackingRecordInfo.cs" />
     <Compile Include="PackingScanRecordInfo.cs" />
-    <Compile Include="BatchRuleInfo.cs" />
     <Compile Include="LabelCodeRuleInfo.cs" />
     <Compile Include="PackingScanRecordQRCodeTypeInfo.cs" />
     <Compile Include="PackingStageInfo.cs" />
     <Compile Include="ParamterInfo.cs" />
-    <Compile Include="ScanFlowScanRecordInfo.cs" />
-    <Compile Include="LabelBindingPdaScanFailureInfo.cs" />
-    <Compile Include="ScanFlowStepInfo.cs" />
-    <Compile Include="ScanFlowInfo.cs" />
     <Compile Include="PartInfo.cs" />
+    <Compile Include="BatchRuleInfo.cs" />
+    <Compile Include="FieldTypeInfo.cs" />
+    <Compile Include="LabelBindingPdaScanFailureInfo.cs" />
+    <Compile Include="LabelCodeInfo.cs" />
+    <Compile Include="ScanFlowInfo.cs" />
+    <Compile Include="ScanFlowScanRecordInfo.cs" />
+    <Compile Include="ScanFlowStepInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

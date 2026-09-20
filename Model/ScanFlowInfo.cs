@@ -1,4 +1,4 @@
-namespace XHS.Model
+﻿namespace XHS.Model
 {
     /// <summary>
     /// 可配置扫描流程。
@@ -12,3 +12,4 @@ namespace XHS.Model
         public bool? Enabled { get; set; }
     }
 }
+

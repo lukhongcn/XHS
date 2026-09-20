@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using XHS.IDAL;
 using XHS.Model;
 
@@ -24,3 +24,4 @@ namespace BLL
         }
     }
 }
+

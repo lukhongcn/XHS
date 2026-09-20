@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using XHS.Model;
 
 namespace XHS.IDAL
@@ -11,3 +11,4 @@ namespace XHS.IDAL
         List<ScanFlowInfo> GetByFlowName(string flowName);
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Linq;
 using XHS.BLL;
@@ -144,3 +144,4 @@ namespace BLL
         }
     }
 }
+

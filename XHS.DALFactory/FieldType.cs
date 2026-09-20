@@ -1,4 +1,4 @@
-using XHS.IDAL;
+﻿using XHS.IDAL;
 
 namespace XHS.DALFactory
 {
@@ -13,3 +13,4 @@ namespace XHS.DALFactory
         }
     }
 }
+

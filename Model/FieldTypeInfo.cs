@@ -1,4 +1,4 @@
-namespace XHS.Model
+﻿namespace XHS.Model
 {
     /// <summary>
     /// 标签字段解析类型信息。
@@ -12,3 +12,4 @@ namespace XHS.Model
         public string ParserClass { get; set; }
     }
 }
+

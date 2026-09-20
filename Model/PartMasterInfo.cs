@@ -7,6 +7,11 @@ namespace XHS.Model
     {
         public int? PartMasterId { get; set; }
 
+        /// <summary>
+        /// Excel 来源行号，不映射数据库字段，仅用于导入错误提示。
+        /// </summary>
+        public int? SourceRowNumber { get; set; }
+
         public string JHSPartNo { get; set; }
 
         public string MaterialNo { get; set; }

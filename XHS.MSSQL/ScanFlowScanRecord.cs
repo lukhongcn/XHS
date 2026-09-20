@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -98,3 +98,4 @@ order by r.BindingTaskId,r.ScanTime,r.RecordId";
         private static object ToDb(object value) { return value ?? DBNull.Value; }
     }
 }
+

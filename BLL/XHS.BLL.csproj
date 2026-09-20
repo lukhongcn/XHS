@@ -66,13 +66,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CheryUpload.cs" />
-    <Compile Include="BatchRule.cs" />
     <Compile Include="LabelCodeRule.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Label.cs" />
-    <Compile Include="LabelCode.cs" />
     <Compile Include="LabelCodeRuleField.cs" />
-    <Compile Include="FieldType.cs" />
     <Compile Include="PackingExceptionType.cs" />
     <Compile Include="PackingException.cs" />
     <Compile Include="PackingOperationResult.cs" />
@@ -87,14 +84,17 @@
     <Compile Include="QRCode.cs" />
     <Compile Include="RegexFieldParser.cs" />
     <Compile Include="FactoryBarcodeParser.cs" />
-    <Compile Include="ScanFlowScanRecord.cs" />
-    <Compile Include="LabelBindingRecord.cs" />
-    <Compile Include="ScanFlowStep.cs" />
-    <Compile Include="ScanStepHandlerRegistry.cs" />
-    <Compile Include="ScanFlow.cs" />
     <Compile Include="ShippingGoods.cs" />
     <Compile Include="UnRegularTableImport.cs" />
     <Compile Include="UnRegularTableImportField.cs" />
+    <Compile Include="BatchRule.cs" />
+    <Compile Include="FieldType.cs" />
+    <Compile Include="LabelBindingRecord.cs" />
+    <Compile Include="LabelCode.cs" />
+    <Compile Include="ScanFlow.cs" />
+    <Compile Include="ScanFlowScanRecord.cs" />
+    <Compile Include="ScanFlowStep.cs" />
+    <Compile Include="ScanStepHandlerRegistry.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\business\business.csproj">

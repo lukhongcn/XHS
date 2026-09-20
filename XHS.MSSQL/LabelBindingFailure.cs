@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Data.SqlClient;
 using Utility;
@@ -50,3 +50,4 @@ values
         private static object ToDb(object value) { return value ?? DBNull.Value; }
     }
 }
+
