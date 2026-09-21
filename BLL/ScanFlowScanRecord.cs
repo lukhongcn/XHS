@@ -13,12 +13,10 @@ namespace BLL
     public class ScanFlowScanRecord
     {
         private readonly IScanFlowScanRecord dal;
-        private readonly ILabelBindingFailure failureDal;
 
         public ScanFlowScanRecord()
         {
             dal = XHS.DALFactory.ScanFlowScanRecord.Create();
-            failureDal = XHS.DALFactory.LabelBindingFailure.Create();
         }
 
         public bool IsFactoryBarcodeRecorded(int flowId, string scanContent)
@@ -40,18 +38,6 @@ namespace BLL
             return Common.Save(source) ? string.Empty : "扫描记录保存失败。";
         }
 
-        public bool SavePdaScanFailure(LabelBindingPdaScanFailureInfo info)
-        {
-            try
-            {
-                return failureDal.Insert(info);
-            }
-            catch (Exception ex)
-            {
-                Utility.Log.WriteLog("log.txt", "LabelBindingPDA 失败记录保存失败：" + ex);
-                return false;
-            }
-        }
     }
 }
 

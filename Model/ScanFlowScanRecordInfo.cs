@@ -16,6 +16,12 @@ namespace XHS.Model
         public string StepCode { get; set; }
         public int? SeqNo { get; set; }
         public string ScanContent { get; set; }
+        /// <summary>实际命中的条码规则编号。</summary>
+        public int? RuleId { get; set; }
+        /// <summary>实际命中的条码规则名称。</summary>
+        public string RuleName { get; set; }
+        /// <summary>条码类型，如光束客户标签、本厂标签或工单。</summary>
+        public string BarcodeType { get; set; }
         public string Status { get; set; }
         public string ScanUser { get; set; }
         public string DeviceInfo { get; set; }

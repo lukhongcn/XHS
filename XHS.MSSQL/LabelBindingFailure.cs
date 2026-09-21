@@ -16,11 +16,11 @@ namespace XHS.MSSQL
             const string sql = @"
 insert into tb_LabelBindingPdaScanFailure
     (BindingTaskId, CustomerRawCode, ScanRawCode, ScanStage, FailureType, FailureReason,
-     ParsedBarcodeType, ParsedPartNo, ParsedBatchNo, ParsedQty, OperatorName, DeviceInfo,
+     ParsedBarcodeType, RuleId, RuleName, ParsedPartNo, ParsedBatchNo, ParsedQty, OperatorName, DeviceInfo,
      ClientIp, ScanTime, IsProcessed)
 values
     (@BindingTaskId, @CustomerRawCode, @ScanRawCode, @ScanStage, @FailureType, @FailureReason,
-     @ParsedBarcodeType, @ParsedPartNo, @ParsedBatchNo, @ParsedQty, @OperatorName, @DeviceInfo,
+     @ParsedBarcodeType, @RuleId, @RuleName, @ParsedPartNo, @ParsedBatchNo, @ParsedQty, @OperatorName, @DeviceInfo,
      @ClientIp, @ScanTime, @IsProcessed)";
 
             using (SqlConnection connection = new SqlConnection(Data.WriteConnectionStr()))
@@ -33,6 +33,8 @@ values
                 command.Parameters.Add(new SqlParameter("@FailureType", SqlDbType.NVarChar, 50) { Value = ToDb(info.FailureType) });
                 command.Parameters.Add(new SqlParameter("@FailureReason", SqlDbType.NVarChar, 1000) { Value = ToDb(info.FailureReason) });
                 command.Parameters.Add(new SqlParameter("@ParsedBarcodeType", SqlDbType.NVarChar, 50) { Value = ToDb(info.ParsedBarcodeType) });
+                command.Parameters.Add(new SqlParameter("@RuleId", SqlDbType.Int) { Value = ToDb(info.RuleId) });
+                command.Parameters.Add(new SqlParameter("@RuleName", SqlDbType.NVarChar, 200) { Value = ToDb(info.RuleName) });
                 command.Parameters.Add(new SqlParameter("@ParsedPartNo", SqlDbType.NVarChar, 100) { Value = ToDb(info.ParsedPartNo) });
                 command.Parameters.Add(new SqlParameter("@ParsedBatchNo", SqlDbType.NVarChar, 100) { Value = ToDb(info.ParsedBatchNo) });
                 SqlParameter qty = new SqlParameter("@ParsedQty", SqlDbType.Decimal) { Precision = 18, Scale = 4, Value = ToDb(info.ParsedQty) };

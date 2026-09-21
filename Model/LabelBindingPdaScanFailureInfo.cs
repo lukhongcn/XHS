@@ -14,6 +14,10 @@ namespace XHS.Model
         public string FailureType { get; set; }
         public string FailureReason { get; set; }
         public string ParsedBarcodeType { get; set; }
+        /// <summary>扫描时实际命中的条码规则编号。</summary>
+        public int? RuleId { get; set; }
+        /// <summary>扫描时实际命中的条码规则名称。</summary>
+        public string RuleName { get; set; }
         public string ParsedPartNo { get; set; }
         public string ParsedBatchNo { get; set; }
         public decimal? ParsedQty { get; set; }

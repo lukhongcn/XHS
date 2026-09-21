@@ -18,6 +18,27 @@ namespace ModuleWorkFlow
         private const string FlowCode = "LABEL_BINDING";
         private readonly FactoryBarcodeParser barcodeParser = new FactoryBarcodeParser();
 
+        protected override void OnPreInit(EventArgs e)
+        {
+            if (!IsLoggedIn())
+            {
+                string loginUrl = ResolveUrl("~/Login.aspx");
+                string returnUrl = Request.RawUrl;
+                Response.Redirect(loginUrl + "?ReturnUrl=" + Server.UrlEncode(returnUrl));
+                return;
+            }
+
+            base.OnPreInit(e);
+        }
+
+        private bool IsLoggedIn()
+        {
+            return Session != null
+                && Session["islogin"] is bool
+                && (bool)Session["islogin"]
+                && !string.IsNullOrWhiteSpace(Convert.ToString(Session["userid"]));
+        }
+
         [Serializable]
         private sealed class PdaBindingRow
         {
@@ -41,6 +62,9 @@ namespace ModuleWorkFlow
             public string StepCode { get; set; }
             public int SeqNo { get; set; }
             public string RawCode { get; set; }
+            public int? RuleId { get; set; }
+            public string RuleName { get; set; }
+            public string BarcodeType { get; set; }
         }
 
         [Serializable]
@@ -270,7 +294,8 @@ namespace ModuleWorkFlow
 
         private void ProcessCustomer(string raw, ScanFlowStepInfo step)
         {
-            PartInfo part = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            List<PartInfo> matches = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
             if (part == null)
             {
                 ShowScanFailure("CustomerFormat", "客户标签格式无效，无法按当前流程规则解析。", raw, null);
@@ -300,7 +325,7 @@ namespace ModuleWorkFlow
             context.CustomerBatch = part.BatchNo ?? string.Empty;
             context.CustomerQty = qty;
             context.Rows = new List<PdaBindingRow>();
-            AddWorkflowScan(context, step, raw, 0);
+            AddWorkflowScan(context, step, raw, 0, part);
             MarkSuccess(context, raw);
             AdvanceAfterStepSuccess(context, step);
             Message("客户标签校验成功，请扫描" + GetCurrentStepTitle(context) + "。", true);
@@ -311,7 +336,8 @@ namespace ModuleWorkFlow
         /// </summary>
         private void ProcessWorkOrder(string raw, ScanFlowStepInfo step)
         {
-            PartInfo part = barcodeParser.ParseWorkOrderBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            List<PartInfo> matches = barcodeParser.ParseWorkOrderBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
             if (part == null || string.IsNullOrWhiteSpace(part.ProcessOrderNo))
             {
                 ShowScanFailure("WorkOrderFormat", "工单条码格式无效，无法按当前流程规则解析。", raw, part);
@@ -335,7 +361,7 @@ namespace ModuleWorkFlow
                 ScanTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
             });
             ReindexRows();
-            AddWorkflowScan(context, step, raw, context.WorkOrderRaws.Count);
+            AddWorkflowScan(context, step, raw, context.WorkOrderRaws.Count, part);
             MarkSuccess(context, raw);
             AdvanceAfterStepSuccess(context, step);
             Message("工单扫描成功，请扫描" + GetCurrentStepTitle(context) + "。", true);
@@ -351,7 +377,8 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            PartInfo part = barcodeParser.ParseFactoryBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            List<PartInfo> matches = barcodeParser.ParseFactoryBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
             if (part == null)
             {
                 ShowScanFailure("Parse", "本厂条码解析失败，请重新扫描。", raw, null);
@@ -403,7 +430,7 @@ namespace ModuleWorkFlow
             bindingRow.WorkOrderNo = string.Join(", ", Current.WorkOrderRaws ?? new List<string>());
             bindingRow.ScanTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
             ReindexRows();
-            AddWorkflowScan(Current, step, raw, Current.Rows[0].SeqNo);
+            AddWorkflowScan(Current, step, raw, Current.Rows[0].SeqNo, part);
             MarkSuccess(Current, raw);
             AdvanceAfterStepSuccess(Current, step);
 
@@ -428,7 +455,7 @@ namespace ModuleWorkFlow
                 return;
             }
             List<ScanFlowScanRecordInfo> records = context.Scans
-                .Select(x => BuildScanRecord(x.StepCode, x.SeqNo, x.RawCode))
+                .Select(BuildScanRecord)
                 .ToList();
 
             string result = new ScanFlowScanRecord().SaveRecords(records);
@@ -448,7 +475,7 @@ namespace ModuleWorkFlow
 
         private void ShowScanFailure(string type, string reason, string raw, PartInfo part, string parsedType = null)
         {
-            bool saved = new ScanFlowScanRecord().SavePdaScanFailure(new LabelBindingPdaScanFailureInfo
+            bool saved = new LabelBindingFailure().Save(new LabelBindingPdaScanFailureInfo
             {
                 BindingTaskId = Current.BindingTaskId,
                 CustomerRawCode = Current.CustomerRaw,
@@ -456,7 +483,9 @@ namespace ModuleWorkFlow
                 ScanStage = GetCurrentStep(Current) == null ? string.Empty : GetCurrentStep(Current).StepCode,
                 FailureType = type,
                 FailureReason = reason,
-                ParsedBarcodeType = parsedType,
+                ParsedBarcodeType = part == null ? parsedType : (part.BarcodeType ?? parsedType),
+                RuleId = part == null ? (int?)null : part.RuleId,
+                RuleName = part == null ? null : part.RuleName,
                 ParsedPartNo = part == null ? null : part.JHSMaterialNo,
                 ParsedBatchNo = part == null ? null : part.JHSBatchNo,
                 ParsedQty = part == null ? (decimal?)null : part.JHSQty,
@@ -593,25 +622,36 @@ namespace ModuleWorkFlow
 
             return null;
         }
-        private static void AddWorkflowScan(PdaContext context, ScanFlowStepInfo step, string rawCode, int seqNo)
+        private static void AddWorkflowScan(PdaContext context, ScanFlowStepInfo step, string rawCode, int seqNo, PartInfo part)
         {
             if (context.Scans == null) context.Scans = new List<PdaWorkflowScan>();
-            context.Scans.Add(new PdaWorkflowScan { StepCode = step == null ? string.Empty : step.StepCode, SeqNo = seqNo, RawCode = rawCode });
+            context.Scans.Add(new PdaWorkflowScan
+            {
+                StepCode = step == null ? string.Empty : step.StepCode,
+                SeqNo = seqNo,
+                RawCode = rawCode,
+                RuleId = part == null ? (int?)null : part.RuleId,
+                RuleName = part == null ? null : part.RuleName,
+                BarcodeType = part == null ? null : part.BarcodeType
+            });
         }
 
-        private ScanFlowScanRecordInfo BuildScanRecord(string stepCode, int seqNo, string rawCode)
+        private ScanFlowScanRecordInfo BuildScanRecord(PdaWorkflowScan scan)
         {
             PdaContext context = Current;
-            ScanFlowStepInfo step = context.Steps.FirstOrDefault(x => string.Equals(x.StepCode, stepCode, StringComparison.OrdinalIgnoreCase));
+            ScanFlowStepInfo step = context.Steps.FirstOrDefault(x => string.Equals(x.StepCode, scan.StepCode, StringComparison.OrdinalIgnoreCase));
             return new ScanFlowScanRecordInfo
             {
                 FlowId = context.FlowId,
                 FlowCode = FlowCode,
                 BindingTaskId = context.BindingTaskId,
                 StepId = step == null ? (int?)null : step.StepId,
-                StepCode = stepCode,
-                SeqNo = seqNo,
-                ScanContent = rawCode,
+                StepCode = scan.StepCode,
+                SeqNo = scan.SeqNo,
+                ScanContent = scan.RawCode,
+                RuleId = scan.RuleId,
+                RuleName = scan.RuleName,
+                BarcodeType = scan.BarcodeType,
                 Status = "已完成",
                 ScanUser = Convert.ToString(Session["userid"]),
                 DeviceInfo = Request.UserAgent,

@@ -62,7 +62,7 @@ order by r.BindingTaskId,r.ScanTime,r.RecordId";
 
         public ParamterInfo InsertRecords(List<ScanFlowScanRecordInfo> infos)
         {
-            const string sql = "insert into tb_ScanFlowScanRecord (FlowId,FlowCode,BindingTaskId,StepId,StepCode,SeqNo,ScanContent,Status,ScanUser,DeviceInfo,ClientIp,ScanTime) values (@FlowId,@FlowCode,@BindingTaskId,@StepId,@StepCode,@SeqNo,@ScanContent,@Status,@ScanUser,@DeviceInfo,@ClientIp,@ScanTime)";
+            const string sql = "insert into tb_ScanFlowScanRecord (FlowId,FlowCode,BindingTaskId,StepId,StepCode,SeqNo,ScanContent,RuleId,RuleName,BarcodeType,Status,ScanUser,DeviceInfo,ClientIp,ScanTime) values (@FlowId,@FlowCode,@BindingTaskId,@StepId,@StepCode,@SeqNo,@ScanContent,@RuleId,@RuleName,@BarcodeType,@Status,@ScanUser,@DeviceInfo,@ClientIp,@ScanTime)";
             ParamterInfo result = new ParamterInfo { Sql = sql, Type = CommandType.Text, AlSQL = new ArrayList(), AlPAR = new ArrayList(), AlCOM = new ArrayList() };
             if (infos == null) return result;
 
@@ -87,6 +87,9 @@ order by r.BindingTaskId,r.ScanTime,r.RecordId";
                 new SqlParameter("@StepCode", SqlDbType.VarChar, 50) { Value = ToDb(info.StepCode) },
                 new SqlParameter("@SeqNo", SqlDbType.Int) { Value = ToDb(info.SeqNo) },
                 new SqlParameter("@ScanContent", SqlDbType.NVarChar, 1000) { Value = ToDb(info.ScanContent) },
+                new SqlParameter("@RuleId", SqlDbType.Int) { Value = ToDb(info.RuleId) },
+                new SqlParameter("@RuleName", SqlDbType.NVarChar, 200) { Value = ToDb(info.RuleName) },
+                new SqlParameter("@BarcodeType", SqlDbType.NVarChar, 50) { Value = ToDb(info.BarcodeType) },
                 new SqlParameter("@Status", SqlDbType.NVarChar, 20) { Value = ToDb(info.Status) },
                 new SqlParameter("@ScanUser", SqlDbType.NVarChar, 100) { Value = ToDb(info.ScanUser) },
                 new SqlParameter("@DeviceInfo", SqlDbType.NVarChar, 500) { Value = ToDb(info.DeviceInfo) },
