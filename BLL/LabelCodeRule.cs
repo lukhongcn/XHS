@@ -33,6 +33,13 @@ namespace XHS.BLL
             return dal.GetLabelCodeRulesByCustomerId(customerId);
         }
 
+        public List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerIdAndLabelType(
+            string customerId,
+            string labelType)
+        {
+            return dal.GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
+        }
+
         public string InsertLabelCodeRules(List<LabelCodeRuleInfo> infos)
         {
             Normalize(infos);

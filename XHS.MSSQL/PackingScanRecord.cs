@@ -154,6 +154,32 @@ namespace XHS.MSSQL
             return paramterInfo;
         }
 
+        public ParamterInfo DeletePackingScanRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            const string sql = "delete psr from tb_PackingScanRecord psr inner join tb_PackingRecord pr on psr.PackingId=pr.Id where exists (select 1 from tb_ShippingGoods sg where sg.SupplyBatchNo=pr.SupplyBatchNo and sg.PartNo=pr.PartNo and sg.CartonNo=pr.CartonNo and sg.SupplyBatchNo=@SupplyBatchNo and sg.PartNo=@PartNo and sg.DeliveryNo=@DeliveryNo)";
+            return BuildBusinessKeyDeleteParameterInfo(sql, supplyBatchNo, partNo, deliveryNo);
+        }
+
+        private ParamterInfo BuildBusinessKeyDeleteParameterInfo(string sql, string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            return new ParamterInfo
+            {
+                Sql = sql,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList { sql },
+                AlPAR = new ArrayList
+                {
+                    new SqlParameter[]
+                    {
+                        new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 50) { Value = supplyBatchNo ?? string.Empty },
+                        new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? string.Empty },
+                        new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = deliveryNo ?? string.Empty }
+                    }
+                },
+                AlCOM = new ArrayList { CommandType.Text }
+            };
+        }
+
         private List<PackingScanRecordInfo> GetPackingScanRecordsBySql(string queryString)
         {
             DataSet dataSet = Data.getDataSet(queryString);
@@ -339,6 +365,19 @@ namespace XHS.MSSQL
                 new SqlParameter("@MaterialNo", SqlDbType.NVarChar, 50) { Value = materialNo ?? (object)DBNull.Value },
                 new SqlParameter("@Qty", SqlDbType.Int) { Value = qty },
                 new SqlParameter("@ScanUser", SqlDbType.NVarChar, 50) { Value = scanUser ?? (object)DBNull.Value },
+                new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel }
+            };
+            return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;
+        }
+
+        /// <summary>事务内删除指定零件扫描明细。</summary>
+        public bool DeleteScanRecord(long scanRecordId, long packingId, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "delete from tb_PackingScanRecord where Id=@ScanRecordId and PackingId=@PackingId and QRCodeType=@QRCodeType";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@ScanRecordId", SqlDbType.BigInt) { Value = scanRecordId },
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
                 new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel }
             };
             return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;

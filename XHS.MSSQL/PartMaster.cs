@@ -15,13 +15,30 @@ namespace XHS.MSSQL
     public class PartMaster : IPartMaster
     {
         private const string SelectColumns =
-            "PartMasterId,JHSPartNo,MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark";
+            "PartMasterId,JHSPartNo,CustomerMaterialNo,CustomerAbbr,CustomerMaterialNo as MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark";
 
         public List<PartMasterInfo> GetPartMasters()
         {
             DataSet dataSet = Data.getDataSet(
                 "select " + SelectColumns + " from tb_PartMaster order by SortOrder asc");
             return BuildPartMasters(dataSet);
+        }
+
+        public List<PartMasterInfo> GetPartMasters(string jhsPartNo, string customerMaterialNo)
+        {
+            const string sql =
+                "select " + SelectColumns + " from tb_PartMaster " +
+                "where (@JHSPartNo = '' or JHSPartNo like @JHSPartNo) " +
+                "and (@CustomerMaterialNo = N'' or CustomerMaterialNo like @CustomerMaterialNo) " +
+                "order by SortOrder asc";
+            string normalizedJhsPartNo = (jhsPartNo ?? string.Empty).Trim();
+            string normalizedCustomerMaterialNo = (customerMaterialNo ?? string.Empty).Trim();
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@JHSPartNo", SqlDbType.VarChar, 20) { Value = string.IsNullOrWhiteSpace(normalizedJhsPartNo) ? string.Empty : "%" + normalizedJhsPartNo + "%" },
+                new SqlParameter("@CustomerMaterialNo", SqlDbType.NVarChar, 100) { Value = string.IsNullOrWhiteSpace(normalizedCustomerMaterialNo) ? string.Empty : "%" + normalizedCustomerMaterialNo + "%" }
+            };
+            return BuildPartMasters(Data.getDataSet(sql, parameters));
         }
 
         public PartMasterInfo GetPartMaster(int partMasterId)
@@ -31,26 +48,58 @@ namespace XHS.MSSQL
             return result.Count == 0 ? null : result[0];
         }
 
-        public PartMasterInfo GetPartMasterByJHSPartNo(string jhsPartNo)
+        public PartInfo GetPartMasterByJHSPartNo(string jhsPartNo)
         {
             string safePartNo = (jhsPartNo ?? string.Empty).Trim().Replace("'", "''");
             List<PartMasterInfo> result = BuildPartMasters(Data.getDataSet(
                 "select " + SelectColumns + " from tb_PartMaster where JHSPartNo='" + safePartNo + "'"));
-            return result.Count == 0 ? null : result[0];
+            return result.Count == 0 ? null : ToPartInfo(result[0]);
+        }
+
+        public PartInfo GetPartMasterByCustomerMaterialNo(string customerMaterialNo)
+        {
+            const string sql = "select " + SelectColumns + " from tb_PartMaster where CustomerMaterialNo=@CustomerMaterialNo";
+            DataSet dataSet = Data.getDataSet(sql, new[]
+            {
+                new SqlParameter("@CustomerMaterialNo", SqlDbType.NVarChar, 100) { Value = (object)(customerMaterialNo ?? string.Empty).Trim() }
+            });
+            List<PartMasterInfo> result = BuildPartMasters(dataSet);
+            return result.Count == 0 ? null : ToPartInfo(result[0]);
+        }
+
+        private static PartInfo ToPartInfo(PartMasterInfo source)
+        {
+            return new PartInfo
+            {
+                PartMasterId = source.PartMasterId,
+                JHSPartNo = source.JHSPartNo,
+                MaterialNo = source.MaterialNo,
+                CustomerMaterialNo = source.CustomerMaterialNo ?? source.MaterialNo,
+                CustomerAbbr = source.CustomerAbbr,
+                MaterialName = source.MaterialName,
+                ProcessType = source.ProcessType,
+                LabelInfo = source.LabelInfo,
+                HasSteelStamp = source.HasSteelStamp,
+                LabelFormat = source.LabelFormat,
+                SortOrder = source.SortOrder,
+                Remark = source.Remark,
+                JHSMaterialNo = source.JHSPartNo,
+                PartType = source.ProcessType
+            };
         }
 
         public ParamterInfo InsertPartMasters(List<PartMasterInfo> infos)
         {
             const string sql =
-                "insert into tb_PartMaster (JHSPartNo,MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark) " +
-                "values (@JHSPartNo,@MaterialNo,@MaterialName,@ProcessType,@LabelInfo,@HasSteelStamp,@LabelFormat,@SortOrder,@Remark)";
+                "insert into tb_PartMaster (JHSPartNo,CustomerMaterialNo,CustomerAbbr,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark) " +
+                "values (@JHSPartNo,@CustomerMaterialNo,@CustomerAbbr,@MaterialName,@ProcessType,@LabelInfo,@HasSteelStamp,@LabelFormat,@SortOrder,@Remark)";
             return BuildParamterInfo(infos, sql, BuildInsertParameters);
         }
 
         public ParamterInfo UpdatePartMasters(List<PartMasterInfo> infos)
         {
             const string sql =
-                "update tb_PartMaster set JHSPartNo=@JHSPartNo,MaterialNo=@MaterialNo,MaterialName=@MaterialName," +
+                "update tb_PartMaster set JHSPartNo=@JHSPartNo,CustomerMaterialNo=@CustomerMaterialNo,CustomerAbbr=@CustomerAbbr,MaterialName=@MaterialName," +
                 "ProcessType=@ProcessType,LabelInfo=@LabelInfo,HasSteelStamp=@HasSteelStamp,LabelFormat=@LabelFormat," +
                 "SortOrder=@SortOrder,Remark=@Remark where PartMasterId=@PartMasterId";
             return BuildParamterInfo(infos, sql, BuildUpdateParameters);
@@ -80,6 +129,8 @@ namespace XHS.MSSQL
                     PartMasterId = row.IsNull("PartMasterId") ? (int?)null : Convert.ToInt32(row["PartMasterId"]),
                     JHSPartNo = row.IsNull("JHSPartNo") ? null : Convert.ToString(row["JHSPartNo"]),
                     MaterialNo = row.IsNull("MaterialNo") ? null : Convert.ToString(row["MaterialNo"]),
+                    CustomerMaterialNo = row.IsNull("CustomerMaterialNo") ? null : Convert.ToString(row["CustomerMaterialNo"]),
+                    CustomerAbbr = row.IsNull("CustomerAbbr") ? null : Convert.ToString(row["CustomerAbbr"]),
                     MaterialName = row.IsNull("MaterialName") ? null : Convert.ToString(row["MaterialName"]),
                     ProcessType = row.IsNull("ProcessType") ? null : Convert.ToString(row["ProcessType"]),
                     LabelInfo = row.IsNull("LabelInfo") ? null : Convert.ToString(row["LabelInfo"]),
@@ -132,7 +183,8 @@ namespace XHS.MSSQL
             return new[]
             {
                 new SqlParameter("@JHSPartNo", SqlDbType.VarChar, 20) { Value = ToDbValue(info.JHSPartNo) },
-                new SqlParameter("@MaterialNo", SqlDbType.VarChar, 50) { Value = ToDbValue(info.MaterialNo) },
+                new SqlParameter("@CustomerMaterialNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.CustomerMaterialNo ?? info.MaterialNo) },
+                new SqlParameter("@CustomerAbbr", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CustomerAbbr ?? string.Empty) },
                 new SqlParameter("@MaterialName", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.MaterialName) },
                 new SqlParameter("@ProcessType", SqlDbType.NVarChar, 20) { Value = ToDbValue(info.ProcessType) },
                 new SqlParameter("@LabelInfo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.LabelInfo) },
@@ -149,7 +201,8 @@ namespace XHS.MSSQL
             {
                 new SqlParameter("@PartMasterId", SqlDbType.Int) { Value = ToDbValue(info.PartMasterId) },
                 new SqlParameter("@JHSPartNo", SqlDbType.VarChar, 20) { Value = ToDbValue(info.JHSPartNo) },
-                new SqlParameter("@MaterialNo", SqlDbType.VarChar, 50) { Value = ToDbValue(info.MaterialNo) },
+                new SqlParameter("@CustomerMaterialNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.CustomerMaterialNo ?? info.MaterialNo) },
+                new SqlParameter("@CustomerAbbr", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CustomerAbbr ?? string.Empty) },
                 new SqlParameter("@MaterialName", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.MaterialName) },
                 new SqlParameter("@ProcessType", SqlDbType.NVarChar, 20) { Value = ToDbValue(info.ProcessType) },
                 new SqlParameter("@LabelInfo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.LabelInfo) },

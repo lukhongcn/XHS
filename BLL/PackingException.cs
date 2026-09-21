@@ -40,6 +40,33 @@ namespace XHS.BLL
             return records;
         }
 
+        public List<PackingExceptionInfo> SearchPackingExceptions(
+            string kdCode,
+            string partNo,
+            System.DateTime? dateFrom,
+            System.DateTime? dateTo,
+            int? status)
+        {
+            List<PackingExceptionInfo> records = dal.SearchPackingExceptions(
+                kdCode,
+                partNo,
+                dateFrom,
+                dateTo,
+                status) ?? new List<PackingExceptionInfo>();
+            var barcodeParser = new FactoryBarcodeParser();
+            foreach (PackingExceptionInfo record in records)
+            {
+                if (!string.IsNullOrWhiteSpace(record.KDQRCode))
+                {
+                    ShippingGoodsInfo kdInfo = barcodeParser.ParseShippingGoodsBarcode(
+                        record.KDQRCode,
+                        "XHSFZKD");
+                    record.KDPartNo = kdInfo != null ? kdInfo.PartNo : string.Empty;
+                }
+            }
+            return records;
+        }
+
         public List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken)
         {
             return dal.GetPackingExceptionByLockToken(lockToken);

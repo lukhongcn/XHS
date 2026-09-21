@@ -2,6 +2,8 @@
 using System.Data.SqlClient;
 using XHS.Model;
 
+using System;
+
 namespace XHS.IDAL
 {
     /// <summary>
@@ -12,6 +14,13 @@ namespace XHS.IDAL
         List<PackingExceptionInfo> GetExPackingExceptions(string boxCode);
 
         List<PackingExceptionInfo> SearchPackingExceptions(string kdCode, int? status);
+
+        List<PackingExceptionInfo> SearchPackingExceptions(
+            string kdCode,
+            string partNo,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? status);
 
         List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken);
 

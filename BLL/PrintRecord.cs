@@ -38,6 +38,11 @@ namespace XHS.BLL
             return dal.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, printType);
         }
 
+        public List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo, string printType)
+        {
+            return dal.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, deliveryNo, printType);
+        }
+
         public List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId)
         {
             return dal.GetPrintRecordsByTaskId(taskId);

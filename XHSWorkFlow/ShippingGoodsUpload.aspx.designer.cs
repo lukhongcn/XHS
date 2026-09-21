@@ -42,6 +42,21 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.Label lab_supplyBatchNo;
 
         /// <summary>
+        /// Label_DeliveryNo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Label Label_DeliveryNo;
+
+        /// <summary>
+        /// txt_DeliveryNo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.TextBox txt_DeliveryNo;
+
+        /// <summary>
+        /// chk_AutoDeliveryNo control.
+        /// </summary>
+        protected global::System.Web.UI.WebControls.CheckBox chk_AutoDeliveryNo;
+
+        /// <summary>
         /// FileUploadShippingGoods control.
         /// </summary>
         /// <remarks>

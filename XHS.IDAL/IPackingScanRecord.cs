@@ -18,6 +18,7 @@ namespace XHS.IDAL
         ParamterInfo InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos);
 
         ParamterInfo UpdatePackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos);
+        ParamterInfo DeletePackingScanRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo);
 
         /// <summary>事务内插入扫描记录。</summary>
         bool InsertScanRecord(long packingId, string qrCodeType, string qrCode, string materialNo, int qty, string scanUser, SqlConnection connection, SqlTransaction transaction);
@@ -42,6 +43,9 @@ namespace XHS.IDAL
 
         /// <summary>事务内按 Id 查询扫描记录。</summary>
         PackingScanRecordInfo GetScanRecordById(long scanRecordId, long packingId, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内删除指定扫描明细。</summary>
+        bool DeleteScanRecord(long scanRecordId, long packingId, SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>事务内更新重新装箱后的扫描明细。</summary>
         bool UpdateScanRecordForRepack(long scanRecordId, long packingId, string qrCode, string materialNo, int qty, string scanUser, SqlConnection connection, SqlTransaction transaction);

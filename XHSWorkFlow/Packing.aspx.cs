@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Web;
 using System.Web.Script.Services;
 using System.Web.Services;
 using System.Web.UI;
+using System.Web.UI.WebControls;
 using BLL;
 using XHS.BLL;
 using XHS.Model;
@@ -15,6 +17,7 @@ namespace ModuleWorkFlow
     public partial class Packing : Page
     {
         private const string MenuId = "B12";
+        private const string PartScanLabelType = "PackingPartScan";
         protected string menuname = "";
         private readonly PackingOperationService packingService = new PackingOperationService();
         private string currentPackingStage = string.Empty;
@@ -208,6 +211,8 @@ namespace ModuleWorkFlow
             BindEmptyScanRecords();
             currentApprovedRepackScanId = 0L;
             hidPackingId.Value = string.Empty;
+            hidTaskId.Value = string.Empty;
+            ViewState["ActivePackingId"] = null;
             hidLockToken.Value = string.Empty;
             hidPackingCompleteMode.Value = string.Empty;
             txt_LockToken.Text = string.Empty;
@@ -217,7 +222,6 @@ namespace ModuleWorkFlow
             txt_ScanQRCode.Enabled = true;
             txt_MaterialNo.Enabled = false;
             txt_Qty.Enabled = false;
-            btn_packing_complete.Enabled = false;
             pnlLocked.Style["display"] = "none";
             SetScanTypeState(false);
         }
@@ -230,7 +234,10 @@ namespace ModuleWorkFlow
 
             try
             {
-                if (GetTaskId() == Guid.Empty && GetPackingId() <= 0 && rblScanType.SelectedValue != "KD")
+                // 是否已存在装箱任务以实际装箱记录为准，不能只看地址栏中的 taskId。
+                // 地址栏可能保留旧任务 ID，但页面本身已经通过隐藏字段保存了当前任务。
+                long activePackingId = GetPackingId();
+                if (activePackingId <= 0 && rblScanType.SelectedValue != "KD")
                 {
                     ShowMessage("请先扫描KD标签，确定当前装箱任务。");
                 }
@@ -260,8 +267,30 @@ namespace ModuleWorkFlow
 
             txt_SupplyBatchNo.Text = parsedInfo.SupplyBatchNo;
             txt_PartNo.Text = parsedInfo.PartNo;
+            string enteredDeliveryNo = SafeValue(txt_DeliveryNo.Text);
+            ShippingGoodsInfo shippingGoodsInfo = FindShippingGoodsForKd(parsedInfo);
+            if (!string.IsNullOrWhiteSpace(enteredDeliveryNo))
+            {
+                txt_DeliveryNo.Text = enteredDeliveryNo;
+            }
+            if (shippingGoodsInfo == null && string.IsNullOrWhiteSpace(enteredDeliveryNo))
+            {
+                ShowMessage("未找到该 KD 标签对应的配送单号，请先确认出货单数据。 ");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(enteredDeliveryNo))
+            {
+                txt_DeliveryNo.Text = SafeValue(shippingGoodsInfo.DeliveryNo);
+            }
             txt_CartonNo.Text = parsedInfo.CartonNo;
             txt_PlanQty.Text = parsedInfo.Quantity.Value.ToString();
+
+            string deliveryNo = SafeValue(txt_DeliveryNo.Text);
+            if (string.IsNullOrWhiteSpace(deliveryNo))
+            {
+                ShowMessage("请输入配送单号后再扫描 KD 标签。");
+                return;
+            }
 
             // 校验 KD 标签是否在 tb_ShippingGoods 中已存在
             if (!CheckShippingGoodsExists(parsedInfo.SupplyBatchNo, parsedInfo.PartNo, parsedInfo.CartonNo))
@@ -283,7 +312,7 @@ namespace ModuleWorkFlow
             if (result.PackingRecord != null && result.PackingRecord.TaskId.HasValue)
             {
                 // 新创建的任务 → 跳转带上 taskId
-                if (result.Message != null && result.Message.Contains("已创建"))
+                if (result.PackingRecord.TaskId.Value != Guid.Empty && GetTaskId() != result.PackingRecord.TaskId.Value)
                 {
                     RedirectToTask(result.PackingRecord);
                     return;
@@ -297,12 +326,35 @@ namespace ModuleWorkFlow
             ShowMessage(result.Message);
         }
 
+        private static ShippingGoodsInfo FindShippingGoodsForKd(ShippingGoodsInfo parsedInfo)
+        {
+            if (parsedInfo == null)
+            {
+                return null;
+            }
+
+            List<ShippingGoodsInfo> exactMatches = new ShippingGoods()
+                .GetShippingGoodsByBusinessKey(parsedInfo.SupplyBatchNo, parsedInfo.PartNo, parsedInfo.CartonNo);
+            ShippingGoodsInfo match = exactMatches == null || exactMatches.Count == 0
+                ? null
+                : exactMatches[0];
+            if (match != null && !string.IsNullOrWhiteSpace(match.DeliveryNo))
+            {
+                return match;
+            }
+
+            // 精确箱号匹配失败时，按零件号+批次号取查询结果第一条。
+            List<ShippingGoodsInfo> partMatches = new ShippingGoods()
+                .GetShippingGoods(parsedInfo.PartNo, string.Empty, parsedInfo.SupplyBatchNo);
+            return partMatches != null && partMatches.Count > 0 ? partMatches[0] : null;
+        }
+
         private void ScanPackingQRCode(string qrCode)
         {
             long packingId = GetRequiredPackingId();
             if (packingId <= 0) return;
 
-            // 配送单：LabelCodeRule 解码(XHSFZPS) → 核对零件/批号/数量 → 匹配则完成
+            // 随箱卡：LabelCodeRule 解码 → 核对零件/批号/数量 → 匹配则完成
             PackingOperationResult result = packingService.ScanDeliveryNote(
                 packingId,
                 SafeValue(hidLockToken.Value),
@@ -317,9 +369,16 @@ namespace ModuleWorkFlow
             long packingId = GetRequiredPackingId();
             if (packingId <= 0) return;
 
-            // 解析零件标签二维码
-            ShippingGoodsInfo parsedInfo = new FactoryBarcodeParser().ParseShippingGoodsBarcode(qrCode, "XHSFZPart");
-            if (parsedInfo == null || string.IsNullOrWhiteSpace(parsedInfo.PartNo))
+            string customerId = GetCustomerId();
+            if (string.IsNullOrWhiteSpace(customerId))
+            {
+                ShowMessage("登录信息已失效，请重新登录。");
+                return;
+            }
+
+            // 解析零件标签二维码（PackingPartScan 规则）
+            PartInfo parsedInfo = new FactoryBarcodeParser().ParseFactoryBarcode(qrCode, customerId, PartScanLabelType);
+            if (parsedInfo == null || string.IsNullOrWhiteSpace(parsedInfo.JHSMaterialNo))
             {
                 ShowMessage("零件标签解析失败，无法识别零件号。");
                 return;
@@ -329,13 +388,13 @@ namespace ModuleWorkFlow
             int qty = 1;
 
             // 自动填入解析到的物料号
-            txt_MaterialNo.Text = parsedInfo.PartNo;
+            txt_MaterialNo.Text = parsedInfo.JHSMaterialNo;
 
             PackingOperationResult result = packingService.ScanMaterialQRCode(
                 packingId,
                 SafeValue(hidLockToken.Value),
                 qrCode,
-                parsedInfo.PartNo,
+                parsedInfo.JHSMaterialNo,
                 qty,
                 GetUserName());
 
@@ -372,7 +431,6 @@ namespace ModuleWorkFlow
             {
                 // Token 过期，禁止继续操作
                 txt_ScanQRCode.Enabled = false;
-                    btn_packing_complete.Enabled = false;
                 ShowMessage(result.Message);
                 return;
             }
@@ -389,7 +447,11 @@ namespace ModuleWorkFlow
         private Guid GetTaskId()
         {
             Guid taskId;
-            return Guid.TryParse(SafeValue(Request.QueryString["taskId"]), out taskId) ? taskId : Guid.Empty;
+            if (Guid.TryParse(SafeValue(Request.QueryString["taskId"]), out taskId))
+            {
+                return taskId;
+            }
+            return Guid.TryParse(SafeValue(hidTaskId.Value), out taskId) ? taskId : Guid.Empty;
         }
 
         private long GetPackingId()
@@ -398,11 +460,56 @@ namespace ModuleWorkFlow
             if (taskId != Guid.Empty)
             {
                 PackingOperationResult result = packingService.GetPackingState(taskId);
-                return result.PackingRecord != null && result.PackingRecord.Id.HasValue ? result.PackingRecord.Id.Value : 0L;
+                // taskId 可能来自旧页面地址或任务状态已被更新。只有成功解析出
+                // 装箱记录时才直接返回；否则继续使用本次页面回传的隐藏字段/ViewState。
+                if (result != null && result.PackingRecord != null &&
+                    result.PackingRecord.Id.HasValue && result.PackingRecord.Id.Value > 0)
+                {
+                    return result.PackingRecord.Id.Value;
+                }
             }
 
             long packingId;
-            return long.TryParse(SafeValue(hidPackingId.Value), out packingId) && packingId > 0 ? packingId : 0L;
+            if (long.TryParse(Convert.ToString(ViewState["ActivePackingId"]), out packingId) && packingId > 0)
+            {
+                return packingId;
+            }
+            if (long.TryParse(SafeValue(hidPackingId.Value), out packingId) && packingId > 0)
+            {
+                return packingId;
+            }
+
+            // 某些旧页面回传时 ViewState/隐藏字段不会带回，但页面上的业务键仍然存在。
+            // 用批次、零件号、箱号重新找回当前装箱记录，避免误提示“请先扫描 KD”。
+            string supplyBatchNo = SafeValue(txt_SupplyBatchNo.Text);
+            string partNo = SafeValue(txt_PartNo.Text);
+            string cartonNo = SafeValue(txt_CartonNo.Text);
+            if (!string.IsNullOrWhiteSpace(supplyBatchNo) &&
+                !string.IsNullOrWhiteSpace(partNo) &&
+                !string.IsNullOrWhiteSpace(cartonNo))
+            {
+                try
+                {
+                    List<PackingRecordInfo> records = new XHS.BLL.PackingRecord()
+                        .GetExPackingRecords(supplyBatchNo, partNo);
+                    PackingRecordInfo record = records == null
+                        ? null
+                        : records.Find(item => item != null &&
+                            string.Equals(SafeValue(item.CartonNo), cartonNo, StringComparison.OrdinalIgnoreCase) &&
+                            item.Id.HasValue);
+                    if (record != null)
+                    {
+                        hidPackingId.Value = record.Id.Value.ToString();
+                        ViewState["ActivePackingId"] = record.Id.Value;
+                        return record.Id.Value;
+                    }
+                }
+                catch
+                {
+                    // 兜底查询失败时保留原有提示，由调用方统一处理。
+                }
+            }
+            return 0L;
         }
 
         private long GetRequiredPackingId()
@@ -420,9 +527,19 @@ namespace ModuleWorkFlow
             currentPackingStage = SafeValue(record.PackingStage);
             currentPackingLocked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
             hidPackingId.Value = record.Id.HasValue ? record.Id.Value.ToString() : string.Empty;
+            hidTaskId.Value = record.TaskId.HasValue ? record.TaskId.Value.ToString() : string.Empty;
+            ViewState["ActivePackingId"] = record.Id;
             txt_SupplyBatchNo.Text = SafeValue(record.SupplyBatchNo);
             txt_PartNo.Text = SafeValue(record.PartNo);
             txt_CartonNo.Text = SafeValue(record.CartonNo);
+            // 重定向或重新加载后，从出货单重新带出配送单号；输入框仍保持可编辑。
+            List<ShippingGoodsInfo> deliveryMatches = new ShippingGoods()
+                .GetShippingGoodsByBusinessKey(record.SupplyBatchNo, record.PartNo, record.CartonNo);
+            if (deliveryMatches != null && deliveryMatches.Count > 0 &&
+                !string.IsNullOrWhiteSpace(deliveryMatches[0].DeliveryNo))
+            {
+                txt_DeliveryNo.Text = SafeValue(deliveryMatches[0].DeliveryNo);
+            }
             hidLockToken.Value = SafeValue(record.LockToken);
             txt_LockToken.Text = SafeValue(record.LockToken);
             txt_PlanQty.Text = record.PlanQty.HasValue ? record.PlanQty.Value.ToString() : string.Empty;
@@ -443,6 +560,18 @@ namespace ModuleWorkFlow
             txt_MaterialNo.Enabled = !locked && !completed;
             txt_Qty.Enabled = !locked && !completed;
             SetScanTypeState(locked || completed, record.PackingStage);
+            if (!locked && !completed)
+            {
+                bool packingComplete = string.Equals(record.PackingStage, PackingStageInfo.装箱完成.Status, StringComparison.OrdinalIgnoreCase);
+                ListItem kdItem = rblScanType.Items.FindByValue("KD");
+                ListItem packingItem = rblScanType.Items.FindByValue("Packing");
+                ListItem materialItem = rblScanType.Items.FindByValue("Material");
+                if (kdItem != null) kdItem.Enabled = false;
+                if (packingItem != null) packingItem.Enabled = packingComplete;
+                if (materialItem != null) materialItem.Enabled = !packingComplete;
+                rblScanType.SelectedValue = packingComplete ? "Packing" : "Material";
+                UpdateRadioStyles();
+            }
             if (locked)
             {
                 ClientScript.RegisterStartupScript(
@@ -458,7 +587,12 @@ namespace ModuleWorkFlow
             var kdItem = rblScanType.Items.FindByValue("KD");
             var packingItem = rblScanType.Items.FindByValue("Packing");
             var materialItem = rblScanType.Items.FindByValue("Material");
-            bool hasActiveTask = GetTaskId() != Guid.Empty || GetPackingId() > 0;
+            long packingId;
+            bool hasActiveTask = long.TryParse(SafeValue(hidPackingId.Value), out packingId) && packingId > 0;
+            if (!hasActiveTask)
+            {
+                hasActiveTask = GetTaskId() != Guid.Empty;
+            }
 
             if (lockedOrCompleted)
             {
@@ -466,7 +600,6 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = false;
                 if (packingItem != null) packingItem.Enabled = false;
                 if (materialItem != null) materialItem.Enabled = false;
-                btn_packing_complete.Enabled = false;
             }
             else if (!hasActiveTask)
             {
@@ -474,16 +607,14 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = true;
                 if (packingItem != null) packingItem.Enabled = false;
                 if (materialItem != null) materialItem.Enabled = false;
-                btn_packing_complete.Enabled = false;
                 rblScanType.SelectedValue = "KD";
             }
             else if (packingStage == PackingStageInfo.装箱完成.Status)
             {
-                // 装箱完成阶段：仅配送单启用
+                // 装箱完成阶段：仅随箱卡启用
                 if (kdItem != null) kdItem.Enabled = false;
                 if (packingItem != null) packingItem.Enabled = true;
                 if (materialItem != null) materialItem.Enabled = false;
-                btn_packing_complete.Enabled = false;
                 rblScanType.SelectedValue = "Packing";
             }
             else
@@ -492,7 +623,6 @@ namespace ModuleWorkFlow
                 if (kdItem != null) kdItem.Enabled = false;
                 if (packingItem != null) packingItem.Enabled = false;
                 if (materialItem != null) materialItem.Enabled = true;
-                btn_packing_complete.Enabled = true;
                 rblScanType.SelectedValue = "Material";
             }
 
@@ -508,19 +638,6 @@ namespace ModuleWorkFlow
                 true);
         }
 
-        protected void btn_packing_complete_Click(object sender, EventArgs e)
-        {
-            long packingId = GetRequiredPackingId();
-            if (packingId <= 0) return;
-
-            PackingOperationResult result = packingService.UpdatePackingStage(
-                packingId,
-                SafeValue(hidLockToken.Value),
-                PackingStageInfo.装箱完成.Status,
-                GetUserName());
-
-            HandleResult(result);
-        }
 
         private void RedirectToTask(PackingRecordInfo record)
         {
@@ -571,7 +688,6 @@ namespace ModuleWorkFlow
             txt_ScanQRCode.Enabled = false;
             txt_MaterialNo.Enabled = false;
             txt_Qty.Enabled = false;
-            btn_packing_complete.Enabled = false;
             foreach (System.Web.UI.WebControls.ListItem item in rblScanType.Items)
             {
                 item.Enabled = false;
@@ -584,12 +700,12 @@ namespace ModuleWorkFlow
             long rowScanId;
             return long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) && rowScanId == currentApprovedRepackScanId
                 ? "重新装箱"
-                : "申请";
+                : "删除";
         }
 
         protected string GetRepackLinkToolTip(object scanRecordId)
         {
-            return GetRepackLinkText(scanRecordId) == "重新装箱" ? "重新装箱" : "申请重新装箱审核";
+            return GetRepackLinkText(scanRecordId) == "重新装箱" ? "重新装箱" : "删除此零件";
         }
 
         protected string GetRepackClientClick(object scanRecordId)
@@ -633,7 +749,36 @@ namespace ModuleWorkFlow
             }
         }
 
+        private static bool CheckShippingGoodsDeliveryNo(string supplyBatchNo, string partNo, string deliveryNo, out string message)
+        {
+            message = string.Empty;
+            try
+            {
+                List<ShippingGoodsInfo> list = new ShippingGoods().GetShippingGoods(partNo, string.Empty, supplyBatchNo);
+                if (list == null || list.Count == 0)
+                {
+                    return true;
+                }
+
+                bool matched = list.All(info => info != null && string.Equals(SafeValue(info.DeliveryNo), deliveryNo, StringComparison.OrdinalIgnoreCase));
+                if (!matched)
+                {
+                    message = string.Format("配送单号不一致：批次“{0}”、零件编号“{1}”在数据库中的配送单号与当前输入不相同。", supplyBatchNo, partNo);
+                    return false;
+                }
+
+                return true;
+            }
+            catch
+            {
+                message = "校验配送单号失败，请稍后重试。";
+                return false;
+            }
+        }
+
         private string GetUserName() { return SafeValue(Session["userid"] == null ? string.Empty : Session["userid"].ToString()); }
+
+        private string GetCustomerId() { return SafeValue(Session["custome"] == null ? string.Empty : Session["custome"].ToString()); }
 
         private void ShowMessage(string message)
         {

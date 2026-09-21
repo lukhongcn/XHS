@@ -26,6 +26,7 @@ namespace ModuleWorkFlow
         private const string MenuId = "B011";
         private const string PrintTypeOuterBox = "KD标签";
         protected string menuname = "";
+        protected global::System.Web.UI.WebControls.Literal Literal_DownloadLink;
 
         private void Page_Load(object sender, EventArgs e)
         {
@@ -78,16 +79,11 @@ namespace ModuleWorkFlow
                 if (selectedInfos.Count == 0)
                 {
                     Label_Message.Text = "请先勾选需要打印的数据。";
+                    Literal_DownloadLink.Text = "";
                     return;
                 }
 
-                string clientId = (hid_ClientId.Value ?? string.Empty).Trim();
-                if (string.IsNullOrWhiteSpace(clientId))
-                {
-                    Label_Message.Text = "未生成客户端任务号，请重新点击打印。";
-                    return;
-                }
-
+                // 重复检查
                 List<string> duplicateMessages = new List<string>();
                 foreach (ShippingGoodsInfo shippingGoodsInfo in selectedInfos)
                 {
@@ -95,36 +91,45 @@ namespace ModuleWorkFlow
                         shippingGoodsInfo.SupplyBatchNo,
                         shippingGoodsInfo.PartNo,
                         shippingGoodsInfo.CartonNo,
+                        shippingGoodsInfo.DeliveryNo,
                         PrintTypeOuterBox);
 
                     if (duplicateInfos.Count > 0)
                     {
-                        duplicateMessages.Add(string.Format("{0}/{1}/{2}", shippingGoodsInfo.SupplyBatchNo, shippingGoodsInfo.PartNo, shippingGoodsInfo.CartonNo));
+                        duplicateMessages.Add(string.Format("{0}/{1}/{2}/{3}", shippingGoodsInfo.SupplyBatchNo, shippingGoodsInfo.PartNo, shippingGoodsInfo.DeliveryNo, shippingGoodsInfo.CartonNo));
                     }
                 }
 
                 if (duplicateMessages.Count > 0)
                 {
                     Label_Message.Text = "以下数据已存在打印任务，不能重复加入：" + string.Join("；", duplicateMessages.ToArray());
+                    Literal_DownloadLink.Text = "";
                     return;
                 }
 
+                // 构建标签数据
+                List<LabelInfo> labelInfos = ShippingGoodsLabelBuilder.BuildOuterBoxLabelInfos(selectedInfos);
+
+                // 生成合并 PDF（每页一张独立标签）
+                string pdfPhysicalPath = GenerateCombinedLabelPdf(labelInfos);
+                string pdfDownloadUrl = BuildPdfDownloadUrl(pdfPhysicalPath);
+                string pdfFileName = Path.GetFileName(pdfPhysicalPath);
+                long pdfFileSize = new FileInfo(pdfPhysicalPath).Length;
+
+                // 插入打印记录
                 DateTime now = DateTime.Now;
                 string currentUser = Session["userid"] == null ? string.Empty : Session["userid"].ToString().Trim();
                 string machineId = DropDownList_PrinterName.SelectedValue.Trim();
-                List<LabelInfo> labelInfos = ShippingGoodsLabelBuilder.BuildOuterBoxLabelInfos(selectedInfos);
+                string clientId = Guid.NewGuid().ToString("N").Substring(0, 8);
                 List<PrintRecordInfo> printRecordInfos = new List<PrintRecordInfo>();
                 for (int i = 0; i < selectedInfos.Count; i++)
                 {
                     ShippingGoodsInfo info = selectedInfos[i];
-                    LabelInfo labelInfo = labelInfos[i];
-                    string pdfPhysicalPath = GenerateSinglePdf(labelInfo);
-                    string pdfDownloadUrl = BuildPdfDownloadUrl(pdfPhysicalPath);
-
                     printRecordInfos.Add(new PrintRecordInfo
                     {
                         SupplyBatchNo = SafeValue(info.SupplyBatchNo),
                         PartNo = SafeValue(info.PartNo),
+                        DeliveryNo = SafeValue(info.DeliveryNo),
                         CartonNo = SafeValue(info.CartonNo),
                         ClientId = clientId,
                         MachineId = machineId,
@@ -133,24 +138,56 @@ namespace ModuleWorkFlow
                         PdfDownLoadUrl = pdfDownloadUrl,
                         PdfDownloadPath = pdfDownloadUrl,
                         LocalPath = pdfPhysicalPath,
-                        Status = PrintRecordStatusInfo.Pending,
-                        PrintCount = 0,
+                        Status = PrintRecordStatusInfo.Completed,
+                        PrintCount = 1,
                         PrintUser = currentUser,
                         PrintTime = now,
+                        FirstPrintUser = currentUser,
+                        FirstPrintTime = now,
+                        LastPrintUser = currentUser,
+                        LastPrintTime = now,
                         CreateUser = currentUser,
                         CreateTime = now
                     });
                 }
 
                 string saveMessage = InsertPrintRecords(printRecordInfos);
-                if (string.IsNullOrWhiteSpace(saveMessage))
+
+                // 更新 tb_ShippingGoods 的状态和打印次数
+                List<string> shippingGoodsErrors = new List<string>();
+                foreach (ShippingGoodsInfo info in selectedInfos)
                 {
-                    Label_Message.Text = string.Format("已生成 {0} 个独立 PDF 并加入 {0} 条待打印记录，ClientId：{1}。", printRecordInfos.Count, clientId);
-                    hid_ClientId.Value = string.Empty;
-                    return;
+                    string error = new global::BLL.ShippingGoods().CompleteShippingGoodsPrint(
+                        SafeValue(info.SupplyBatchNo),
+                        SafeValue(info.PartNo),
+                        SafeValue(info.CartonNo),
+                        SafeValue(info.DeliveryNo));
+                    if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        shippingGoodsErrors.Add(SafeValue(info.CartonNo) + "：" + error);
+                    }
                 }
 
-                Label_Message.Text = saveMessage;
+                // 显示下载链接
+                string statusMessage = string.IsNullOrWhiteSpace(saveMessage)
+                    ? "打印记录已保存，出货货品状态已更新。"
+                    : saveMessage;
+                if (shippingGoodsErrors.Count > 0)
+                {
+                    statusMessage += "（部分出货货品状态更新失败：" + string.Join("；", shippingGoodsErrors.ToArray()) + "）";
+                }
+
+                Label_Message.Text = string.Format(
+                    "已生成 {0} 页标签 PDF，共 {1} 条记录。{2}",
+                    labelInfos.Count,
+                    printRecordInfos.Count,
+                    statusMessage);
+
+                Literal_DownloadLink.Text = string.Format(
+                    "&nbsp;&nbsp;<a href=\"{0}\" target=\"_blank\" class=\"btn btn-sm btn-primary\" style=\"text-decoration:none;padding:4px 12px;\">📥 下载 PDF（{1} 页，{2:F1} KB）</a>",
+                    pdfDownloadUrl,
+                    labelInfos.Count,
+                    pdfFileSize / 1024.0);
             }
             finally
             {
@@ -221,13 +258,21 @@ namespace ModuleWorkFlow
 
         private List<ShippingGoodsInfo> GetPrintableShippingGoodsInfos()
         {
-            List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
+        List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
                 TextBox_PartNo.Text.Trim(),
                 TextBox_PartName.Text.Trim(),
                 TextBox_SupplyBatchNo.Text.Trim(),
                 "未结案");
 
-            HashSet<string> existingPrintRecordKeys = GetExistingPrintRecordKeys();
+            string deliveryNo = TextBox_DeliveryNo.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(deliveryNo))
+            {
+                shippingGoodsInfos = shippingGoodsInfos.FindAll(item =>
+                    item != null &&
+                    (item.DeliveryNo ?? string.Empty).IndexOf(deliveryNo, StringComparison.OrdinalIgnoreCase) >= 0);
+            }
+
+            HashSet<string> existingPrintRecordKeys = GetExistingPrintRecordKeys(shippingGoodsInfos);
             return shippingGoodsInfos
                 .Where(item => item != null &&
                     (!item.PrintCount.HasValue || item.PrintCount.Value == 0) &&
@@ -235,39 +280,45 @@ namespace ModuleWorkFlow
                         item.SupplyBatchNo,
                         item.PartNo,
                         item.CartonNo,
+                        item.DeliveryNo,
                         item.PrintCount)))
                 .ToList();
         }
 
-        private HashSet<string> GetExistingPrintRecordKeys()
+        private HashSet<string> GetExistingPrintRecordKeys(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
             XHS.BLL.PrintRecord printrecord = new XHS.BLL.PrintRecord();
-            List<PrintRecordInfo> printRecordInfos = printrecord.GetPrintRecords(
-                TextBox_SupplyBatchNo.Text.Trim(),
-                TextBox_PartNo.Text.Trim(),
-                string.Empty,
-                string.Empty);
-
             HashSet<string> keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (PrintRecordInfo printRecordInfo in printRecordInfos.Where(item => item != null))
+            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos.Where(item => item != null))
             {
-                keys.Add(BuildPrintRecordKey(
-                    printRecordInfo.SupplyBatchNo,
-                    printRecordInfo.PartNo,
-                    printRecordInfo.CartonNo,
-                    printRecordInfo.PrintCount));
+                List<PrintRecordInfo> printRecordInfos = printrecord.GetPrintRecordsByBusinessKey(
+                    shippingGoodsInfo.SupplyBatchNo,
+                    shippingGoodsInfo.PartNo,
+                    shippingGoodsInfo.CartonNo,
+                    shippingGoodsInfo.DeliveryNo,
+                    PrintTypeOuterBox);
+                if (printRecordInfos.Count > 0)
+                {
+                    keys.Add(BuildPrintRecordKey(
+                        shippingGoodsInfo.SupplyBatchNo,
+                        shippingGoodsInfo.PartNo,
+                        shippingGoodsInfo.CartonNo,
+                        shippingGoodsInfo.DeliveryNo,
+                        shippingGoodsInfo.PrintCount));
+                }
             }
 
             return keys;
         }
 
-        private static string BuildPrintRecordKey(string supplyBatchNo, string partNo, string cartonNo, int? printCount)
+        private static string BuildPrintRecordKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo, int? printCount)
         {
             return string.Join("|", new[]
             {
                 SafeValue(supplyBatchNo),
                 SafeValue(partNo),
                 SafeValue(cartonNo),
+                SafeValue(deliveryNo),
                 (printCount ?? 0).ToString()
             });
         }
@@ -277,10 +328,10 @@ namespace ModuleWorkFlow
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
         }
 
-        private static List<PrintRecordInfo> GetDuplicatePrintRecords(string supplyBatchNo, string partNo, string cartonNo, string printType)
+        private static List<PrintRecordInfo> GetDuplicatePrintRecords(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo, string printType)
         {
             XHS.BLL.PrintRecord printrecord = new XHS.BLL.PrintRecord();
-            return printrecord.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, printType);
+            return printrecord.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, deliveryNo, printType);
         }
 
         private static string InsertPrintRecords(List<PrintRecordInfo> printRecordInfos)
@@ -289,7 +340,7 @@ namespace ModuleWorkFlow
             return printrecord.InsertPrintRecord(printRecordInfos);
         }
 
-        private string GenerateSinglePdf(LabelInfo labelInfo)
+        private string GenerateCombinedLabelPdf(List<LabelInfo> labelInfos)
         {
             string outputFolderConfig = ConfigurationManager.AppSettings["PrintRecord.LabelOutputFolder"];
             string physicalOutputFolder = Server.MapPath(string.IsNullOrWhiteSpace(outputFolderConfig) ? "~/labeloutput" : outputFolderConfig.Trim());
@@ -301,7 +352,7 @@ namespace ModuleWorkFlow
             LabelPrintConfig config = LabelPrintConfig.LoadRollPaper();
             config.OutputFolder = physicalOutputFolder;
 
-            return new LabelPdfBuilder().GenerateSingleLabelPdf(labelInfo, LabelTemplateType.TableLabel, config);
+            return new LabelPdfBuilder().GenerateMultiPageSingleLabelPdf(labelInfos, LabelTemplateType.TableLabel, config);
         }
 
         private string BuildPdfDownloadUrl(string pdfPhysicalPath)
@@ -316,14 +367,14 @@ namespace ModuleWorkFlow
 
             if (!fullPdfPath.StartsWith(fullRootPath, StringComparison.OrdinalIgnoreCase))
             {
-                return "/labeloutput/" + Path.GetFileName(pdfPhysicalPath);
+                return ResolveUrl("~/labeloutput/" + Path.GetFileName(pdfPhysicalPath));
             }
 
             string relativePath = fullPdfPath.Substring(fullRootPath.Length)
                 .Replace(Path.DirectorySeparatorChar, '/')
                 .Replace(Path.AltDirectorySeparatorChar, '/');
 
-            return "/" + relativePath.TrimStart('/');
+            return ResolveUrl("~/" + relativePath.TrimStart('/'));
         }
 
         #region Web Form Designer generated code

@@ -14,7 +14,7 @@ namespace XHS.MSSQL
     /// </summary>
     public class PrintRecord : IPrintRecord
     {
-        private const string PrintRecordSelectColumns = "Id,SupplyBatchNo,PartNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,ReprintReasonsId,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime";
+        private const string PrintRecordSelectColumns = "Id,SupplyBatchNo,PartNo,DeliveryNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,ReprintReasonsId,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime";
         private const string PrintRecordOrderBy = " order by CreateTime desc, Id desc";
 
         public List<PrintRecordInfo> GetPrintRecords()
@@ -34,7 +34,7 @@ namespace XHS.MSSQL
 
             if (!string.IsNullOrWhiteSpace(closeStatus))
             {
-                queryString += " inner join tb_ShippingGoods sg on pr.SupplyBatchNo=sg.SupplyBatchNo and pr.PartNo=sg.PartNo and pr.CartonNo=sg.CartonNo";
+                queryString += " inner join tb_ShippingGoods sg on pr.SupplyBatchNo=sg.SupplyBatchNo and pr.PartNo=sg.PartNo and pr.DeliveryNo=sg.DeliveryNo and pr.CartonNo=sg.CartonNo";
             }
 
             queryString += " where 1=1";
@@ -86,6 +86,16 @@ namespace XHS.MSSQL
             return GetPrintRecordsBySql(queryString);
         }
 
+        public List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo, string printType)
+        {
+            string queryString = string.Format(
+                "select {0} from tb_PrintRecord where SupplyBatchNo='{1}' and PartNo='{2}' and DeliveryNo='{3}' and CartonNo='{4}' and PrintType='{5}'",
+                PrintRecordSelectColumns,
+                SafeSqlValue(supplyBatchNo), SafeSqlValue(partNo), SafeSqlValue(deliveryNo), SafeSqlValue(cartonNo), SafeSqlValue(printType));
+            queryString += PrintRecordOrderBy;
+            return GetPrintRecordsBySql(queryString);
+        }
+
         public List<PrintRecordInfo> GetPrintRecordsByTaskId(Guid taskId)
         {
             string queryString = string.Format(
@@ -108,7 +118,7 @@ namespace XHS.MSSQL
             int timeoutMinutes = lockTimeoutMinutes < 1 ? 3 : lockTimeoutMinutes;
             string outputColumns = "inserted." + PrintRecordSelectColumns.Replace(",", ",inserted.");
             string queryString = string.Format(
-                "update tb_PrintRecord set Status=@FailedStatus,LockTime=null,UpdateTime=getdate()" +
+                "update tb_PrintRecord set Status=@Status,LockTime=null,UpdateTime=getdate()" +
                 " where Status=@Status and MachineId=@MachineId and LockTime is not null" +
                 " and LockTime <= dateadd(minute, -@LockTimeoutMinutes, getdate());" +
                 " with NextRecord as (" +
@@ -125,7 +135,6 @@ namespace XHS.MSSQL
                 queryString,
                 new SqlParameter("@TopCount", SqlDbType.Int) { Value = takeCount },
                 new SqlParameter("@Status", SqlDbType.Int) { Value = PrintRecordStatusInfo.Pending },
-                new SqlParameter("@FailedStatus", SqlDbType.Int) { Value = PrintRecordStatusInfo.Failed },
                 new SqlParameter("@LockTimeoutMinutes", SqlDbType.Int) { Value = timeoutMinutes },
                 new SqlParameter("@MachineId", SqlDbType.NVarChar, 50) { Value = machineId.Trim() });
 
@@ -134,26 +143,53 @@ namespace XHS.MSSQL
 
         public ParamterInfo InsertPrintRecord(List<PrintRecordInfo> printRecordInfos)
         {
-            const string sql = "insert into tb_PrintRecord (SupplyBatchNo,PartNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,ReprintReasonsId,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime) values (@SupplyBatchNo,@PartNo,@CartonNo,@TaskId,@ClientId,@MachineId,@PrintType,@PdfUrl,@PdfDownLoadUrl,@PdfDownloadPath,@LocalPath,@Status,@PrintCount,@PrintUser,@PrintTime,@FirstPrintUser,@FirstPrintTime,@LastPrintUser,@LastPrintTime,@ReprintReason,@ReprintReasonsId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime,@LockTime)";
+            const string sql = "insert into tb_PrintRecord (SupplyBatchNo,PartNo,DeliveryNo,CartonNo,TaskId,ClientId,MachineId,PrintType,PdfUrl,PdfDownLoadUrl,PdfDownloadPath,LocalPath,Status,PrintCount,PrintUser,PrintTime,FirstPrintUser,FirstPrintTime,LastPrintUser,LastPrintTime,ReprintReason,ReprintReasonsId,CreateUser,CreateTime,UpdateUser,UpdateTime,LockTime) values (@SupplyBatchNo,@PartNo,@DeliveryNo,@CartonNo,@TaskId,@ClientId,@MachineId,@PrintType,@PdfUrl,@PdfDownLoadUrl,@PdfDownloadPath,@LocalPath,@Status,@PrintCount,@PrintUser,@PrintTime,@FirstPrintUser,@FirstPrintTime,@LastPrintUser,@LastPrintTime,@ReprintReason,@ReprintReasonsId,@CreateUser,@CreateTime,@UpdateUser,@UpdateTime,@LockTime)";
             return BuildParamterInfo(printRecordInfos, sql, BuildInsertOrUpdateParameters);
         }
 
         public ParamterInfo UpdatePrintRecord(List<PrintRecordInfo> printRecordInfos)
         {
-            const string sql = "update tb_PrintRecord set TaskId=@TaskId,ClientId=@ClientId,MachineId=@MachineId,PdfUrl=@PdfUrl,PdfDownLoadUrl=@PdfDownLoadUrl,PdfDownloadPath=@PdfDownloadPath,LocalPath=@LocalPath,Status=@Status,PrintCount=@PrintCount,PrintUser=@PrintUser,PrintTime=@PrintTime,FirstPrintUser=@FirstPrintUser,FirstPrintTime=@FirstPrintTime,LastPrintUser=@LastPrintUser,LastPrintTime=@LastPrintTime,ReprintReason=@ReprintReason,ReprintReasonsId=@ReprintReasonsId,CreateUser=@CreateUser,CreateTime=@CreateTime,UpdateUser=@UpdateUser,UpdateTime=@UpdateTime,LockTime=@LockTime where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and PrintType=@PrintType";
+            const string sql = "update tb_PrintRecord set TaskId=@TaskId,ClientId=@ClientId,MachineId=@MachineId,PdfUrl=@PdfUrl,PdfDownLoadUrl=@PdfDownLoadUrl,PdfDownloadPath=@PdfDownloadPath,LocalPath=@LocalPath,Status=@Status,PrintCount=@PrintCount,PrintUser=@PrintUser,PrintTime=@PrintTime,FirstPrintUser=@FirstPrintUser,FirstPrintTime=@FirstPrintTime,LastPrintUser=@LastPrintUser,LastPrintTime=@LastPrintTime,ReprintReason=@ReprintReason,ReprintReasonsId=@ReprintReasonsId,CreateUser=@CreateUser,CreateTime=@CreateTime,UpdateUser=@UpdateUser,UpdateTime=@UpdateTime,LockTime=@LockTime where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and DeliveryNo=@DeliveryNo and CartonNo=@CartonNo and PrintType=@PrintType";
             return BuildParamterInfo(printRecordInfos, sql, BuildInsertOrUpdateParameters);
         }
 
         public ParamterInfo DeletePrintRecord(List<PrintRecordInfo> printRecordInfos)
         {
-            const string sql = "delete from tb_PrintRecord where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and PrintType=@PrintType";
+            const string sql = "delete from tb_PrintRecord where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and DeliveryNo=@DeliveryNo and CartonNo=@CartonNo and PrintType=@PrintType";
             return BuildParamterInfo(printRecordInfos, sql, info => new[]
             {
                 new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.SupplyBatchNo) },
                 new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PartNo) },
+                new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.DeliveryNo) },
                 new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) },
                 new SqlParameter("@PrintType", SqlDbType.NVarChar, 20) { Value = ToDbValue(info.PrintType) }
             });
+        }
+
+        public ParamterInfo DeletePrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            const string sql = "delete from tb_PrintRecord where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and DeliveryNo=@DeliveryNo";
+            return BuildBusinessKeyDeleteParameterInfo(sql, supplyBatchNo, partNo, deliveryNo);
+        }
+
+        private ParamterInfo BuildBusinessKeyDeleteParameterInfo(string sql, string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            return new ParamterInfo
+            {
+                Sql = sql,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList { sql },
+                AlPAR = new ArrayList
+                {
+                    new SqlParameter[]
+                    {
+                        new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 50) { Value = supplyBatchNo ?? string.Empty },
+                        new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? string.Empty },
+                        new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = deliveryNo ?? string.Empty }
+                    }
+                },
+                AlCOM = new ArrayList { CommandType.Text }
+            };
         }
 
         private static List<PrintRecordInfo> GetPrintRecordsBySql(string queryString)
@@ -177,6 +213,7 @@ namespace XHS.MSSQL
                     Id = ReadNullableLong(row, "Id"),
                     SupplyBatchNo = ReadString(row, "SupplyBatchNo"),
                     PartNo = ReadString(row, "PartNo"),
+                    DeliveryNo = ReadString(row, "DeliveryNo"),
                     CartonNo = ReadString(row, "CartonNo"),
                     TaskId = ReadNullableGuid(row, "TaskId"),
                     ClientId = ReadString(row, "ClientId"),
@@ -239,6 +276,7 @@ namespace XHS.MSSQL
             {
                 new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.SupplyBatchNo) },
                 new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PartNo) },
+                new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.DeliveryNo) },
                 new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) },
                 new SqlParameter("@TaskId", SqlDbType.UniqueIdentifier) { Value = ToDbValue(info.TaskId) },
                 new SqlParameter("@ClientId", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.ClientId) },

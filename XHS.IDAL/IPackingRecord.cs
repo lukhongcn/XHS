@@ -18,6 +18,7 @@ namespace XHS.IDAL
         ParamterInfo InsertPackingRecord(List<PackingRecordInfo> packingRecordInfos);
 
         ParamterInfo UpdatePackingRecord(List<PackingRecordInfo> packingRecordInfos);
+        ParamterInfo DeletePackingRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo);
 
         /// <summary>在事务内以 UPDLOCK 读取装箱记录。</summary>
         PackingRecordInfo GetPackingRecordForUpdate(long packingId, SqlConnection connection, SqlTransaction transaction);

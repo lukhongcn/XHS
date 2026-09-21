@@ -4,7 +4,6 @@
     {
         protected global::System.Web.UI.ScriptManager ScriptManager1;
         protected global::System.Web.UI.WebControls.LinkButton lnk_view;
-        protected global::System.Web.UI.WebControls.Button btn_packing_complete;
         protected global::System.Web.UI.WebControls.Panel pnlLocked;
         protected global::System.Web.UI.WebControls.Label Label_LockMessage;
         protected global::System.Web.UI.WebControls.Label Label_ScanQRCode;
@@ -14,6 +13,8 @@
         protected global::System.Web.UI.WebControls.TextBox txt_SupplyBatchNo;
         protected global::System.Web.UI.WebControls.Label Label_PartNo;
         protected global::System.Web.UI.WebControls.TextBox txt_PartNo;
+        protected global::System.Web.UI.WebControls.Label Label_DeliveryNo;
+        protected global::System.Web.UI.WebControls.TextBox txt_DeliveryNo;
         protected global::System.Web.UI.WebControls.Label Label_CartonNo;
         protected global::System.Web.UI.WebControls.TextBox txt_CartonNo;
         protected global::System.Web.UI.WebControls.Label Label_PlanQty;
@@ -29,6 +30,7 @@
         protected global::System.Web.UI.WebControls.Label Label_LockToken;
         protected global::System.Web.UI.WebControls.TextBox txt_LockToken;
         protected global::System.Web.UI.WebControls.HiddenField hidPackingId;
+        protected global::System.Web.UI.WebControls.HiddenField hidTaskId;
         protected global::System.Web.UI.WebControls.HiddenField hidLockToken;
         protected global::System.Web.UI.WebControls.HiddenField hidPackingCompleteMode;
         protected global::System.Web.UI.WebControls.HiddenField hidRepackScanId;

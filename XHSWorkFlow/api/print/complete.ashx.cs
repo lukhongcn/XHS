@@ -55,7 +55,8 @@ namespace ModuleWorkFlow.Api
                     string saveShippingGoodsMessage = shippingGoodsService.CompleteShippingGoodsPrint(
                         SafeValue(printRecordInfo.SupplyBatchNo),
                         SafeValue(printRecordInfo.PartNo),
-                        SafeValue(printRecordInfo.CartonNo));
+                        SafeValue(printRecordInfo.CartonNo),
+                        SafeValue(printRecordInfo.DeliveryNo));
 
                     if (!string.IsNullOrWhiteSpace(saveShippingGoodsMessage))
                     {

@@ -67,6 +67,7 @@ namespace ModuleWorkFlow
 					//Session["roleid"] = dr["roleid"];
 					Session["isadmin"] = Convert.ToInt32(dr["isadmin"]) == 1;
 					Session["iprivate"] = ip;
+						Session["custome"] = "FZXHS";
 					checkSucc = true;
 				}
 				/*else

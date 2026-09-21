@@ -1,5 +1,6 @@
 ﻿using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
+using System.Text.RegularExpressions;
 
 namespace XHS.PlaywrightTests;
 
@@ -10,7 +11,7 @@ public class ShippingGoodsViewTests : PageTest
         get
         {
             string? value = Environment.GetEnvironmentVariable("XHS_BASE_URL");
-            return string.IsNullOrWhiteSpace(value) ? "http://localhost:55426" : value.TrimEnd('/');
+            return string.IsNullOrWhiteSpace(value) ? "http://localhost/XHS" : value.TrimEnd('/');
         }
     }
 
@@ -23,6 +24,18 @@ public class ShippingGoodsViewTests : PageTest
         await Expect(Page.GetByRole(AriaRole.Link, new() { Name = "保存/save" })).ToBeVisibleAsync();
         await Expect(Page.GetByLabel("扫描条码")).ToBeVisibleAsync();
         await Expect(Page.GetByLabel("二维码内容")).ToBeVisibleAsync();
+        await Expect(Page.GetByLabel("自动产生配送单号")).ToBeVisibleAsync();
+    }
+
+    [Test]
+    public async Task AutoDeliveryNoMakesDeliveryNoReadOnly()
+    {
+        await Page.GotoAsync($"{BaseUrl}/ShippingGoodsView.aspx");
+
+        await Page.GetByLabel("自动产生配送单号").CheckAsync();
+        ILocator deliveryNo = Page.GetByLabel("配送单号");
+        await Expect(deliveryNo).ToHaveAttributeAsync("readonly", "readonly");
+        await Expect(deliveryNo).ToHaveClassAsync(new Regex("shipping-goods-readonly"));
     }
 }
 
