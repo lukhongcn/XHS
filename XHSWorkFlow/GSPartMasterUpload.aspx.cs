@@ -6,6 +6,8 @@ using System.Web;
 using System.Web.UI;
 using XHS.BLL;
 using XHS.Model;
+using BLL;
+using ModuleWorkFlow.BLL;
 
 namespace ModuleWorkFlow
 {
@@ -14,8 +16,8 @@ namespace ModuleWorkFlow
     /// </summary>
     public partial class GSPartMasterUpload : Page
     {
-        protected string menuname = "光束标签主数据上传";
-        private const string MenuId = "C";
+        protected string menuname = "";
+        private const string MenuId = "C01";
         private const string CustomerAbbr = "DSBQ";
         private const string LabelBindingFlowCode = "LABEL_BINDING";
 
@@ -27,12 +29,18 @@ namespace ModuleWorkFlow
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!ModuleWorkFlow.BLL.Private.checkPrivate(this, MenuId, "PADD")) return;
+            menuname = new PartTmenu().findbykey(MenuId).Menuname;
+            if (Master is DefaultSub master)
+            {
+                master.Menuname = menuname;
+            }
+
             if (Session["userid"] == null)
             {
                 Response.Redirect("login.aspx");
                 return;
             }
+            if (!ModuleWorkFlow.BLL.Private.checkPrivate(this, MenuId, "PADD")) return;
         }
 
         protected void btn_upload_Click(object sender, EventArgs e)

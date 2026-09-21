@@ -33,7 +33,9 @@ namespace XHS.BLL
             return dal.GetLabelCodeRulesByCustomerId(customerId);
         }
 
-        public List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerIdAndLabelType(string customerId, string labelType)
+        public List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerIdAndLabelType(
+            string customerId,
+            string labelType)
         {
             return dal.GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
         }
@@ -123,9 +125,9 @@ namespace XHS.BLL
                     return "请填写标签类型。";
                 }
 
-                if (info.LabelType != "CUSTOMER" && info.LabelType != "MES" && info.LabelType != "PackingPartScan")
+                if (info.LabelType != "CUSTOMER" && info.LabelType != "MES")
                 {
-                    return "标签类型必须为 CUSTOMER、MES 或 PackingPartScan。";
+                    return "标签类型必须为 CUSTOMER 或 MES。";
                 }
 
                 if (string.IsNullOrWhiteSpace(info.ParseType))

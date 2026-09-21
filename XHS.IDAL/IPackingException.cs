@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.SqlClient;
 using XHS.Model;
+
+using System;
 
 namespace XHS.IDAL
 {
@@ -14,8 +15,12 @@ namespace XHS.IDAL
 
         List<PackingExceptionInfo> SearchPackingExceptions(string kdCode, int? status);
 
-        /// <summary>按多条件搜索装箱异常（支持日期范围、零件编号过滤）。</summary>
-        List<PackingExceptionInfo> SearchPackingExceptions(string kdCode, string partNo, DateTime? dateFrom, DateTime? dateTo, int? status);
+        List<PackingExceptionInfo> SearchPackingExceptions(
+            string kdCode,
+            string partNo,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? status);
 
         List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken);
 

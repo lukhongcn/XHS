@@ -39,12 +39,12 @@ namespace XHS.MSSQL
         public List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerIdAndLabelType(string customerId, string labelType)
         {
             const string sql = "select " + SelectColumns + " from tb_LabelCodeRule where CustomerId=@customerId and LabelType=@labelType order by RuleId asc";
-            SqlParameter[] pars = new SqlParameter[]
+            SqlParameter[] parameters = new SqlParameter[]
             {
-                new SqlParameter("@customerId", SqlDbType.VarChar, 100) { Value = customerId },
-                new SqlParameter("@labelType", SqlDbType.VarChar, 20) { Value = labelType }
+                new SqlParameter("@customerId", SqlDbType.VarChar, 100) { Value = customerId ?? string.Empty },
+                new SqlParameter("@labelType", SqlDbType.VarChar, 20) { Value = labelType ?? string.Empty }
             };
-            DataSet dataSet = Data.getDataSet(sql, pars);
+            DataSet dataSet = Data.getDataSet(sql, parameters);
             return BuildLabelCodeRules(dataSet);
         }
 
