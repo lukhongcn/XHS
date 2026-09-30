@@ -16,7 +16,13 @@ namespace XHS.IDAL
 
         List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string printType);
 
+        List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo, string printType);
+
         List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId);
+
+        int GetPrintCount(string printType, System.DateTime printTime);
+
+        int GetPrintCount(System.DateTime printTime);
 
         List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes);
 
@@ -25,5 +31,6 @@ namespace XHS.IDAL
         ParamterInfo UpdatePrintRecord(List<PrintRecordInfo> printRecordInfos);
 
         ParamterInfo DeletePrintRecord(List<PrintRecordInfo> printRecordInfos);
+        ParamterInfo DeletePrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo);
     }
 }

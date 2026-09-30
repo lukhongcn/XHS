@@ -51,6 +51,47 @@ namespace XHS.MSSQL
             return GetPackingExceptionsJoinBySql(queryString);
         }
 
+        public List<PackingExceptionInfo> SearchPackingExceptions(
+            string kdCode,
+            string partNo,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? status)
+        {
+            string queryString = "select " + PackingExceptionJoinSelectColumns
+                + " from tb_PackingException e inner join tb_PackingRecord p on e.PackingId=p.Id where 1=1";
+            if (!string.IsNullOrWhiteSpace(kdCode))
+            {
+                queryString += string.Format(
+                    " and p.KDQRCode like '%{0}%'",
+                    (kdCode ?? string.Empty).Replace("'", "''"));
+            }
+            if (!string.IsNullOrWhiteSpace(partNo))
+            {
+                queryString += string.Format(
+                    " and p.PartNo like '%{0}%'",
+                    (partNo ?? string.Empty).Replace("'", "''"));
+            }
+            if (dateFrom.HasValue)
+            {
+                queryString += string.Format(
+                    " and e.CreateTime >= '{0:yyyy-MM-dd HH:mm:ss}'",
+                    dateFrom.Value);
+            }
+            if (dateTo.HasValue)
+            {
+                queryString += string.Format(
+                    " and e.CreateTime < '{0:yyyy-MM-dd HH:mm:ss}'",
+                    dateTo.Value.AddDays(1));
+            }
+            if (status.HasValue)
+            {
+                queryString += string.Format(" and e.Status={0}", status.Value);
+            }
+            queryString += " order by e.CreateTime desc, e.Id desc";
+            return GetPackingExceptionsJoinBySql(queryString);
+        }
+
         public List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken)
         {
             string queryString = "select " + PackingExceptionSelectColumns + " from tb_PackingException where 1=1";

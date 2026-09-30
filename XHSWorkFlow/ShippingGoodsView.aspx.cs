@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -43,12 +44,15 @@ namespace ModuleWorkFlow
 
             txt_barcode.Attributes["autocomplete"] = "off";
             txt_barcode.Attributes["onkeydown"] = "return shippingGoodsBarcodeKeyDown(event);";
+            ApplyAutoDeliveryNoState();
 
             if (!IsPostBack)
             {
                 InitializePage();
                 LoadShippingGoods();
             }
+
+            ApplyPrintedEditModeState();
         }
 
         protected void txt_barcode_TextChanged(object sender, EventArgs e)
@@ -67,10 +71,18 @@ namespace ModuleWorkFlow
             SaveShippingGoods();
         }
 
+        protected void chk_AutoDeliveryNo_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyAutoDeliveryNoState();
+        }
+
         private void InitializePage()
         {
             txt_SupplierCode.Text = CheryPortConfig.SupplNo;
             txt_StackLayerCount.Text = "1";
+            string todayAtMidnight = FormatDateTimeLocal(DateTime.Today);
+            txt_ProductionDate.Text = todayAtMidnight;
+            txt_InspectionConfirmDate.Text = todayAtMidnight;
             ApplyBarcodeDrivenReadOnlyState();
             ApplyEditModeState();
         }
@@ -83,6 +95,11 @@ namespace ModuleWorkFlow
             SetTextBoxReadOnly(txt_SupplyBatchNo, true);
             SetTextBoxReadOnly(txt_StackLayerCount, false);
             SetTextBoxReadOnly(txt_ProductionDate, false);
+        }
+
+        private void ApplyAutoDeliveryNoState()
+        {
+            SetTextBoxReadOnly(txt_DeliveryNo, chk_AutoDeliveryNo.Checked);
         }
 
         private static void SetTextBoxReadOnly(TextBox textBox, bool isReadOnly)
@@ -154,6 +171,8 @@ namespace ModuleWorkFlow
             txt_PartEnglishName.Text = SafeValue(shippingGoodsInfo.PartEnglishName);
             txt_Quantity.Text = shippingGoodsInfo.Quantity.HasValue ? shippingGoodsInfo.Quantity.Value.ToString() : string.Empty;
             txt_SupplyBatchNo.Text = SafeValue(shippingGoodsInfo.SupplyBatchNo);
+            txt_DeliveryNo.Text = SafeValue(shippingGoodsInfo.DeliveryNo);
+            txt_OrderQuantity.Text = GetExistingOrderQuantityText(shippingGoodsInfo);
             txt_StackLayerCount.Text = shippingGoodsInfo.StackLayerCount.HasValue ? shippingGoodsInfo.StackLayerCount.Value.ToString() : string.Empty;
             txt_ProductionDate.Text = FormatDateTimeLocal(shippingGoodsInfo.ProductionDate);
             txt_InspectionConfirmDate.Text = FormatDateTimeLocal(shippingGoodsInfo.InspectionConfirmDate);
@@ -161,6 +180,32 @@ namespace ModuleWorkFlow
             txt_SingleBoxGrossWeight.Text = shippingGoodsInfo.SingleBoxGrossWeight.HasValue
                 ? shippingGoodsInfo.SingleBoxGrossWeight.Value.ToString("0.##")
                 : string.Empty;
+        }
+
+        private static string GetExistingOrderQuantityText(ShippingGoodsInfo shippingGoodsInfo)
+        {
+            if (shippingGoodsInfo == null ||
+                string.IsNullOrWhiteSpace(shippingGoodsInfo.PartNo) ||
+                string.IsNullOrWhiteSpace(shippingGoodsInfo.SupplyBatchNo) ||
+                string.IsNullOrWhiteSpace(shippingGoodsInfo.DeliveryNo))
+            {
+                return shippingGoodsInfo != null && shippingGoodsInfo.Quantity.HasValue
+                    ? shippingGoodsInfo.Quantity.Value.ToString()
+                    : string.Empty;
+            }
+
+            List<ShippingGoodsInfo> existingInfos = new ShippingGoods().GetShippingGoods(
+                shippingGoodsInfo.PartNo,
+                string.Empty,
+                shippingGoodsInfo.SupplyBatchNo);
+            int orderQuantity = existingInfos == null
+                ? 0
+                : existingInfos
+                    .Where(item => item != null &&
+                        string.Equals((item.DeliveryNo ?? string.Empty).Trim(), shippingGoodsInfo.DeliveryNo.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .Sum(item => item.Quantity ?? 0);
+
+            return orderQuantity > 0 ? orderQuantity.ToString() : string.Empty;
         }
 
         private void ApplyEditModeState()
@@ -208,8 +253,19 @@ namespace ModuleWorkFlow
             }
 
             txt_PartNo.Text = SafeValue(scannedShippingGoodsInfo.PartNo);
+            txt_PartChineseName.Text = string.Empty;
+            txt_SingleBoxGrossWeight.Text = string.Empty;
+            ShippingGoodsInfo existingPartInfo = FindExistingPartInfo(scannedShippingGoodsInfo.PartNo);
+            if (existingPartInfo != null)
+            {
+                txt_PartChineseName.Text = SafeValue(existingPartInfo.PartChineseName);
+                txt_SingleBoxGrossWeight.Text = existingPartInfo.SingleBoxGrossWeight.HasValue
+                    ? existingPartInfo.SingleBoxGrossWeight.Value.ToString("0.##", CultureInfo.InvariantCulture)
+                    : string.Empty;
+            }
             txt_Quantity.Text = scannedShippingGoodsInfo.Quantity.HasValue ? scannedShippingGoodsInfo.Quantity.Value.ToString() : string.Empty;
             txt_SupplyBatchNo.Text = SafeValue(scannedShippingGoodsInfo.SupplyBatchNo);
+            txt_DeliveryNo.Text = SafeValue(scannedShippingGoodsInfo.DeliveryNo);
             txt_StackLayerCount.Text = scannedShippingGoodsInfo.StackLayerCount.HasValue ? scannedShippingGoodsInfo.StackLayerCount.Value.ToString() : "1";
             txt_ProductionDate.Text = scannedShippingGoodsInfo.ProductionDate.HasValue
                 ? FormatDateTimeLocal(scannedShippingGoodsInfo.ProductionDate)
@@ -221,6 +277,7 @@ namespace ModuleWorkFlow
             txt_PartNo.Text = string.Empty;
             txt_Quantity.Text = string.Empty;
             txt_SupplyBatchNo.Text = string.Empty;
+            txt_DeliveryNo.Text = string.Empty;
             txt_StackLayerCount.Text = "1";
             txt_ProductionDate.Text = string.Empty;
             txt_BoxCount.Text = string.Empty;
@@ -229,8 +286,84 @@ namespace ModuleWorkFlow
             ApplyEditModeState();
         }
 
+        private bool IsPrintedEditMode()
+        {
+            int printCount;
+            return IsEditMode() &&
+                ((int.TryParse(hid_PrintCount.Value, out printCount) && printCount > 0) ||
+                 string.Equals(hid_Status.Value, ShippingGoodsStatusInfo.Printed, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void ApplyPrintedEditModeState()
+        {
+            if (!IsPrintedEditMode())
+            {
+                return;
+            }
+
+            TextBox[] readOnlyTextBoxes =
+            {
+                txt_barcode, txt_SupplierCode, txt_PartNo, txt_PartChineseName, txt_PartEnglishName,
+                txt_Quantity, txt_OrderQuantity, txt_SupplyBatchNo, txt_StackLayerCount,
+                txt_ProductionDate, txt_InspectionConfirmDate, txt_BoxCount, txt_SingleBoxGrossWeight
+            };
+            foreach (TextBox textBox in readOnlyTextBoxes)
+            {
+                SetTextBoxReadOnly(textBox, true);
+            }
+
+            SetTextBoxReadOnly(txt_DeliveryNo, false);
+            chk_AutoDeliveryNo.Checked = false;
+            chk_AutoDeliveryNo.Enabled = false;
+        }
+
+        private static ShippingGoodsInfo FindExistingPartInfo(string partNo)
+        {
+            string normalizedPartNo = SafeValue(partNo);
+            if (string.IsNullOrWhiteSpace(normalizedPartNo))
+            {
+                return null;
+            }
+
+            List<ShippingGoodsInfo> candidates = new ShippingGoods()
+                .GetShippingGoods(normalizedPartNo, string.Empty, string.Empty);
+
+            return candidates == null
+                ? null
+                : candidates.Find(item => item != null &&
+                    string.Equals(SafeValue(item.PartNo), normalizedPartNo, StringComparison.OrdinalIgnoreCase));
+        }
+
         private void SaveShippingGoods()
         {
+            if (IsPrintedEditMode())
+            {
+                if (string.IsNullOrWhiteSpace(txt_DeliveryNo.Text))
+                {
+                    ShowMessage("配送单号不能为空。");
+                    return;
+                }
+
+                string printedSaveMessage = new ShippingGoods().UpdatePrintedDeliveryNo(
+                    txt_SupplyBatchNo.Text.Trim(), txt_PartNo.Text.Trim(), hid_CartonNo.Value,
+                    GetOriginalDeliveryNo(), txt_DeliveryNo.Text.Trim());
+                ShowMessage(string.IsNullOrWhiteSpace(printedSaveMessage) ? "配送单号保存成功。" : printedSaveMessage);
+                return;
+            }
+
+            if (chk_AutoDeliveryNo.Checked && !IsEditMode())
+            {
+                try
+                {
+                    txt_DeliveryNo.Text = new ShippingGoods().GetNextAutoDeliveryNo(DateTime.Now);
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage(ex.Message);
+                    return;
+                }
+            }
+
             string validateMessage;
             if (!ValidateInput(out validateMessage))
             {
@@ -239,9 +372,20 @@ namespace ModuleWorkFlow
             }
 
             ShippingGoods shippingGoods = new ShippingGoods();
+            int orderQuantity;
+            int boxQuantity;
+            int boxCount;
+            string quantityMessage;
+            if (!TryGetGenerationQuantities(out orderQuantity, out boxQuantity, out boxCount, out quantityMessage))
+            {
+                ShowMessage(quantityMessage);
+                return;
+            }
+
             if (IsEditMode())
             {
-                List<ShippingGoodsInfo> editShippingGoodsInfos = BuildNewShippingGoodsInfos();
+                List<ShippingGoodsInfo> editShippingGoodsInfos = shippingGoods.BuildNewShippingGoodsInfos(
+                    BuildShippingGoodsTemplate(null), orderQuantity, boxQuantity, boxCount);
                 string editSaveMessage = shippingGoods.SaveViewEditShippingGoods(
                     txt_SupplyBatchNo.Text.Trim(),
                     txt_PartNo.Text.Trim(),
@@ -252,16 +396,24 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            List<ShippingGoodsInfo> shippingGoodsInfos = BuildNewShippingGoodsInfos();
+            List<ShippingGoodsInfo> shippingGoodsInfos = shippingGoods.BuildNewShippingGoodsInfos(
+                BuildShippingGoodsTemplate(null), orderQuantity, boxQuantity, boxCount);
             ShippingGoodsInfo firstShippingGoodsInfo = shippingGoodsInfos.Count == 0 ? null : shippingGoodsInfos[0];
-            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
+            ShippingGoodsInfo duplicateKeyInfo = shippingGoodsInfos.Count == 0 ? null : shippingGoodsInfos[0];
+            if (duplicateKeyInfo != null)
             {
-                List<ShippingGoodsInfo> duplicateInfos = shippingGoods.GetShippingGoodsBySupplyBatchNo(
-                    shippingGoodsInfo.SupplyBatchNo,
-                    shippingGoodsInfo.CartonNo);
-                if (duplicateInfos.Count > 0)
+                List<ShippingGoodsInfo> duplicateInfos = shippingGoods.GetShippingGoods(
+                    duplicateKeyInfo.PartNo,
+                    string.Empty,
+                    duplicateKeyInfo.SupplyBatchNo);
+                bool isDuplicate = duplicateInfos.Any(existingInfo =>
+                    existingInfo != null &&
+                    string.Equals((existingInfo.PartNo ?? string.Empty).Trim(), (duplicateKeyInfo.PartNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals((existingInfo.SupplyBatchNo ?? string.Empty).Trim(), (duplicateKeyInfo.SupplyBatchNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals((existingInfo.DeliveryNo ?? string.Empty).Trim(), (duplicateKeyInfo.DeliveryNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase));
+                if (isDuplicate)
                 {
-                    ShowMessage(string.Format("供货批次号“{0}”下的纸箱编号“{1}”已存在。", shippingGoodsInfo.SupplyBatchNo, shippingGoodsInfo.CartonNo));
+                    ShowMessage(string.Format("零件编号“{0}”、配送单号“{1}”、供货批次号“{2}”的出货货品已存在。", duplicateKeyInfo.PartNo, duplicateKeyInfo.DeliveryNo, duplicateKeyInfo.SupplyBatchNo));
                     return;
                 }
             }
@@ -291,7 +443,9 @@ namespace ModuleWorkFlow
             CheckRequiredField(txt_PartNo.Text, "零件编号", missingFields);
             CheckRequiredField(txt_PartChineseName.Text, "零件中文名称", missingFields);
             CheckRequiredField(txt_Quantity.Text, "数量", missingFields);
+            CheckRequiredField(txt_OrderQuantity.Text, "订单数量", missingFields);
             CheckRequiredField(txt_SupplyBatchNo.Text, "供货批次号", missingFields);
+            CheckRequiredField(txt_DeliveryNo.Text, "配送单号", missingFields);
             CheckRequiredField(txt_StackLayerCount.Text, "码放层数", missingFields);
             CheckRequiredField(txt_ProductionDate.Text, "生产日期", missingFields);
             CheckRequiredField(txt_InspectionConfirmDate.Text, "检验确认日期", missingFields);
@@ -306,6 +460,13 @@ namespace ModuleWorkFlow
             if (!int.TryParse(txt_Quantity.Text.Trim(), out quantity))
             {
                 message = "数量必须为整数。";
+                return false;
+            }
+
+            int orderQuantity;
+            if (!int.TryParse(txt_OrderQuantity.Text.Trim(), out orderQuantity) || orderQuantity <= 0)
+            {
+                message = "订单数量必须为大于 0 的整数。";
                 return false;
             }
 
@@ -357,6 +518,55 @@ namespace ModuleWorkFlow
             return true;
         }
 
+        private string GetOriginalDeliveryNo()
+        {
+            int id;
+            if (!int.TryParse(hid_Id.Value, out id))
+            {
+                return txt_DeliveryNo.Text.Trim();
+            }
+
+            ShippingGoodsInfo info = new ShippingGoods().GetShippingGoods().Find(item => item != null && item.Id == id);
+            return info == null ? txt_DeliveryNo.Text.Trim() : SafeValue(info.DeliveryNo);
+        }
+
+        private bool TryGetGenerationQuantities(
+            out int orderQuantity,
+            out int boxQuantity,
+            out int boxCount,
+            out string message)
+        {
+            orderQuantity = 0;
+            boxQuantity = 0;
+            boxCount = 0;
+            message = string.Empty;
+
+            if (!int.TryParse(txt_OrderQuantity.Text.Trim(), out orderQuantity) || orderQuantity <= 0)
+            {
+                message = "订单数量必须为大于 0 的整数。";
+                return false;
+            }
+
+            if (!int.TryParse(txt_Quantity.Text.Trim(), out boxQuantity) || boxQuantity <= 0)
+            {
+                message = "数量必须为大于 0 的整数。";
+                return false;
+            }
+
+            if (!TryGetBoxCount(out boxCount, out message))
+            {
+                return false;
+            }
+
+            if (boxCount > 1 && orderQuantity <= boxQuantity * (boxCount - 1))
+            {
+                message = "订单数量不足以生成指定的纸箱数量。";
+                return false;
+            }
+
+            return true;
+        }
+
         private ShippingGoodsInfo GetCurrentShippingGoodsForEdit()
         {
             int id;
@@ -387,44 +597,6 @@ namespace ModuleWorkFlow
             return new List<ShippingGoodsInfo> { shippingGoodsInfo };
         }
 
-        private List<ShippingGoodsInfo> BuildNewShippingGoodsInfos()
-        {
-            int boxCount;
-            string boxCountMessage;
-            if (!TryGetBoxCount(out boxCount, out boxCountMessage))
-            {
-                throw new ApplicationException(boxCountMessage);
-            }
-
-            ShippingGoodsInfo templateShippingGoodsInfo = BuildShippingGoodsTemplate(null);
-            var shippingGoodsInfos = new List<ShippingGoodsInfo>();
-            for (int i = 1; i <= boxCount; i++)
-            {
-                shippingGoodsInfos.Add(new ShippingGoodsInfo
-                {
-                    SupplierCode = templateShippingGoodsInfo.SupplierCode,
-                    PartNo = templateShippingGoodsInfo.PartNo,
-                    PartChineseName = templateShippingGoodsInfo.PartChineseName,
-                    PartEnglishName = templateShippingGoodsInfo.PartEnglishName,
-                    Quantity = templateShippingGoodsInfo.Quantity,
-                    SupplyBatchNo = templateShippingGoodsInfo.SupplyBatchNo,
-                    StackLayerCount = templateShippingGoodsInfo.StackLayerCount,
-                    ProductionDate = templateShippingGoodsInfo.ProductionDate,
-                    InspectionConfirmDate = templateShippingGoodsInfo.InspectionConfirmDate,
-                    CartonNo = boxCount.ToString() + "-" + i.ToString(),
-                    QrCode = templateShippingGoodsInfo.QrCode,
-                    OutBoxQRCode = templateShippingGoodsInfo.OutBoxQRCode,
-                    Status = templateShippingGoodsInfo.Status,
-                    PrintCount = templateShippingGoodsInfo.PrintCount,
-                    Creater = templateShippingGoodsInfo.Creater,
-                    CreatDate = templateShippingGoodsInfo.CreatDate,
-                    SingleBoxGrossWeight = templateShippingGoodsInfo.SingleBoxGrossWeight
-                });
-            }
-
-            return shippingGoodsInfos;
-        }
-
         private ShippingGoodsInfo BuildShippingGoodsTemplate(ShippingGoodsInfo currentShippingGoodsInfo)
         {
             int printCount;
@@ -444,6 +616,7 @@ namespace ModuleWorkFlow
                 PartEnglishName = SafeValue(txt_PartEnglishName.Text),
                 Quantity = Convert.ToInt32(txt_Quantity.Text.Trim()),
                 SupplyBatchNo = txt_SupplyBatchNo.Text.Trim(),
+                DeliveryNo = txt_DeliveryNo.Text.Trim(),
                 StackLayerCount = Convert.ToInt32(txt_StackLayerCount.Text.Trim()),
                 ProductionDate = productionDate,
                 InspectionConfirmDate = inspectionConfirmDate,

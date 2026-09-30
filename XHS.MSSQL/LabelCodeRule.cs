@@ -36,6 +36,18 @@ namespace XHS.MSSQL
             return BuildLabelCodeRules(dataSet);
         }
 
+        public List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerIdAndLabelType(string customerId, string labelType)
+        {
+            const string sql = "select " + SelectColumns + " from tb_LabelCodeRule where CustomerId=@customerId and LabelType=@labelType order by RuleId asc";
+            SqlParameter[] parameters = new SqlParameter[]
+            {
+                new SqlParameter("@customerId", SqlDbType.VarChar, 100) { Value = customerId ?? string.Empty },
+                new SqlParameter("@labelType", SqlDbType.VarChar, 20) { Value = labelType ?? string.Empty }
+            };
+            DataSet dataSet = Data.getDataSet(sql, parameters);
+            return BuildLabelCodeRules(dataSet);
+        }
+
         public ParamterInfo InsertLabelCodeRules(List<LabelCodeRuleInfo> labelCodeRuleInfos)
         {
             const string sql = "insert into tb_LabelCodeRule (RuleName,LabelType,CustomerId,ParseType,Separator,KeySeparator,Version,Enabled,Remark,MatchRegex) values (@RuleName,@LabelType,@CustomerId,@ParseType,@Separator,@KeySeparator,@Version,@Enabled,@Remark,@MatchRegex)";

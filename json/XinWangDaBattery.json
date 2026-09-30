@@ -1,0 +1,100 @@
+{
+    "RuleName": "XinWangDaBattery",
+    "Description": "欣旺达汽车电池标签条码规则（推测版，可根据供应商规范调整）",
+    "Version": "0.1",
+    "BarcodeLength": 28,
+    "StructureDescription": "X1-X28: 规格代码13位 + 供应商代码5位 + 日期代码3位 + 图纸版本1位 + 批次号1位 + 序列号5位",
+    "Fields": [
+        {
+            "Name": "PartNo",
+            "Description": "规格代码",
+            "Position": {
+                "Start": 1,
+                "Length": 13
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true
+        },
+        {
+            "Name": "SupplierCode",
+            "Description": "供应商代码",
+            "Position": {
+                "Start": 14,
+                "Length": 5
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true
+        },
+        {
+            "Name": "ProductionDate",
+            "Description": "生产日期代码",
+            "Position": {
+                "Start": 19,
+                "Length": 3
+            },
+            "Source": "Date",
+            "Formatter": "XinWangDaDate",
+            "Required": true
+        },
+        {
+            "Name": "DrawingVersion",
+            "Description": "图纸版本",
+            "Position": {
+                "Start": 22,
+                "Length": 1
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Formatter": "XinWangDaDrawingRevision",
+            "Required": true
+        },
+        {
+            "Name": "BatchNo",
+            "Description": "批次号",
+            "Position": {
+                "Start": 23,
+                "Length": 1
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true
+        },
+        {
+            "Name": "SerialNo",
+            "Description": "序列号",
+            "Position": {
+                "Start": 24,
+                "Length": 5
+            },
+            "Source": "Auto",
+            "ValueSource": "Today",
+            "DataType": "Number",
+            "Formatter": "DailySerialNumber",
+            "StartGenerator": "PrintCountPlusOne",
+            "InitialValue": "00001",
+            "Format": "00000",
+            "Required": true
+        }
+    ],
+    "Validation": {
+        "LengthCheck": true,
+        "AllowedCharacters": "0-9A-Z",
+        "CaseSensitive": false
+    },
+    "Examples": [
+        {
+            "Input": {
+                "PartNo": "5599660001281",
+                "SupplierCode": "10758",
+                "ProductionDate": "2018-01-30",
+                "DrawingVersion": "A0",
+                "BatchNo": "1",
+                "SerialNo": "00000"
+            },
+            "ExpectedBarcode": "55996600012811075881Y0100000",
+            "Description": "规范示例"
+        }
+    ]
+}

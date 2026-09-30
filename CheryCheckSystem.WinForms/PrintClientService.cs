@@ -52,7 +52,7 @@ namespace CheryCheckSystem.PrintClient
 
                 _settings = PrintClientSettings.Load();
                 _logger = new PrintClientFileLogger(_settings.LogFolder);
-                _worker = new PrintClientWorker(_settings, _logger.Write);
+                _worker = new PrintClientWorker(_settings, _logger.Write, _logger.WriteFetch);
 
                 _logger.Write(ServiceDisplayName + "已启动，轮询间隔 " + _settings.PollIntervalSeconds + " 秒。");
                 _timer = new Timer(ProcessPrintTasks, null, TimeSpan.Zero, TimeSpan.FromSeconds(_settings.PollIntervalSeconds));

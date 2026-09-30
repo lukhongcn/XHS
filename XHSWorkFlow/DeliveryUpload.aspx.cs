@@ -56,6 +56,13 @@ namespace ModuleWorkFlow
             set { ViewState["PackageNameDefault"] = value; }
         }
 
+        // 缓存 ShippingGoods.DeliveryNo，扫描 KD 后自动带出
+        private string DeliveryNoDefault
+        {
+            get { return ViewState["DeliveryNoDefault"] as string ?? string.Empty; }
+            set { ViewState["DeliveryNoDefault"] = value; }
+        }
+
         // KD 对应的零件中文名称
         private string KdPartName
         {
@@ -144,7 +151,7 @@ namespace ModuleWorkFlow
         private void ScanKd(string qrCode)
         {
             ShippingGoodsInfo parsedInfo = new FactoryBarcodeParser()
-                .ParseShippingGoodsBarcode(qrCode, "XHSFZKD");
+                .ParseShippingGoodsBarcode(qrCode);
             if (parsedInfo == null ||
                 string.IsNullOrWhiteSpace(parsedInfo.PartNo) ||
                 string.IsNullOrWhiteSpace(parsedInfo.SupplyBatchNo) ||
@@ -167,6 +174,7 @@ namespace ModuleWorkFlow
                     KdPartName = existList[0].PartChineseName ?? string.Empty;
                     shippingPackingStage = existList[0].PackingStage;
                     PackageNameDefault = existList[0].PackageName ?? string.Empty;
+                    DeliveryNoDefault = existList[0].DeliveryNo ?? string.Empty;
                 }
                 else
                 {
@@ -212,6 +220,7 @@ namespace ModuleWorkFlow
             // 清除旧配送单和核验结果
             ClearDeliveryDisplay();
             txt_DeliveryPackageName.Text = PackageNameDefault;
+            txt_DeliveryNo.Text = DeliveryNoDefault;
             txt_DeliveryMatch.Text = string.Empty;
 
             RecheckMatch();
@@ -227,7 +236,7 @@ namespace ModuleWorkFlow
             }
 
             ShippingGoodsInfo parsedInfo = new FactoryBarcodeParser()
-                .ParseShippingGoodsBarcode(qrCode, "XHSFZPS");
+                .ParseShippingGoodsBarcode(qrCode);
             if (parsedInfo == null ||
                 string.IsNullOrWhiteSpace(parsedInfo.PartNo) ||
                 string.IsNullOrWhiteSpace(parsedInfo.SupplyBatchNo) ||
@@ -301,7 +310,7 @@ namespace ModuleWorkFlow
             }
             if (string.IsNullOrWhiteSpace(txt_DeliveryNo.Text))
             {
-                ShowMessage("请填写配送单号。");
+                ShowMessage("配送单号未自动带出，无法上传。");
                 return;
             }
             if (string.IsNullOrWhiteSpace(txt_DeliveryPackageCode.Text))
@@ -330,6 +339,7 @@ namespace ModuleWorkFlow
                 // 2. 组装上传信息
                 var uploadInfo = new CheryUploadInfo
                 {
+                    BaseNo = SafeValue(dpl_baseno.SelectedValue),
                     DeliveryNo = SafeValue(txt_DeliveryNo.Text),
                     SxCardSeq = SafeValue(txt_SxCardSeq.Text),
                     MaterialNo = materialNo,
@@ -381,14 +391,16 @@ namespace ModuleWorkFlow
                     }
 
                     respMsg += "，状态已更新为" + ShippingGoodsStatusInfo.Uploaded;
+
+                    // 只有平台上传成功且本地状态更新成功后，才清理当前输入内容。
+                    BindInitialState();
+                    KdInfo = null;
+                    DeliveryInfo = null;
+                    KdPackingId = 0;
+                    KdRawBarcode = null;
                 }
 
                 ShowMessage("平台返回：" + respMsg);
-                BindInitialState();
-                KdInfo = null;
-                DeliveryInfo = null;
-                KdPackingId = 0;
-                KdRawBarcode = null;
             }
             catch (Exception ex)
             {
@@ -421,8 +433,11 @@ namespace ModuleWorkFlow
             txt_DeliveryQty.Text = info.Quantity.HasValue ? info.Quantity.Value.ToString() : string.Empty;
             txt_SxCardSeq.Text = SafeValue(info.PackingCardNo);
             txt_DeliveryPackageCode.Text = SafeValue(info.PackageCode);
+            if (!string.IsNullOrWhiteSpace(info.DeliveryNo))
+            {
+                txt_DeliveryNo.Text = SafeValue(info.DeliveryNo);
+            }
             // txt_DeliveryPackageName 在 ClearDeliveryDisplay 后赋值
-            // txt_DeliveryNo 手工填写，不自动带出
         }
 
         private void ClearDeliveryDisplay()

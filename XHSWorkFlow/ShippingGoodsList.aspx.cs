@@ -53,9 +53,9 @@ namespace ModuleWorkFlow
 
         protected void lnkbutton_delete_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(TextBox_SupplyBatchNo.Text) || string.IsNullOrWhiteSpace(TextBox_PartNo.Text))
+            if (string.IsNullOrWhiteSpace(TextBox_SupplyBatchNo.Text) || string.IsNullOrWhiteSpace(TextBox_PartNo.Text) || string.IsNullOrWhiteSpace(TextBox_DeliveryNo.Text))
             {
-                ShowMessage("请输入供货批次号和零件编号后再删除。");
+                ShowMessage("请输入供货批次号、零件编号和配送单号后再删除。");
                 return;
             }
 
@@ -65,7 +65,8 @@ namespace ModuleWorkFlow
                 TextBox_SupplyBatchNo.Text.Trim());
             string message = new ShippingGoods().SaveDeleteShippingGoods(
                 TextBox_SupplyBatchNo.Text.Trim(),
-                TextBox_PartNo.Text.Trim());
+                TextBox_PartNo.Text.Trim(),
+                TextBox_DeliveryNo.Text.Trim());
             if (string.IsNullOrWhiteSpace(message))
             {
                 BindData();
@@ -181,16 +182,31 @@ namespace ModuleWorkFlow
 
         private void BindData()
         {
+            List<ShippingGoodsInfo> shippingGoodsInfos = GetFilteredShippingGoods();
+
+            MainDataGrid.DataKeyField = "Id";
+            MainDataGrid.DataSource = shippingGoodsInfos;
+            MainDataGrid.DataBind();
+            Label_Message.Text = string.Format("共查询到 {0} 条出货货品数据。", shippingGoodsInfos.Count);
+        }
+
+        private List<ShippingGoodsInfo> GetFilteredShippingGoods()
+        {
             List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
                 TextBox_PartNo.Text.Trim(),
                 TextBox_PartName.Text.Trim(),
                 TextBox_SupplyBatchNo.Text.Trim(),
                 DropDownList_CloseStatus.SelectedValue);
 
-            MainDataGrid.DataKeyField = "Id";
-            MainDataGrid.DataSource = shippingGoodsInfos;
-            MainDataGrid.DataBind();
-            Label_Message.Text = string.Format("共查询到 {0} 条出货货品数据。", shippingGoodsInfos.Count);
+            string deliveryNo = TextBox_DeliveryNo.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(deliveryNo))
+            {
+                shippingGoodsInfos = shippingGoodsInfos.FindAll(info =>
+                    info != null &&
+                    (info.DeliveryNo ?? string.Empty).IndexOf(deliveryNo, StringComparison.OrdinalIgnoreCase) >= 0);
+            }
+
+            return shippingGoodsInfos;
         }
 
         private bool TryGetSingleSelectedShippingGoods(out ShippingGoodsInfo shippingGoodsInfo)
@@ -217,11 +233,7 @@ namespace ModuleWorkFlow
 
         private List<ShippingGoodsInfo> GetSelectedShippingGoods()
         {
-            List<ShippingGoodsInfo> shippingGoodsInfos = new ShippingGoods().GetShippingGoods(
-                TextBox_PartNo.Text.Trim(),
-                TextBox_PartName.Text.Trim(),
-                TextBox_SupplyBatchNo.Text.Trim(),
-                DropDownList_CloseStatus.SelectedValue);
+            List<ShippingGoodsInfo> shippingGoodsInfos = GetFilteredShippingGoods();
             List<ShippingGoodsInfo> selectedShippingGoodsInfos = new List<ShippingGoodsInfo>();
 
             foreach (DataGridItem item in MainDataGrid.Items)

@@ -11,9 +11,9 @@ namespace CheryCheckSystem.PrintClient
     {
         private readonly JavaScriptSerializer _serializer = new JavaScriptSerializer();
 
-        public List<PrintPendingRecord> FetchPendingRecords(string apiBaseUrl, string pendingApiPath, string machineId, int lockTimeoutMinutes)
+        public List<PrintPendingRecord> FetchPendingRecords(string apiBaseUrl, string pendingApiPath, string machineId, int lockTimeoutMinutes, int maxCount = 1)
         {
-            string requestUrl = BuildPendingUrl(apiBaseUrl, pendingApiPath, machineId, lockTimeoutMinutes);
+            string requestUrl = BuildPendingUrl(apiBaseUrl, pendingApiPath, machineId, lockTimeoutMinutes, maxCount);
             using (WebClient webClient = CreateWebClient())
             {
                 string responseText = webClient.DownloadString(requestUrl);
@@ -156,7 +156,7 @@ namespace CheryCheckSystem.PrintClient
             }
         }
 
-        public string BuildPendingUrl(string apiBaseUrl, string pendingApiPath, string machineId, int lockTimeoutMinutes)
+        public string BuildPendingUrl(string apiBaseUrl, string pendingApiPath, string machineId, int lockTimeoutMinutes, int maxCount = 1)
         {
             string safeMachineId = Uri.EscapeDataString(SafeValue(machineId));
             string relativePath = SafeValue(pendingApiPath);
@@ -166,10 +166,10 @@ namespace CheryCheckSystem.PrintClient
             }
 
             string separator = relativePath.IndexOf('?') >= 0 ? "&" : "?";
-            return BuildUri(apiBaseUrl, relativePath + separator + "machineId=" + safeMachineId + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes)).ToString();
+            return BuildUri(apiBaseUrl, relativePath + separator + "machineId=" + safeMachineId + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes) + "&maxCount=" + Math.Max(1, Math.Min(30, maxCount))).ToString();
         }
 
-        public string BuildPendingUrlFromTemplate(string pendingApiUrlTemplate, string machineId, int lockTimeoutMinutes)
+        public string BuildPendingUrlFromTemplate(string pendingApiUrlTemplate, string machineId, int lockTimeoutMinutes, int maxCount = 1)
         {
             string template = SafeValue(pendingApiUrlTemplate);
             if (string.IsNullOrWhiteSpace(template))
@@ -188,11 +188,11 @@ namespace CheryCheckSystem.PrintClient
                     "(^|&)machineId=[^&]*",
                     "$1machineId=" + encodedMachineId,
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                return uri.GetLeftPart(UriPartial.Path) + "?" + updated + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes);
+                return uri.GetLeftPart(UriPartial.Path) + "?" + updated + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes) + "&maxCount=" + Math.Max(1, Math.Min(30, maxCount));
             }
 
             string separator = string.IsNullOrWhiteSpace(query) ? "?" : "&";
-            return template + separator + "machineId=" + encodedMachineId + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes);
+            return template + separator + "machineId=" + encodedMachineId + "&lockTimeoutMinutes=" + Math.Max(1, lockTimeoutMinutes) + "&maxCount=" + Math.Max(1, Math.Min(30, maxCount));
         }
 
         private static WebClient CreateWebClient()

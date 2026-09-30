@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Web;
 using System.Web.UI;
 using BLL;
@@ -46,11 +47,18 @@ namespace ModuleWorkFlow
             {
                 InitializeUploadMode();
             }
+
+            ApplyAutoDeliveryNoState();
         }
 
         protected void btn_upload_Click(object sender, EventArgs e)
         {
             UploadShippingGoods();
+        }
+
+        protected void chk_AutoDeliveryNo_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyAutoDeliveryNoState();
         }
 
         protected void lnk_view_Click(object sender, EventArgs e)
@@ -61,6 +69,28 @@ namespace ModuleWorkFlow
 
         private void UploadShippingGoods()
         {
+            if (!IsUpdateMode())
+            {
+                if (chk_AutoDeliveryNo.Checked)
+                {
+                    try
+                    {
+                        txt_DeliveryNo.Text = new ShippingGoods().GetNextAutoDeliveryNo(DateTime.Now);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage(ex.Message);
+                        return;
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(txt_DeliveryNo.Text))
+                {
+                    ShowMessage("请输入配送单号，或勾选自动产生配送单号。");
+                    return;
+                }
+            }
+
             if (!FileUploadShippingGoods.HasFile)
             {
                 ShowMessage("请选择需要上传的出货单。");
@@ -83,7 +113,16 @@ namespace ModuleWorkFlow
             FileUploadShippingGoods.SaveAs(fullName);
 
             List<string> messageList;
-            List<ShippingGoodsInfo> shippingGoodsInfos = new UnRegularTableImport().GetList<ShippingGoodsInfo>(fullName, out messageList);
+            List<ShippingGoodsInfo> shippingGoodsInfos;
+            try
+            {
+                shippingGoodsInfos = new UnRegularTableImport().GetList<ShippingGoodsInfo>(fullName, out messageList);
+            }
+            catch (Exception ex)
+            {
+                ShowMessage("读取出货单失败：" + ex.Message);
+                return;
+            }
             if (messageList.Count > 0)
             {
                 ShowMessage(string.Join("<br />", messageList.ToArray()));
@@ -106,10 +145,19 @@ namespace ModuleWorkFlow
             ShippingGoods shippingGoods = new ShippingGoods();
             foreach(ShippingGoodsInfo sgi in shippingGoodsInfos)
             {
-                List<ShippingGoodsInfo> duplicateShippingGoodsInfos = shippingGoods.GetShippingGoodsBySupplyBatchNo(sgi.SupplyBatchNo, sgi.CartonNo);
-                if (duplicateShippingGoodsInfos.Count > 0)
+                sgi.DeliveryNo = txt_DeliveryNo.Text.Trim();
+                List<ShippingGoodsInfo> existingPartShippingGoodsInfos = shippingGoods.GetShippingGoods(
+                    sgi.PartNo,
+                    string.Empty,
+                    sgi.SupplyBatchNo);
+                bool isDuplicate = existingPartShippingGoodsInfos != null && existingPartShippingGoodsInfos.Any(existingInfo =>
+                    existingInfo != null &&
+                    string.Equals((existingInfo.PartNo ?? string.Empty).Trim(), (sgi.PartNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals((existingInfo.SupplyBatchNo ?? string.Empty).Trim(), (sgi.SupplyBatchNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals((existingInfo.DeliveryNo ?? string.Empty).Trim(), (sgi.DeliveryNo ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase));
+                if (isDuplicate)
                 {
-                    ShowMessage(string.Format("供货批次号“{0}”下的纸箱编号“{1}”已存在，不允许重复上传。", sgi.SupplyBatchNo, sgi.CartonNo));
+                    ShowMessage(string.Format("零件编号“{0}”、配送单号“{1}”、供货批次号“{2}”的出货货品已存在，不允许重复上传。", sgi.PartNo, sgi.DeliveryNo, sgi.SupplyBatchNo));
                     return;
                 }
 
@@ -181,6 +229,22 @@ namespace ModuleWorkFlow
 
             string supplyBatchNo = Request.QueryString["supplyBatchNo"];
             return string.IsNullOrWhiteSpace(supplyBatchNo) ? string.Empty : supplyBatchNo.Trim();
+        }
+
+        private void ApplyAutoDeliveryNoState()
+        {
+            bool isReadOnly = chk_AutoDeliveryNo.Checked;
+            txt_DeliveryNo.ReadOnly = isReadOnly;
+            string cssClass = txt_DeliveryNo.CssClass ?? string.Empty;
+            const string readOnlyClass = "shipping-upload-readonly";
+            if (isReadOnly && !cssClass.Contains(readOnlyClass))
+            {
+                txt_DeliveryNo.CssClass = (cssClass + " " + readOnlyClass).Trim();
+            }
+            else if (!isReadOnly && cssClass.Contains(readOnlyClass))
+            {
+                txt_DeliveryNo.CssClass = cssClass.Replace(readOnlyClass, string.Empty).Trim();
+            }
         }
 
         private string GetUploadPath()

@@ -48,13 +48,17 @@
     <Compile Include="IPartMaster.cs" />
     <Compile Include="IPrintRecord.cs" />
     <Compile Include="IReprintReason.cs" />
-    <Compile Include="ILabelCode.cs" />
     <Compile Include="ILabelCodeRuleField.cs" />
-    <Compile Include="IFieldType.cs" />
     <Compile Include="IShippingGoods.cs" />
-    <Compile Include="IBatchRule.cs" />
     <Compile Include="ILabelCodeRule.cs" />
     <Compile Include="IUnRegularTableImportField.cs" />
+    <Compile Include="IBatchRule.cs" />
+    <Compile Include="IFieldType.cs" />
+    <Compile Include="ILabelBindingFailure.cs" />
+    <Compile Include="ILabelCode.cs" />
+    <Compile Include="IScanFlow.cs" />
+    <Compile Include="IScanFlowScanRecord.cs" />
+    <Compile Include="IScanFlowStep.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

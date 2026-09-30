@@ -11,3 +11,8 @@ TestResults/
 [Rr]elease/
 packages/
 .nuget/
+
+# Local deployment files are used for IIS/Playwright testing only.
+/deploy/XHSWorkFlow/GSPartMasterUpload.aspx
+/deploy/XHSWorkFlow/GSPartMasterUpload.aspx.cs
+/deploy/XHSWorkFlow/GSPartMasterUpload.aspx.designer.cs

@@ -38,9 +38,24 @@ namespace XHS.BLL
             return dal.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, printType);
         }
 
+        public List<PrintRecordInfo> GetPrintRecordsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo, string printType)
+        {
+            return dal.GetPrintRecordsByBusinessKey(supplyBatchNo, partNo, cartonNo, deliveryNo, printType);
+        }
+
         public List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId)
         {
             return dal.GetPrintRecordsByTaskId(taskId);
+        }
+
+        public int GetPrintCount(string printType, System.DateTime printTime)
+        {
+            return dal.GetPrintCount(printType, printTime);
+        }
+
+        public int GetPrintCount(System.DateTime printTime)
+        {
+            return dal.GetPrintCount(printTime);
         }
 
         public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes)
