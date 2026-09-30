@@ -20,6 +20,10 @@ namespace XHS.IDAL
 
         List<PrintRecordInfo> GetPrintRecordsByTaskId(System.Guid taskId);
 
+        int GetPrintCount(string printType, System.DateTime printTime);
+
+        int GetPrintCount(System.DateTime printTime);
+
         List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes);
 
         ParamterInfo InsertPrintRecord(List<PrintRecordInfo> printRecordInfos);

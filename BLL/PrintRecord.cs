@@ -48,6 +48,16 @@ namespace XHS.BLL
             return dal.GetPrintRecordsByTaskId(taskId);
         }
 
+        public int GetPrintCount(string printType, System.DateTime printTime)
+        {
+            return dal.GetPrintCount(printType, printTime);
+        }
+
+        public int GetPrintCount(System.DateTime printTime)
+        {
+            return dal.GetPrintCount(printTime);
+        }
+
         public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes)
         {
             return dal.LockPendingPrintRecords(machineId, maxCount, lockTimeoutMinutes);

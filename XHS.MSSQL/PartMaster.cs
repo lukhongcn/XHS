@@ -41,6 +41,21 @@ namespace XHS.MSSQL
             return BuildPartMasters(Data.getDataSet(sql, parameters));
         }
 
+        public List<PartMasterInfo> GetPartByCustomerAbbr(string customerAbbr)
+        {
+            const string sql =
+                "select " + SelectColumns + " from tb_PartMaster " +
+                "where CustomerAbbr=@CustomerAbbr order by SortOrder asc";
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@CustomerAbbr", SqlDbType.NVarChar, 50)
+                {
+                    Value = (object)(customerAbbr ?? string.Empty).Trim()
+                }
+            };
+            return _getPartMasterInfo(sql, parameters);
+        }
+
         public PartMasterInfo GetPartMaster(int partMasterId)
         {
             List<PartMasterInfo> result = BuildPartMasters(Data.getDataSet(
@@ -112,6 +127,14 @@ namespace XHS.MSSQL
             {
                 new SqlParameter("@PartMasterId", SqlDbType.Int) { Value = ToDbValue(info.PartMasterId) }
             });
+        }
+
+        private static List<PartMasterInfo> _getPartMasterInfo(string querystring, SqlParameter[] pars)
+        {
+            DataSet dataSet = pars == null
+                ? Data.getDataSet(querystring)
+                : Data.getDataSet(querystring, pars);
+            return BuildPartMasters(dataSet);
         }
 
         private static List<PartMasterInfo> BuildPartMasters(DataSet dataSet)

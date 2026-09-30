@@ -107,6 +107,53 @@ namespace XHS.MSSQL
             return GetPrintRecordsBySql(queryString);
         }
 
+        public int GetPrintCount(string printType, DateTime printTime)
+        {
+            DateTime dateStart = printTime.Date;
+            DateTime dateEnd = dateStart.AddDays(1);
+            string queryString =
+                "select isnull(sum(PrintCount), 0) as PrintCount " +
+                "from tb_PrintRecord " +
+                "where PrintType=@PrintType " +
+                "and PrintTime>=@DateStart " +
+                "and PrintTime<@DateEnd";
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@PrintType", SqlDbType.NVarChar, 20)
+                {
+                    Value = (object)(printType ?? string.Empty).Trim()
+                },
+                new SqlParameter("@DateStart", SqlDbType.DateTime)
+                {
+                    Value = dateStart
+                },
+                new SqlParameter("@DateEnd", SqlDbType.DateTime)
+                {
+                    Value = dateEnd
+                }
+            };
+
+            return _getPrintCount(queryString, parameters);
+        }
+
+        public int GetPrintCount(DateTime printTime)
+        {
+            DateTime dateStart = printTime.Date;
+            DateTime dateEnd = dateStart.AddDays(1);
+            string queryString =
+                "select isnull(sum(PrintCount), 0) as PrintCount " +
+                "from tb_PrintRecord " +
+                "where PrintTime>=@DateStart " +
+                "and PrintTime<@DateEnd";
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@DateStart", SqlDbType.DateTime) { Value = dateStart },
+                new SqlParameter("@DateEnd", SqlDbType.DateTime) { Value = dateEnd }
+            };
+
+            return _getPrintCount(queryString, parameters);
+        }
+
         public List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes)
         {
             if (string.IsNullOrWhiteSpace(machineId) || maxCount <= 0)
@@ -196,6 +243,18 @@ namespace XHS.MSSQL
         {
             DataSet dataSet = Data.getDataSet(queryString);
             return BuildPrintRecords(dataSet);
+        }
+
+        private static int _getPrintCount(string queryString, SqlParameter[] parameters)
+        {
+            DataSet dataSet = Data.getDataSet(queryString, parameters);
+            if (dataSet == null || dataSet.Tables.Count == 0 || dataSet.Tables[0].Rows.Count == 0)
+            {
+                return 0;
+            }
+
+            object value = dataSet.Tables[0].Rows[0]["PrintCount"];
+            return value == null || value == DBNull.Value ? 0 : Convert.ToInt32(value);
         }
 
         private static List<PrintRecordInfo> BuildPrintRecords(DataSet dataSet)
