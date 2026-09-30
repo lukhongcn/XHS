@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Data;
 using System.Linq;
 using XHS.BLL;
@@ -75,15 +74,13 @@ namespace BLL
         private string ParseCustomerProduct(DataRow row)
         {
             if (row == null) return string.Empty;
-            List<PartInfo> matches = barcodeParser.ParseCustomerBarcode(ReadString(row, "ScanContent"), ReadString(row, "CustomerId"), ReadString(row, "LabelType"), ReadString(row, "RuleName"));
-            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
+            PartInfo part = barcodeParser.ParseCustomerBarcode(ReadString(row, "ScanContent"), ReadString(row, "CustomerId"), ReadString(row, "LabelType"), ReadString(row, "RuleName"));
             return part == null ? string.Empty : (part.MaterialNo ?? string.Empty);
         }
 
         private string ParseFactoryProduct(DataRow row)
         {
-            List<PartInfo> matches = barcodeParser.ParseFactoryBarcode(ReadString(row, "ScanContent"), ReadString(row, "CustomerId"), ReadString(row, "LabelType"), ReadString(row, "RuleName"));
-            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
+            PartInfo part = barcodeParser.ParseFactoryBarcode(ReadString(row, "ScanContent"), ReadString(row, "CustomerId"), ReadString(row, "LabelType"), ReadString(row, "RuleName"));
             return part == null ? string.Empty : (part.JHSMaterialNo ?? string.Empty);
         }
 
