@@ -1,0 +1,95 @@
+{
+    "RuleName": "XinWangDaBattery",
+    "Description": "欣旺达汽车电池标签规则",
+    "BarcodeLength": 28,
+    "Fields": [
+        {
+            "Name": "PartNo",
+            "Description": "零件品号",
+            "Length": 13,
+            "Source": "Input",
+            "RememberLastValue": true,
+            "UI": {
+                "Order": 1,
+                "Width": 200,
+                "Placeholder": "请输入13位零件品号"
+            }
+        },
+        {
+            "Name": "SupplierCode",
+            "Description": "供应商代号",
+            "Length": 5,
+            "Source": "Input",
+            "RememberLastValue": true,
+            "UI": {
+                "Order": 2,
+                "Width": 120,
+                "DefaultValue": "20287"
+            }
+        },
+        {
+            "Name": "ProductionDate",
+            "Description": "生产日期",
+            "Length": 3,
+            "Source": "Date",
+            "Formatter": "XinWangDaDate",
+            "UI": {
+                "Order": 3
+            }
+        },
+        {
+            "Name": "DrawingVersion",
+            "Description": "图纸版本",
+            "Length": 1,
+            "Source": "Input",
+            "Formatter": "XinWangDaDrawingRevision",
+            "RememberLastValue": true,
+            "UI": {
+                "Order": 4,
+                "Width": 80
+            }
+        },
+        {
+            "Name": "BatchNo",
+            "Description": "批次号",
+            "Length": 1,
+            "Source": "Input",
+            "RememberLastValue": true,
+            "UI": {
+                "Order": 5,
+                "Width": 80
+            }
+        },
+        {
+            "Name": "SerialNo",
+            "Description": "开始序列号",
+            "Length": 5,
+            "Source": "Auto",
+            "ValueSource": "Today",
+            "Formatter": "DailySerialNumber",
+            "StartGenerator": "PrintCountPlusOne",
+            "InitialValue": "00001",
+            "Format": "00000",
+            "RememberLastValue": false,
+            "UI": {
+                "Order": 6,
+                "Width": 100,
+                "DefaultValue": "00001",
+                "ReadOnly": true
+            }
+        },
+        {
+            "Name": "GenerateQuantity",
+            "Description": "产生数量",
+            "Length": 1,
+            "Source": "Input",
+            "IncludeInBarcode": false,
+            "RememberLastValue": true,
+            "UI": {
+                "Order": 7,
+                "Width": 100,
+                "DefaultValue": "1"
+            }
+        }
+    ]
+}

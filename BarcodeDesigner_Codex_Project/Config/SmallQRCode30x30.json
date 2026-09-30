@@ -1,0 +1,57 @@
+{
+  "templateName": "SmallQRCode30x30",
+  "printer": {
+    "type": "Zebra",
+    "dpi": 203
+  },
+  "label": {
+    "widthMm": 30,
+    "heightMm": 30
+  },
+  "objects": [
+    {
+      "type": "qrcode",
+      "name": "QRCode",
+      "field": "QRCodeValue",
+      "position": {
+        "x": 40,
+        "y": 20
+      },
+      "size": {
+        "module": 5
+      },
+      "format": {
+        "model": 2,
+        "errorCorrection": "M"
+      }
+    },
+    {
+      "type": "text",
+      "name": "Line1",
+      "field": "Code1",
+      "position": {
+        "x": 35,
+        "y": 175
+      },
+      "font": {
+        "height": 25,
+        "width": 25
+      },
+      "align": "center"
+    },
+    {
+      "type": "text",
+      "name": "Line2",
+      "field": "Code2",
+      "position": {
+        "x": 35,
+        "y": 210
+      },
+      "font": {
+        "height": 25,
+        "width": 25
+      },
+      "align": "center"
+    }
+  ]
+}

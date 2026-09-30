@@ -1,0 +1,150 @@
+{
+    "RuleName": "XinWangDaBattery",
+    "Description": "欣旺达汽车电池标签规则（UI Schema版）",
+    "Version": "1.0",
+    "BarcodeLength": 28,
+    "BarcodeDescription": "X1-X28: 规格代码13位 + 供应商代码5位 + 日期代码3位 + 图纸版本1位 + 批次号1位 + 序列号5位",
+    "UI": {
+        "FormTitle": "欣旺达汽车电池条码生成",
+        "Layout": "Vertical",
+        "GenerateButtonText": "生成条码"
+    },
+    "Fields": [
+        {
+            "Name": "PartNo",
+            "Description": "规格代码",
+            "Position": {
+                "Start": 1,
+                "Length": 13
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true,
+            "UI": {
+                "Control": "TextBox",
+                "Order": 1,
+                "Width": 200,
+                "Placeholder": "请输入13位规格代码"
+            },
+            "Validation": {
+                "MaxLength": 13,
+                "Regex": "^[A-Z0-9]{13}$"
+            }
+        },
+        {
+            "Name": "SupplierCode",
+            "Description": "供应商代码",
+            "Position": {
+                "Start": 14,
+                "Length": 5
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true,
+            "UI": {
+                "Control": "TextBox",
+                "Order": 2,
+                "Width": 120,
+                "Placeholder": "请输入5位供应商代码"
+            },
+            "Validation": {
+                "MaxLength": 5,
+                "Regex": "^[A-Z0-9]{5}$"
+            }
+        },
+        {
+            "Name": "ProductionDate",
+            "Description": "生产日期",
+            "Position": {
+                "Start": 19,
+                "Length": 3
+            },
+            "Source": "Date",
+            "DataType": "DateTime",
+            "Required": true,
+            "Formatter": "XinWangDaDate",
+            "UI": {
+                "Control": "DateTimePicker",
+                "Order": 3,
+                "Format": "yyyy-MM-dd",
+                "Width": 120
+            }
+        },
+        {
+            "Name": "DrawingVersion",
+            "Description": "图纸版本",
+            "Position": {
+                "Start": 22,
+                "Length": 1
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true,
+            "UI": {
+                "Control": "TextBox",
+                "Order": 4,
+                "Width": 50
+            },
+            "Validation": {
+                "MaxLength": 1,
+                "Regex": "^[A-Z0-9]$"
+            }
+        },
+        {
+            "Name": "BatchNo",
+            "Description": "批次号",
+            "Position": {
+                "Start": 23,
+                "Length": 1
+            },
+            "Source": "Input",
+            "DataType": "String",
+            "Required": true,
+            "UI": {
+                "Control": "TextBox",
+                "Order": 5,
+                "Width": 50
+            },
+            "Validation": {
+                "MaxLength": 1,
+                "Regex": "^[A-Z0-9]$"
+            }
+        },
+        {
+            "Name": "SerialNo",
+            "Description": "序列号",
+            "Position": {
+                "Start": 24,
+                "Length": 5
+            },
+            "Source": "Auto",
+            "DataType": "Number",
+            "Required": true,
+            "UI": {
+                "Control": "TextBox",
+                "Order": 6,
+                "ReadOnly": true,
+                "Width": 80
+            },
+            "Format": "00000"
+        }
+    ],
+    "Validation": {
+        "LengthCheck": true,
+        "AllowedCharacters": "0-9A-Z",
+        "CaseSensitive": false
+    },
+    "Examples": [
+        {
+            "Input": {
+                "PartNo": "5599660001281",
+                "SupplierCode": "10758",
+                "ProductionDate": "2018-01-30",
+                "DrawingVersion": "A",
+                "BatchNo": "1",
+                "SerialNo": "00000"
+            },
+            "ExpectedBarcode": "55996600012811075881YA100000"
+        }
+    ]
+}
