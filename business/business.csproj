@@ -48,7 +48,7 @@
     </Reference>
     <Reference Include="ModuleWorkFlow.BLL.Alert, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\new_xuxiang2018_zhengqin_twPart\new_xuxiang2018_zhengqin_twPart\bin\ModuleWorkFlow.BLL.Alert.dll</HintPath>
+      <HintPath>..\XHSWorkFlow\bin\ModuleWorkFlow.BLL.Alert.dll</HintPath>
     </Reference>
     <Reference Include="ModuleWorkFlow.BLL.Outsource, Version=1.0.9653.36998, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
