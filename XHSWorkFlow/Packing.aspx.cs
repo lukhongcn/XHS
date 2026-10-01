@@ -377,7 +377,8 @@ namespace ModuleWorkFlow
             }
 
             // 解析零件标签二维码（PackingPartScan 规则）
-            PartInfo parsedInfo = new FactoryBarcodeParser().ParseFactoryBarcode(qrCode, customerId, PartScanLabelType);
+            List<PartInfo> parsedMatches = new FactoryBarcodeParser().ParseFactoryBarcode(qrCode, customerId, PartScanLabelType);
+            PartInfo parsedInfo = parsedMatches != null && parsedMatches.Count > 0 ? parsedMatches[0] : null;
             if (parsedInfo == null || string.IsNullOrWhiteSpace(parsedInfo.JHSMaterialNo))
             {
                 ShowMessage("零件标签解析失败，无法识别零件号。");

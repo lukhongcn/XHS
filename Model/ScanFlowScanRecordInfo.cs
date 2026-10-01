@@ -14,6 +14,9 @@ namespace XHS.Model
         public string BindingTaskId { get; set; }
         public int? StepId { get; set; }
         public string StepCode { get; set; }
+        public string StepName { get; set; }
+        public string CustomerId { get; set; }
+        public string LabelType { get; set; }
         public int? SeqNo { get; set; }
         public string ScanContent { get; set; }
         /// <summary>实际命中的条码规则编号。</summary>

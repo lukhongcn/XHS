@@ -20,11 +20,20 @@
         <h2>客户标签信息</h2>
         <div class="pda-field"><label>客户标签原始内容</label><div class="pda-readonly"><asp:Label ID="labCustomerRaw" runat="server"></asp:Label></div></div>
         <div class="pda-field"><label>客户物料号/本厂品号</label><div class="pda-readonly"><asp:Label ID="labCustomerMaterial" runat="server"></asp:Label>/<asp:Label ID="labExpectedPart" runat="server"></asp:Label></div></div>
-        <div class="pda-field"><label>客户批次 / 单位</label><div class="pda-readonly"><asp:Label ID="labCustomerBatch" runat="server"></asp:Label> / <asp:Label ID="labCustomerUnit" runat="server"></asp:Label></div></div>
-        <div class="pda-summary"><div>客户数量<strong><asp:Label ID="labCustomerQty" runat="server" Text="0"></asp:Label></strong></div><div>已绑定<strong><asp:Label ID="labBoundQty" runat="server" Text="0"></asp:Label></strong></div><div>剩余<strong><asp:Label ID="labRemainingQty" runat="server" Text="0"></asp:Label></strong></div></div>
-        <div class="pda-progress"><span id="progressBar" runat="server" style="width:0%"></span></div>
+        <div class="pda-field"><label>包装数量</label><div class="pda-readonly"><asp:Label ID="labCustomerQty" runat="server" Text="0"></asp:Label></div></div>
     </div>
-    <div class="pda-section"><h2>已绑定明细（最新在上）</h2><asp:GridView ID="gvBindingRecords" runat="server" CssClass="pda-grid" AutoGenerateColumns="false"><Columns><asp:BoundField DataField="WorkOrderNo" HeaderText="工单号" /><asp:BoundField DataField="FactoryBarcode" HeaderText="本厂条码" /><asp:BoundField DataField="CodeType" HeaderText="类型" /><asp:BoundField DataField="SteelStampRelation" HeaderText="钢印关联" /><asp:BoundField DataField="JHSPartNo" HeaderText="本厂品号" /><asp:BoundField DataField="JHSBatchNo" HeaderText="批次" /><asp:BoundField DataField="BindQtyText" HeaderText="标签数量" /><asp:BoundField DataField="ScanTimeText" HeaderText="扫描时间" /></Columns></asp:GridView></div>
+    <div class="pda-section"><h2>已绑定明细（最新在上）</h2>
+        <asp:GridView ID="gvBindingRecords" runat="server" CssClass="pda-grid" AutoGenerateColumns="false">
+            <Columns>
+                <asp:BoundField DataField="WorkOrderNo" HeaderText="工单号" />
+                <asp:BoundField DataField="FactoryBarcode" HeaderText="本厂条码" />
+                <asp:BoundField DataField="JHSPartNo" HeaderText="本厂品号" />
+                <asp:BoundField DataField="JHSBatchNo" HeaderText="批号" />
+                <asp:BoundField DataField="LabelQtyText" HeaderText="包装数量" />
+                <asp:BoundField DataField="ScanTimeText" HeaderText="扫描时间" />
+            </Columns>
+        </asp:GridView>
+    </div>
     <div class="pda-actions"><asp:Button ID="btnEndStep" runat="server" Text="结束当前步骤" CssClass="pda-button pda-primary" Visible="false" OnClick="btnEndStep_Click" /><asp:Button ID="btnCompleteBinding" runat="server" Text="完成绑定" CssClass="pda-button pda-primary" Visible="false" OnClick="btnCompleteBinding_Click" /><asp:Button ID="btnClear" runat="server" Text="清空当前绑定" CssClass="pda-button pda-danger" OnClick="btnClear_Click" OnClientClick="return confirm('确定清空当前客户的全部绑定明细吗？');" /></div>
     <asp:Panel ID="pnlFailureModal" runat="server" CssClass="pda-modal-mask" Visible="false"><div class="pda-modal" role="dialog" aria-modal="true"><h3><asp:Label ID="labFailureTitle" runat="server" Text="扫描失败" /></h3><pre><asp:Label ID="labFailureMessage" runat="server" /></pre><asp:Button ID="btnFailureOk" runat="server" Text="确定" CssClass="pda-button pda-primary" OnClick="btnFailureOk_Click" /></div></asp:Panel>
     <asp:HiddenField ID="hidScanStage" runat="server" /><asp:HiddenField ID="hidCustomerQty" runat="server" Value="0" /><asp:HiddenField ID="hidBoundQty" runat="server" Value="0" /><asp:HiddenField ID="hidRemainingQty" runat="server" Value="0" />

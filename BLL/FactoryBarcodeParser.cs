@@ -26,12 +26,21 @@ namespace XHS.BLL
             return new XHS.BLL.QRCode().ParseShippingGoodsInfo(rawCode);
         }
 
-        public PartInfo ParseFactoryBarcode(
-     string rawCode,
-     string customerId,
-     string labelType,
-     string ruleName = null)
+        public List<PartInfo> ParseFactoryBarcode(
+            string rawCode,
+            string customerId,
+            string labelType)
         {
+            return ParseFactoryBarcode(rawCode, customerId, labelType, null);
+        }
+
+        public List<PartInfo> ParseFactoryBarcode(
+            string rawCode,
+            string customerId,
+            string labelType,
+            string ruleName = null)
+        {
+            List<PartInfo> result = new List<PartInfo>();
             rawCode = (rawCode ?? string.Empty)
                 .Replace("\r", string.Empty)
                 .Replace("\n", string.Empty)
@@ -39,7 +48,7 @@ namespace XHS.BLL
 
             if (string.IsNullOrEmpty(rawCode))
             {
-                return null;
+                return result;
             }
 
             // 1. 优先匹配下方零件包装码
@@ -114,12 +123,13 @@ namespace XHS.BLL
                     partInfo.SupplierCode = supplierCode;
                     partInfo.ProductDate = productDate;
 
-                    return partInfo;
+                    result.Add(partInfo);
+                    return result;
                 }
             }
 
             // 当前步骤没有匹配到其配置的规则时，不能使用固定格式兜底。
-            return null;
+            return result;
         }
 
         public PartInfo ParseWorkOrderBarcode(string rawCode, string customerId, string labelType, string ruleName)
@@ -148,6 +158,66 @@ namespace XHS.BLL
                     ProcessOrderNo = orderNo,
                     BarcodeType = "WORKORDER",
                     LabelInfo = rawCode
+                };
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 解析前六位为 JHS 零件号的客户条码。
+        /// </summary>
+        public PartInfo ParseJHSPartnoBarcode(
+            string rawCode,
+            string customerId,
+            string labelType,
+            string ruleName)
+        {
+            rawCode = (rawCode ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Trim();
+            if (string.IsNullOrEmpty(rawCode)) return null;
+
+            List<LabelCodeRuleInfo> rules = new LabelCodeRule()
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
+            if (rules == null) return null;
+
+            foreach (LabelCodeRuleInfo rule in rules
+                .Where(x => x != null && (!x.Enabled.HasValue || x.Enabled.Value))
+                .OrderByDescending(x => RuleMatches(x.RuleName, ruleName)))
+            {
+                if (string.IsNullOrWhiteSpace(rule.MatchRegex)) continue;
+
+                IDictionary<string, string> fields;
+                if (!regexParser.TryParse(rawCode, rule.MatchRegex, out fields)) continue;
+
+                string jhsPartNo = GetFieldValue(fields, "JHSMaterialNo");
+                string batchNo = GetFieldValue(fields, "JHSBatchNo")
+                    ?? GetFieldValue(fields, "BatchNo")
+                    ?? GetFieldValue(fields, "CustomerBatchNo");
+                string qtyText = GetFieldValue(fields, "JHSQty")
+                    ?? GetFieldValue(fields, "Qty")
+                    ?? GetFieldValue(fields, "CustomerQty");
+                int qty;
+                if (string.IsNullOrWhiteSpace(jhsPartNo)
+                    || !int.TryParse(qtyText, NumberStyles.Any, CultureInfo.InvariantCulture, out qty)
+                    || qty <= 0)
+                {
+                    continue;
+                }
+
+                return new PartInfo
+                {
+                    JHSMaterialNo = jhsPartNo,
+                    JHSBatchNo = batchNo,
+                    BatchNo = batchNo,
+                    JHSQty = qty,
+                    Qty = qty,
+                    LabelInfo = rawCode,
+                    BarcodeType = "CUSTOMER",
+                    RuleId = rule.RuleId,
+                    RuleName = rule.RuleName
                 };
             }
 
@@ -203,6 +273,51 @@ namespace XHS.BLL
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 使用完整条码规则中的命名分组，校验已经从 Excel 拆分出来的字段值。
+        /// </summary>
+        public bool IsConfiguredFieldMatch(
+            string rawValue,
+            IEnumerable<LabelCodeRuleInfo> rules,
+            string fieldName,
+            string ruleName = null)
+        {
+            rawValue = (rawValue ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Trim();
+            if (string.IsNullOrEmpty(rawValue)
+                || string.IsNullOrWhiteSpace(fieldName)
+                || rules == null)
+            {
+                return false;
+            }
+
+            foreach (LabelCodeRuleInfo rule in rules
+                .Where(x => x != null && (!x.Enabled.HasValue || x.Enabled.Value))
+                .OrderByDescending(x => RuleMatches(x.RuleName, ruleName)))
+            {
+                if (string.IsNullOrWhiteSpace(rule.MatchRegex))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (regexParser.TryMatchNamedField(rawValue, rule.MatchRegex, fieldName))
+                    {
+                        return true;
+                    }
+                }
+                catch (ArgumentException)
+                {
+                    // 无效规则不应导致上传页面直接抛出异常，继续尝试其他启用规则。
+                }
+            }
+
+            return false;
         }
 
         private string GetFieldValue(

@@ -25,6 +25,13 @@ namespace BLL
                 && dal.IsFactoryBarcodeRecorded(flowId, scanContent.Trim());
         }
 
+        public List<ScanFlowScanRecordInfo> GetBindingScanRecordsByTaskId(string bindingTaskId)
+        {
+            return string.IsNullOrWhiteSpace(bindingTaskId)
+                ? new List<ScanFlowScanRecordInfo>()
+                : dal.GetBindingScanRecordsByTaskId(bindingTaskId.Trim());
+        }
+
         public string SaveRecords(List<ScanFlowScanRecordInfo> infos)
         {
             if (infos == null || infos.Count == 0)

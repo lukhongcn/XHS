@@ -29,6 +29,17 @@
             <a href="<%= ResolveUrl("~/login.aspx") %>" target="_parent">登出</a>
         </header>
         <main class="pda-page">
+            <asp:Panel ID="pnlPdaLogin" runat="server" CssClass="pda-login-panel">
+                <h3>PDA 登录</h3>
+                <asp:Label ID="labPdaLoginMessage" runat="server" CssClass="pda-login-message" />
+                <div>
+                    <asp:TextBox ID="txtPdaUserName" runat="server" placeholder="员工编号" />
+                </div>
+                <div>
+                    <asp:TextBox ID="txtPdaPassword" runat="server" TextMode="Password" placeholder="密码" />
+                </div>
+                <asp:Button ID="btnPdaLogin" runat="server" Text="登录" OnClick="btnPdaLogin_Click" />
+            </asp:Panel>
             <asp:ContentPlaceHolder ID="contentHolder" runat="server" />
         </main>
     </form>

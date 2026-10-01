@@ -310,6 +310,7 @@
     <Content Include="LabelBinding.aspx" />
     <Content Include="DefaultPDASub.Master" />
     <Content Include="LabelBindingPDA.aspx" />
+    <Content Include="LabelBindingRecordList.aspx" />
     <Content Include="ScanFlowStep.aspx" />
     <Content Include="GSPartMasterUpload.aspx" />
     <Content Include="GSPartMasterList.aspx" />

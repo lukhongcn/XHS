@@ -28,6 +28,11 @@ namespace XHS.BLL
             return dal.GetPartMasters();
         }
 
+        public List<PartMasterInfo> GetPartMasters(string jhsPartNo, string customerMaterialNo)
+        {
+            return dal.GetPartMasters(jhsPartNo, customerMaterialNo);
+        }
+
         public List<PartMasterInfo> GetPartByCustomerAbbr(string customerAbbr)
         {
             return dal.GetPartByCustomerAbbr(customerAbbr);
@@ -131,6 +136,80 @@ namespace XHS.BLL
             return messageList.Count == 0 ? result : new List<PartMasterInfo>();
         }
 
+        public string ValidateGSPartMasterCodes(
+            List<PartMasterInfo> infos,
+            string customerId,
+            string jhsPartNoLabelType,
+            string customerMaterialNoLabelType,
+            string jhsPartNoRuleName = null,
+            string customerMaterialNoRuleName = null)
+        {
+            if (infos == null || infos.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(customerId))
+            {
+                return "未配置光束零件主数据编码规则的客户编号。";
+            }
+
+            if (string.IsNullOrWhiteSpace(jhsPartNoLabelType)
+                || string.IsNullOrWhiteSpace(customerMaterialNoLabelType))
+            {
+                return "未配置光束零件主数据编码规则类型。";
+            }
+
+            LabelCodeRule labelCodeRule = new LabelCodeRule();
+            List<LabelCodeRuleInfo> jhsRules = labelCodeRule
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, jhsPartNoLabelType);
+            List<LabelCodeRuleInfo> customerRules = labelCodeRule
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, customerMaterialNoLabelType);
+
+            if (!HasEnabledRule(jhsRules))
+            {
+                return "未配置本厂零件编号编码规则：" + jhsPartNoLabelType + "。";
+            }
+
+            if (!HasEnabledRule(customerRules))
+            {
+                return "未配置客户零件编号编码规则：" + customerMaterialNoLabelType + "。";
+            }
+
+            FactoryBarcodeParser barcodeParser = new FactoryBarcodeParser();
+            List<string> messages = new List<string>();
+            foreach (PartMasterInfo info in infos)
+            {
+                if (info == null)
+                {
+                    continue;
+                }
+
+                string rowText = info.SourceRowNumber.HasValue
+                    ? "第 " + info.SourceRowNumber.Value + " 行"
+                    : "零件主数据";
+                if (!barcodeParser.IsConfiguredFieldMatch(
+                    info.JHSPartNo,
+                    jhsRules,
+                    "JHSMaterialNo",
+                    jhsPartNoRuleName))
+                {
+                    messages.Add(rowText + "【JHS 品号】不符合编码规则。值：" + (info.JHSPartNo ?? string.Empty));
+                }
+
+                if (!barcodeParser.IsConfiguredFieldMatch(
+                    info.CustomerMaterialNo,
+                    customerRules,
+                    "CustomerMaterialNo",
+                    customerMaterialNoRuleName))
+                {
+                    messages.Add(rowText + "【物料编号】不符合编码规则。值：" + (info.CustomerMaterialNo ?? string.Empty));
+                }
+            }
+
+            return string.Join("<br />", messages.ToArray());
+        }
+
         private static int FindGSHeaderRow(ISheet sheet, string[] headers, List<string> messages, out Dictionary<string, int> columns)
         {
             columns = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -178,6 +257,13 @@ namespace XHS.BLL
             }
 
             return string.Empty;
+        }
+
+        private static bool HasEnabledRule(List<LabelCodeRuleInfo> rules)
+        {
+            return rules != null && rules.Any(rule => rule != null
+                && (!rule.Enabled.HasValue || rule.Enabled.Value)
+                && !string.IsNullOrWhiteSpace(rule.MatchRegex));
         }
     }
 }

@@ -8,7 +8,8 @@ namespace XHS.IDAL
     public interface IScanFlowScanRecord
     {
         bool IsFactoryBarcodeRecorded(int flowId, string scanContent);
-        DataTable GetLabelBindingRecords(string flowCode, string scanContentLike, DateTime startTime, DateTime endTime);
+        List<ScanFlowScanRecordInfo> GetBindingScanRecordsByTaskId(string bindingTaskId);
+        List<ScanFlowScanRecordInfo> GetLabelBindingRecords(string flowCode, string scanContentLike, DateTime startTime, DateTime endTime);
         ParamterInfo InsertRecords(List<ScanFlowScanRecordInfo> infos);
     }
 }
