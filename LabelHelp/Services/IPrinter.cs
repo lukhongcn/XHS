@@ -1,6 +1,6 @@
-using ZebraPrintTest.Models;
+using XHS.Model.ZPLLabel;
 
-namespace ZebraPrintTest.Printer
+namespace LabelHelp.Services
 {
     public interface IPrinter
     {

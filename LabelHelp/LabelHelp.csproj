@@ -90,6 +90,7 @@
       <HintPath>..\packages\System.Diagnostics.DiagnosticSource.10.0.5\lib\net462\System.Diagnostics.DiagnosticSource.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Formats.Asn1, Version=10.0.0.5, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Formats.Asn1.10.0.5\lib\net462\System.Formats.Asn1.dll</HintPath>
     </Reference>
@@ -134,6 +135,9 @@
     <Compile Include="Rendering\LabelRenderer.cs" />
     <Compile Include="Rendering\QrCodeGenerator.cs" />
     <Compile Include="Services\LabelPrintService.cs" />
+    <Compile Include="Services\IPrinter.cs" />
+    <Compile Include="Services\ZebraRawPrinter.cs" />
+    <Compile Include="Services\ZplGenerator.cs" />
     <Compile Include="Template\LabelTemplateResolver.cs" />
     <Compile Include="UsageExample.cs" />
   </ItemGroup>

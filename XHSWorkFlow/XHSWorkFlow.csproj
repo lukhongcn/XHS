@@ -156,6 +156,13 @@
     <Compile Include="GSPartMasterList.aspx.designer.cs">
       <DependentUpon>GSPartMasterList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="XWDPartMasterList.aspx.cs">
+      <DependentUpon>XWDPartMasterList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="XWDPartMasterList.aspx.designer.cs">
+      <DependentUpon>XWDPartMasterList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -189,6 +196,13 @@
     </Compile>
     <Compile Include="Packing.aspx.designer.cs">
       <DependentUpon>Packing.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PackingPDA.aspx.cs">
+      <DependentUpon>PackingPDA.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PackingPDA.aspx.designer.cs">
+      <DependentUpon>PackingPDA.aspx</DependentUpon>
     </Compile>
     <Compile Include="PackingList.aspx.cs">
       <DependentUpon>PackingList.aspx</DependentUpon>
@@ -314,6 +328,7 @@
     <Content Include="ScanFlowStep.aspx" />
     <Content Include="GSPartMasterUpload.aspx" />
     <Content Include="GSPartMasterList.aspx" />
+    <Content Include="XWDPartMasterList.aspx" />
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
     <Content Include="api\print\pending.ashx" />
@@ -323,6 +338,7 @@
     <Content Include="api\print\record-detail.ashx" />
     <Content Include="NoPrivateMsg.aspx" />
     <Content Include="Packing.aspx" />
+    <Content Include="PackingPDA.aspx" />
     <Content Include="PackingList.aspx" />
     <Content Include="DeliveryUpload.aspx" />
     <Content Include="ExceptionReview.aspx" />

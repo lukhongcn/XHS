@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using ZebraLabelTest.Engine;
-using ZebraLabelTest.Models;
+using LabelHelp.Services;
+using XHS.Model.ZPLLabel;
 
 namespace ZebraLabelTest
 {

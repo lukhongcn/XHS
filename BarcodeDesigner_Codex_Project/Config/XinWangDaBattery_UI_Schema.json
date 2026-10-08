@@ -1,6 +1,6 @@
 {
     "RuleName": "XinWangDaBattery",
-    "Description": "欣旺达汽车电池标签规则",
+    "Description": "欣旺达汽车电池标签",
     "BarcodeLength": 28,
     "Fields": [
         {

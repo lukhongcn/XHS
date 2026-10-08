@@ -37,13 +37,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
-    <Compile Include="Models\LabelTemplate.cs" />
-    <Compile Include="Models\LabelObject.cs" />
-    <Compile Include="Models\ZplResult.cs" />
-    <Compile Include="Engine\ZplGenerator.cs" />
     <None Include="Templates\SmallQRCode30x30.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LabelHelp\LabelHelp.csproj">
+      <Project>{ED812210-62AB-4107-8D77-EDBAAABEFFE3}</Project>
+      <Name>LabelHelp</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Model\Model.csproj">
+      <Project>{731D059A-6CCF-46C2-93D8-E94EE4905933}</Project>
+      <Name>Model</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

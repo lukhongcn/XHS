@@ -3,8 +3,8 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using ZebraPrintTest.Models;
-using ZebraPrintTest.Printer;
+using XHS.Model.ZPLLabel;
+using LabelHelp.Services;
 using ZebraPrintTest.Tests;
 
 namespace ZebraPrintTest

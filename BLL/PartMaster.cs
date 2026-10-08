@@ -97,16 +97,24 @@ namespace XHS.BLL
             using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 IWorkbook workbook = WorkbookFactory.Create(stream);
-                if (workbook.NumberOfSheets < 2) { messageList.Add("Excel must contain two worksheets."); return result; }
                 string[] sheet1Headers = { "\u5e8f\u53f7", "\u7269\u6599\u7f16\u53f7", "\u7269\u6599\u540d\u79f0", "JHS\u54c1\u53f7", "\u7c7b\u578b", "\u6807\u7b7e\u4fe1\u606f", "\u94a2\u5370\u6709\u65e0\u5173\u8054" };
                 string[] formatHeaders = { "\u7269\u6599\u7f16\u53f7", "JHS\u54c1\u53f7", "\u6807\u7b7e\u683c\u5f0f\uff08\u5355\u88c5/\u6df7\u88c5\uff09" };
                 Dictionary<string, int> columns1;
                 Dictionary<string, int> columns2;
-                int header1 = FindGSHeaderRow(workbook.GetSheetAt(0), sheet1Headers, messageList, out columns1);
-                int header2 = FindGSHeaderRow(workbook.GetSheetAt(1), formatHeaders, messageList, out columns2);
-                if (header1 < 0 || header2 < 0) return result;
-                Dictionary<string, PartMasterInfo> parts = new Dictionary<string, PartMasterInfo>(StringComparer.OrdinalIgnoreCase);
                 ISheet sheet1 = workbook.GetSheetAt(0);
+                int header1 = FindGSHeaderRow(sheet1, sheet1Headers, messageList, out columns1);
+                bool hasFormatSheet = workbook.NumberOfSheets >= 2;
+                int header2 = -1;
+                if (hasFormatSheet)
+                {
+                    header2 = FindGSHeaderRow(workbook.GetSheetAt(1), formatHeaders, messageList, out columns2);
+                }
+                else
+                {
+                    columns2 = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                }
+                if (header1 < 0 || (hasFormatSheet && header2 < 0)) return result;
+                Dictionary<string, PartMasterInfo> parts = new Dictionary<string, PartMasterInfo>(StringComparer.OrdinalIgnoreCase);
                 for (int rowIndex = header1 + 1; rowIndex <= sheet1.LastRowNum; rowIndex++)
                 {
                     IRow row = sheet1.GetRow(rowIndex); if (row == null) continue;
@@ -121,17 +129,29 @@ namespace XHS.BLL
                     parts.Add(key, new PartMasterInfo { CustomerMaterialNo = material, JHSPartNo = jhs, CustomerAbbr = customerAbbr, MaterialName = GetGSCellText(row.GetCell(columns1["\u7269\u6599\u540d\u79f0"])), ProcessType = GetGSCellText(row.GetCell(columns1["\u7c7b\u578b"])), LabelInfo = GetGSCellText(row.GetCell(columns1["\u6807\u7b7e\u4fe1\u606f"])), HasSteelStamp = GetGSCellText(row.GetCell(columns1["\u94a2\u5370\u6709\u65e0\u5173\u8054"])), SortOrder = sortOrder });
                 }
                 Dictionary<string, string> formats = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                ISheet sheet2 = workbook.GetSheetAt(1);
-                string formatHeader = "\u6807\u7b7e\u683c\u5f0f\uff08\u5355\u88c5/\u6df7\u88c5\uff09";
-                for (int rowIndex = header2 + 1; rowIndex <= sheet2.LastRowNum; rowIndex++)
+                if (hasFormatSheet)
                 {
-                    IRow row = sheet2.GetRow(rowIndex); if (row == null) continue;
-                    string material = GetGSCellText(row.GetCell(columns2["\u7269\u6599\u7f16\u53f7"])); string jhs = GetGSCellText(row.GetCell(columns2["JHS\u54c1\u53f7"])); string format = GetGSCellText(row.GetCell(columns2[formatHeader]));
-                    if (material.Length == 0 && jhs.Length == 0 && format.Length == 0) continue;
-                    if (material.Length == 0 || jhs.Length == 0 || format.Length == 0) { messageList.Add("Incomplete format row " + (rowIndex + 1)); continue; }
-                    string key = BuildGSKey(material, jhs); if (formats.ContainsKey(key)) { messageList.Add("Duplicate format key at row " + (rowIndex + 1)); continue; } formats.Add(key, format);
+                    ISheet sheet2 = workbook.GetSheetAt(1);
+                    string formatHeader = "\u6807\u7b7e\u683c\u5f0f\uff08\u5355\u88c5/\u6df7\u88c5\uff09";
+                    for (int rowIndex = header2 + 1; rowIndex <= sheet2.LastRowNum; rowIndex++)
+                    {
+                        IRow row = sheet2.GetRow(rowIndex); if (row == null) continue;
+                        string material = GetGSCellText(row.GetCell(columns2["\u7269\u6599\u7f16\u53f7"])); string jhs = GetGSCellText(row.GetCell(columns2["JHS\u54c1\u53f7"])); string format = GetGSCellText(row.GetCell(columns2[formatHeader]));
+                        if (material.Length == 0 && jhs.Length == 0 && format.Length == 0) continue;
+                        if (material.Length == 0 || jhs.Length == 0 || format.Length == 0) { messageList.Add("Incomplete format row " + (rowIndex + 1)); continue; }
+                        string key = BuildGSKey(material, jhs); if (formats.ContainsKey(key)) { messageList.Add("Duplicate format key at row " + (rowIndex + 1)); continue; } formats.Add(key, format);
+                    }
                 }
-                foreach (KeyValuePair<string, PartMasterInfo> entry in parts) { string format; if (!formats.TryGetValue(entry.Key, out format)) { messageList.Add("Missing label format for key: " + entry.Key.Replace("\u001f", " / ")); continue; } entry.Value.LabelFormat = format; result.Add(entry.Value); }
+                foreach (KeyValuePair<string, PartMasterInfo> entry in parts)
+                {
+                    if (hasFormatSheet)
+                    {
+                        string format;
+                        if (!formats.TryGetValue(entry.Key, out format)) { messageList.Add("Missing label format for key: " + entry.Key.Replace("\u001f", " / ")); continue; }
+                        entry.Value.LabelFormat = format;
+                    }
+                    result.Add(entry.Value);
+                }
             }
             return messageList.Count == 0 ? result : new List<PartMasterInfo>();
         }

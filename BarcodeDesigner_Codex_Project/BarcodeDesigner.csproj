@@ -55,6 +55,9 @@
     <None Include="Config\XinWangDaDrawingRevision.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Config\SmallQRCode30x30.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Docs\CODEX_TASK.md" />
     <None Include="Docs\Architecture.md" />
     <None Include="Docs\Json_Config_Spec.md" />
@@ -72,6 +75,10 @@
     <ProjectReference Include="..\Utility\Utility.csproj">
       <Project>{421F17D9-9D55-4E8E-A292-3857605AE16D}</Project>
       <Name>Utility</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LabelHelp\LabelHelp.csproj">
+      <Project>{ED812210-62AB-4107-8D77-EDBAAABEFFE3}</Project>
+      <Name>LabelHelp</Name>
     </ProjectReference>
     <ProjectReference Include="..\XHS.Service\XHS.Service.csproj">
       <Project>{A9CFB7A9-1D91-4D62-BD74-9D6D0E1C9D3A}</Project>

@@ -27,7 +27,7 @@
                                     <asp:LinkButton ID="lnkbutton_edit" runat="server" OnClick="lnkbutton_edit_Click" ToolTip="编辑/edit">编辑/edit</asp:LinkButton>
                                 </li>
                                 <li class="btn6">
-                                    <asp:LinkButton ID="lnkbutton_delete" runat="server" OnClick="lnkbutton_delete_Click" ToolTip="删除/delete" OnClientClick="return confirm('确认按供货批次号和零件编号删除相关的出货货品数据吗？');">删除/delete</asp:LinkButton>
+                                    <asp:LinkButton ID="lnkbutton_delete" runat="server" OnClick="lnkbutton_delete_Click" ToolTip="删除/delete" OnClientClick="return confirm('确认按供货批次号、零件编号和配送单号删除出货货品、打印记录和装箱记录吗？');">删除/delete</asp:LinkButton>
                                 </li>
                                 <li class="btn13">
                                     <asp:LinkButton ID="lnk_upload" runat="server" OnClick="lnk_upload_Click" ToolTip="上传">上传</asp:LinkButton>
@@ -65,6 +65,10 @@
                                 <asp:TextBox ID="TextBox_SupplyBatchNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
                             </div>
                             <div class="col-lg-3 d-flex">
+                                <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label">配送单号</asp:Label>
+                                <asp:TextBox ID="TextBox_DeliveryNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                            </div>
+                            <div class="col-lg-3 d-flex">
                                 <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label" AssociatedControlID="DropDownList_CloseStatus">状态</asp:Label>
                                 <asp:DropDownList ID="DropDownList_CloseStatus" runat="server" CssClass="form-select custom-heighter-width text-start border-primary" AutoPostBack="true" OnSelectedIndexChanged="DropDownList_CloseStatus_SelectedIndexChanged">
                                     <asp:ListItem Text="未结案" Value="未结案" Selected="True"></asp:ListItem>
@@ -92,6 +96,7 @@
                                 <asp:BoundColumn DataField="PartEnglishName" HeaderText="零件英文名称"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="Quantity" HeaderText="数量"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="SupplyBatchNo" HeaderText="供货批次号"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="DeliveryNo" HeaderText="配送单号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="CartonNo" HeaderText="纸箱编号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="Status" HeaderText="状态"></asp:BoundColumn>
                                 <asp:TemplateColumn HeaderText="打印次数">

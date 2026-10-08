@@ -1,9 +1,8 @@
-namespace ZebraLabelTest.Models
+namespace XHS.Model.ZPLLabel
 {
-    public sealed class ZplResult
+    public sealed class PrintResult
     {
         public bool Success { get; set; }
-        public string Zpl { get; set; }
         public string ErrorMessage { get; set; }
     }
 }

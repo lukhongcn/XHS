@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using ZebraPrintTest.Models;
-using ZebraPrintTest.Printer;
+using XHS.Model.ZPLLabel;
+using LabelHelp.Services;
 
 namespace ZebraPrintTest.Tests
 {

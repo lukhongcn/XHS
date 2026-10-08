@@ -5,24 +5,27 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
+using LabelHelp.Services;
+using XHS.Model;
 using XHS.Model.BarcodeCreateRule;
+using XHS.Model.ZPLLabel;
 using XHS.service;
 using XHS.service.Barcode;
 using XHS.service.Formatter;
-using PartMasterService = XHS.BLL.PartMaster;
-using PrintRecordService = XHS.BLL.PrintRecord;
 
 namespace BarcodeDesigner
 {
     public sealed class MainForm : Form
     {
+        private const string PrintTypeXwdLabel = "XWDLabel";
         private readonly Dictionary<string, Control> fieldControls = new Dictionary<string, Control>(StringComparer.OrdinalIgnoreCase);
         private readonly TableLayoutPanel fieldLayout = new TableLayoutPanel();
         private readonly Label statusLabel = new Label();
         private readonly DataGridView barcodeGrid = new DataGridView();
         private readonly Button generateButton = new Button();
-        private readonly PrintRecordService printRecord = new PrintRecordService();
+        private readonly XHS.BLL.PrintRecord printRecord = new XHS.BLL.PrintRecord();
         private readonly BarcodeBuilder barcodeBuilder;
         private readonly UserFieldValuesStore userFieldValuesStore = new UserFieldValuesStore();
         private ICodeFormatter serialNumberFormatter;
@@ -30,10 +33,17 @@ namespace BarcodeDesigner
 
         public MainForm()
         {
-            barcodeBuilder = new BarcodeBuilder(printRecord.GetPrintCount);
+            barcodeBuilder = new BarcodeBuilder(GetXwdLabelPrintCount);
             InitializeForm();
             LoadRuleAndBuildUi();
             FormClosed += MainForm_FormClosed;
+            Shown += MainForm_Shown;
+        }
+
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            UpdateDrawingVersionFromPartMaster();
+            UpdateGenerateButtonState();
         }
 
         private void InitializeForm()
@@ -100,7 +110,7 @@ namespace BarcodeDesigner
 
             serialNumberFormatter = new FormatterFactory().Get(
                 serialField,
-                printRecord.GetPrintCount);
+                GetXwdLabelPrintCount);
 
             fieldLayout.RowCount = fields.Count + 3;
             for (int index = 0; index < fields.Count; index++)
@@ -129,7 +139,8 @@ namespace BarcodeDesigner
             statusLabel.ForeColor = Color.DimGray;
             fieldLayout.Controls.Add(statusLabel, 1, fields.Count + 2);
             LoadRememberedValues(rule);
-            SetFieldText("SerialNo", serialNumberFormatter.Encode(DateTime.Today));
+            UpdateDrawingVersionFromPartMaster();
+            RefreshSerialNumber();
             UpdateGenerateButtonState();
         }
 
@@ -192,7 +203,20 @@ namespace BarcodeDesigner
         {
             if (string.Equals(field.Name, "PartNo", StringComparison.OrdinalIgnoreCase))
             {
-                return CreatePartNoComboBox(field);
+                ComboBox comboBox = CreatePartNoComboBox(field);
+                comboBox.SelectedValueChanged += PartNoComboBox_SelectedValueChanged;
+                comboBox.SelectedIndexChanged += PartNoComboBox_SelectedValueChanged;
+                return comboBox;
+            }
+
+            if (string.Equals(field.Name, "DrawingVersion", StringComparison.OrdinalIgnoreCase))
+            {
+                return new TextBox
+                {
+                    ReadOnly = true,
+                    TabStop = false,
+                    Width = GetWidth(field, 200)
+                };
             }
 
             string controlName = field.Ui == null ? null : field.Ui.Control;
@@ -224,7 +248,7 @@ namespace BarcodeDesigner
 
         private static ComboBox CreatePartNoComboBox(BarcodeFieldRule field)
         {
-            List<XHS.Model.PartMasterInfo> parts = new PartMasterService()
+            List<XHS.Model.PartMasterInfo> parts = new XHS.BLL.PartMaster()
                 .GetPartByCustomerAbbr("XWD");
 
             ComboBox comboBox = new ComboBox
@@ -238,6 +262,60 @@ namespace BarcodeDesigner
             };
             comboBox.SelectedIndex = -1;
             return comboBox;
+        }
+
+        private void PartNoComboBox_SelectedValueChanged(object sender, EventArgs e)
+        {
+            UpdateDrawingVersionFromPartMaster();
+        }
+
+        private void UpdateDrawingVersionFromPartMaster()
+        {
+            Control partNoControl;
+            Control drawingVersionControl;
+            if (!fieldControls.TryGetValue("PartNo", out partNoControl)
+                || !fieldControls.TryGetValue("DrawingVersion", out drawingVersionControl))
+            {
+                return;
+            }
+
+            ComboBox partNoComboBox = partNoControl as ComboBox;
+            string selectedPartNo = partNoComboBox == null
+                ? string.Empty
+                : Convert.ToString(partNoComboBox.SelectedValue);
+            if (string.IsNullOrWhiteSpace(selectedPartNo) && partNoComboBox != null)
+            {
+                selectedPartNo = partNoComboBox.Text;
+            }
+
+            List<XHS.Model.PartMasterInfo> parts = partNoComboBox == null
+                ? null
+                : partNoComboBox.DataSource as List<XHS.Model.PartMasterInfo>;
+            XHS.Model.PartMasterInfo selectedPart = parts == null
+                ? null
+                : parts.FirstOrDefault(part => part != null
+                    && string.Equals(
+                        part.JHSPartNo,
+                        selectedPartNo,
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (selectedPart == null && partNoComboBox != null)
+            {
+                selectedPart = partNoComboBox.SelectedItem as XHS.Model.PartMasterInfo;
+            }
+
+            if (selectedPart == null && parts != null && partNoComboBox != null)
+            {
+                selectedPart = parts.FirstOrDefault(part => part != null
+                    && string.Equals(
+                        part.JHSPartNo,
+                        partNoComboBox.Text.Trim(),
+                        StringComparison.OrdinalIgnoreCase));
+            }
+
+            drawingVersionControl.Text = selectedPart == null
+                ? string.Empty
+                : (selectedPart.Remark ?? string.Empty).Trim();
         }
 
         private static string GetDefaultValue(BarcodeFieldRule field)
@@ -278,8 +356,13 @@ namespace BarcodeDesigner
                     SetFieldText("SerialNo", Convert.ToString(result.Rows[0]["SerialNo"]));
                 }
 
+                string zplFile = GenerateZplFile(result);
+                PrintZplFile(zplFile);
+                SavePrintRecord(result, zplFile);
+                RefreshSerialNumber();
+
                 statusLabel.Text = string.Format(
-                    "已生成 {0} 条条码。",
+                    "已生成并打印 {0} 条条码，已保存打印记录。",
                     result.Rows.Count);
             }
             catch (Exception ex)
@@ -287,6 +370,154 @@ namespace BarcodeDesigner
                 statusLabel.ForeColor = Color.DarkRed;
                 statusLabel.Text = ex.Message;
             }
+        }
+
+        private static string GenerateZplFile(DataTable barcodeResult)
+        {
+            string templateFile = ConfigurationManager.AppSettings["ZplTemplateFile"];
+            string outputFile = ConfigurationManager.AppSettings["ZplOutputFile"];
+            if (string.IsNullOrWhiteSpace(templateFile))
+            {
+                throw new ConfigurationErrorsException("App.config 缺少 ZplTemplateFile 配置。");
+            }
+            if (string.IsNullOrWhiteSpace(outputFile))
+            {
+                throw new ConfigurationErrorsException("App.config 缺少 ZplOutputFile 配置。");
+            }
+
+            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, templateFile);
+            string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, outputFile);
+            StringBuilder zpl = new StringBuilder();
+            ZplGenerator generator = new ZplGenerator();
+
+            foreach (DataRow row in barcodeResult.Rows)
+            {
+                List<string> values = new List<string>
+                {
+                    Convert.ToString(row["Barcode"]),
+                    Convert.ToString(row["PartNo"]),
+                    Convert.ToString(row["SupplierCode"])
+                        + Convert.ToString(row["DrawingVersion"])
+                        + Convert.ToString(row["BatchNo"])
+                        + Convert.ToString(row["SerialNo"])
+                };
+
+                ZplResult generated = generator.Generate(templatePath, values);
+                if (!generated.Success)
+                {
+                    throw new InvalidOperationException("生成 ZPL 失败：" + generated.ErrorMessage);
+                }
+
+                if (zpl.Length > 0)
+                {
+                    zpl.AppendLine();
+                }
+                zpl.Append(generated.Zpl);
+            }
+
+            string outputDirectory = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            File.WriteAllText(outputPath, zpl.ToString(), Encoding.UTF8);
+            return outputPath;
+        }
+
+        private static void PrintZplFile(string zplFile)
+        {
+            if (!File.Exists(zplFile))
+            {
+                throw new FileNotFoundException("ZPL 文件不存在。", zplFile);
+            }
+
+            string printerName = ConfigurationManager.AppSettings["PrinterName"];
+            if (string.IsNullOrWhiteSpace(printerName))
+            {
+                using (System.Drawing.Printing.PrintDocument printDocument = new System.Drawing.Printing.PrintDocument())
+                {
+                    printerName = printDocument.PrinterSettings.PrinterName;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(printerName))
+            {
+                throw new InvalidOperationException("未配置打印机，且 Windows 没有默认打印机。");
+            }
+
+            string zpl = File.ReadAllText(zplFile, Encoding.UTF8);
+            PrintResult printResult = new ZebraRawPrinter(printerName).Print(zpl);
+            if (!printResult.Success)
+            {
+                throw new InvalidOperationException("打印失败：" + printResult.ErrorMessage);
+            }
+        }
+
+        private void SavePrintRecord(DataTable barcodeResult, string zplFile)
+        {
+            if (barcodeResult == null || barcodeResult.Rows.Count == 0)
+            {
+                throw new InvalidOperationException("没有可保存的条码记录。");
+            }
+
+            DateTime now = DateTime.Now;
+            string currentUser = Environment.UserName;
+            string partNo = Convert.ToString(barcodeResult.Rows[0]["PartNo"]);
+            string batchNo = Convert.ToString(barcodeResult.Rows[0]["BatchNo"]);
+            PrintRecordInfo printRecordInfo = new PrintRecordInfo
+            {
+                SupplyBatchNo = batchNo,
+                PartNo = partNo,
+                CartonNo = string.Empty,
+                MachineId = Environment.MachineName,
+                PrintType = PrintTypeXwdLabel,
+                LocalPath = zplFile,
+                Status = PrintRecordStatusInfo.Completed,
+                PrintCount = barcodeResult.Rows.Count,
+                PrintUser = currentUser,
+                PrintTime = now,
+                FirstPrintUser = currentUser,
+                FirstPrintTime = now,
+                LastPrintUser = currentUser,
+                LastPrintTime = now,
+                CreateUser = currentUser,
+                CreateTime = now,
+                UpdateUser = currentUser,
+                UpdateTime = now
+            };
+
+            string message = printRecord.InsertPrintRecord(new List<PrintRecordInfo> { printRecordInfo });
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                throw new InvalidOperationException("保存打印记录失败：" + message);
+            }
+        }
+
+        private void RefreshSerialNumber()
+        {
+            if (currentRule == null || currentRule.Fields == null)
+            {
+                return;
+            }
+
+            BarcodeFieldRule serialField = currentRule.Fields.FirstOrDefault(field =>
+                field != null
+                && string.Equals(field.Name, "SerialNo", StringComparison.OrdinalIgnoreCase));
+            if (serialField == null)
+            {
+                return;
+            }
+
+            serialNumberFormatter = new FormatterFactory().Get(
+                serialField,
+                GetXwdLabelPrintCount);
+            SetFieldText("SerialNo", serialNumberFormatter.Encode(DateTime.Today));
+        }
+
+        private int GetXwdLabelPrintCount(DateTime printTime)
+        {
+            return printRecord.GetPrintCount(PrintTypeXwdLabel, printTime);
         }
 
         private IDictionary<string, object> CollectFieldValues()

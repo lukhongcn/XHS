@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Web.Script.Serialization;
-using ZebraLabelTest.Models;
+using XHS.Model.ZPLLabel;
 
-namespace ZebraLabelTest.Engine
+namespace LabelHelp.Services
 {
     public sealed class ZplGenerator
     {
@@ -15,7 +15,7 @@ namespace ZebraLabelTest.Engine
         {
             try
             {
-                LabelTemplate template = LoadTemplate(templateFile);
+                ZplLabelTemplate template = LoadTemplate(templateFile);
                 Validate(template, values);
 
                 int dpi = template.Printer.Dpi;
@@ -26,7 +26,7 @@ namespace ZebraLabelTest.Engine
                 zpl.AppendLine("^PW" + labelWidth);
                 zpl.AppendLine("^LL" + labelHeight);
 
-                foreach (LabelObject item in template.Objects)
+                foreach (ZplLabelObject item in template.Objects)
                 {
                     string value = EscapeFieldData(values[item.FieldIndex]);
                     if (string.Equals(item.Type, "qrcode", StringComparison.OrdinalIgnoreCase))
@@ -56,14 +56,14 @@ namespace ZebraLabelTest.Engine
             }
         }
 
-        private LabelTemplate LoadTemplate(string templateFile)
+        private ZplLabelTemplate LoadTemplate(string templateFile)
         {
             if (string.IsNullOrWhiteSpace(templateFile) || !File.Exists(templateFile))
             {
                 throw new FileNotFoundException("找不到标签模板文件。", templateFile);
             }
 
-            LabelTemplate template = serializer.Deserialize<LabelTemplate>(File.ReadAllText(templateFile));
+            ZplLabelTemplate template = serializer.Deserialize<ZplLabelTemplate>(File.ReadAllText(templateFile));
             if (template == null)
             {
                 throw new InvalidDataException("标签模板内容为空。 ");
@@ -71,7 +71,7 @@ namespace ZebraLabelTest.Engine
             return template;
         }
 
-        private static void Validate(LabelTemplate template, List<string> values)
+        private static void Validate(ZplLabelTemplate template, List<string> values)
         {
             if (template.Printer == null || template.Printer.Dpi <= 0)
                 throw new InvalidDataException("模板缺少有效的 printer.dpi。");
@@ -82,7 +82,7 @@ namespace ZebraLabelTest.Engine
             if (values == null)
                 throw new ArgumentNullException("values");
 
-            foreach (LabelObject item in template.Objects)
+            foreach (ZplLabelObject item in template.Objects)
             {
                 if (item == null || item.Position == null)
                     throw new InvalidDataException("模板包含无效对象或坐标。");

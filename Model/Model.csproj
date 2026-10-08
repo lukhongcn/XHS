@@ -62,6 +62,7 @@
     <Compile Include="ZPLLabel\ZplLabelTemplate.cs" />
     <Compile Include="ZPLLabel\ZplLabelObject.cs" />
     <Compile Include="ZPLLabel\ZplResult.cs" />
+    <Compile Include="ZPLLabel\PrintResult.cs" />
     <Compile Include="FieldTypeInfo.cs" />
     <Compile Include="LabelBindingPdaScanFailureInfo.cs" />
     <Compile Include="LabelCodeInfo.cs" />
