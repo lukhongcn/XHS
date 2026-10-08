@@ -11,7 +11,7 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.TextBox TextBox_SupplyBatchNo;
         protected global::System.Web.UI.WebControls.TextBox TextBox_PartNo;
         protected global::System.Web.UI.WebControls.TextBox TextBox_CartonNo;
-        protected global::System.Web.UI.WebControls.TextBox TextBox_PrintType;
+        protected global::System.Web.UI.WebControls.DropDownList DropDownList_PrintType;
         protected global::System.Web.UI.WebControls.DataGrid MainDataGrid;
         protected global::System.Web.UI.WebControls.Label Label2;
         protected global::System.Web.UI.WebControls.Label Label_Message;

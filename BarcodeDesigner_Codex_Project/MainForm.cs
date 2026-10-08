@@ -19,7 +19,7 @@ namespace BarcodeDesigner
 {
     public sealed class MainForm : Form
     {
-        private const string PrintTypeXwdLabel = "XWDLabel";
+        private const string PrintTypeXwdLabel = "欣旺达标签";
         private readonly Dictionary<string, Control> fieldControls = new Dictionary<string, Control>(StringComparer.OrdinalIgnoreCase);
         private readonly TableLayoutPanel fieldLayout = new TableLayoutPanel();
         private readonly Label statusLabel = new Label();
@@ -28,11 +28,13 @@ namespace BarcodeDesigner
         private readonly XHS.BLL.PrintRecord printRecord = new XHS.BLL.PrintRecord();
         private readonly BarcodeBuilder barcodeBuilder;
         private readonly UserFieldValuesStore userFieldValuesStore = new UserFieldValuesStore();
+        private readonly string loginUserName;
         private ICodeFormatter serialNumberFormatter;
         private BarcodeRule currentRule;
 
-        public MainForm()
+        public MainForm(string loginUserName)
         {
+            this.loginUserName = string.IsNullOrWhiteSpace(loginUserName) ? Environment.UserName : loginUserName;
             barcodeBuilder = new BarcodeBuilder(GetXwdLabelPrintCount);
             InitializeForm();
             LoadRuleAndBuildUi();
@@ -462,7 +464,7 @@ namespace BarcodeDesigner
             }
 
             DateTime now = DateTime.Now;
-            string currentUser = Environment.UserName;
+            string currentUser = loginUserName;
             string partNo = Convert.ToString(barcodeResult.Rows[0]["PartNo"]);
             string batchNo = Convert.ToString(barcodeResult.Rows[0]["BatchNo"]);
             PrintRecordInfo printRecordInfo = new PrintRecordInfo

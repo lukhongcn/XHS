@@ -46,8 +46,8 @@
                                 <asp:TextBox ID="TextBox_CartonNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
                             </div>
                             <div class="col-lg-3 d-flex">
-                                <asp:Label runat="server" CssClass="me-10 print-record-search-label" AssociatedControlID="TextBox_PrintType">打印类型</asp:Label>
-                                <asp:TextBox ID="TextBox_PrintType" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
+                                <asp:Label runat="server" CssClass="me-10 print-record-search-label" AssociatedControlID="DropDownList_PrintType">标签类别</asp:Label>
+                                <asp:DropDownList ID="DropDownList_PrintType" runat="server" CssClass="form-control custom-heighter-width text-start border-primary" />
                             </div>
                         </div>
                     </div>
@@ -70,6 +70,7 @@
                                                         <th>打印次序</th>
                                                         <th>打印人</th>
                                                         <th>打印时间</th>
+                                                        <th>打印次数</th>
                                                         <th>补打原因</th>
                                                         <th>状态</th>
                                                     </tr>
@@ -81,6 +82,7 @@
                                                                 <td><%# Eval("SequenceText") %></td>
                                                                 <td><%# Eval("PrintUser") %></td>
                                                                 <td><%# Eval("PrintTimeText") %></td>
+                                                                <td><%# Eval("PrintCountText") %></td>
                                                                 <td><%# Eval("ReprintReason") %></td>
                                                                 <td><%# Eval("StatusText") %></td>
                                                             </tr>
