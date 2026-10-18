@@ -222,6 +222,18 @@ namespace XHS.MSSQL
             return BuildPackingRecordFromRow(ds.Tables[0].Rows[0]);
         }
 
+        /// <summary>查询最新创建的装箱记录。</summary>
+        public PackingRecordInfo GetLatestPackingRecord(SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "select top 1 " + PackingRecordSelectColumns + " from tb_PackingRecord order by CreateTime desc, Id desc";
+            DataSet ds = ExecuteDatasetInternal(connection, transaction, sql, null);
+            if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+            {
+                return null;
+            }
+            return BuildPackingRecordFromRow(ds.Tables[0].Rows[0]);
+        }
+
         /// <summary>事务内插入装箱记录，返回新 Id。</summary>
         public long InsertPackingRecord(PackingRecordInfo info, SqlConnection connection, SqlTransaction transaction)
         {

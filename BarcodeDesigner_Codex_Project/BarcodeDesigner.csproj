@@ -7,7 +7,7 @@
     <ProjectGuid>{9B7F2B5A-0B9B-4E55-BE54-3D9D6D2D3C1A}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>BarcodeDesigner</RootNamespace>
-    <AssemblyName>BarcodeDesigner</AssemblyName>
+    <AssemblyName>欣旺达标签打印</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

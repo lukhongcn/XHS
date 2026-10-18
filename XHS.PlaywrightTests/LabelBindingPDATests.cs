@@ -71,6 +71,28 @@ public class LabelBindingPDATests : PageTest
         await Expect(Page.Locator("[id$='_Label_Message']")).ToContainTextAsync("绑定记录");
     }
 
+    [Test]
+    public async Task PdaRepeatedWorkOrderScanKeepsSeparateBindingRows()
+    {
+        await Page.GotoAsync($"{BaseUrl}/Login.aspx");
+        await Page.Locator("[id$='TextBox_UserName']").FillAsync("admin");
+        await Page.Locator("[id$='HTML_Password']").FillAsync("123456");
+        await Page.Locator("[id$='Button_Login']").ClickAsync();
+
+        await Page.GotoAsync($"{BaseUrl}/LabelBindingPDA.aspx");
+
+        var scanner = Page.Locator("[id$='_txtPdaScan']");
+        var gridRows = Page.Locator("[id$='_gvBindingRecords'] tr");
+
+        await scanner.FillAsync("5103-20280721003");
+        await scanner.PressAsync("Enter");
+        await Expect(gridRows).ToHaveCountAsync(2);
+
+        await scanner.FillAsync("5103-20280721004");
+        await scanner.PressAsync("Enter");
+        await Expect(gridRows).ToHaveCountAsync(3);
+    }
+
     private async Task LoginAsPdaAdmin()
     {
         var dialog = Page.GetByRole(AriaRole.Dialog, new() { Name = "PDA 登录" });

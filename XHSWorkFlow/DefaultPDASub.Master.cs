@@ -13,10 +13,8 @@ namespace ModuleWorkFlow
 {
     public partial class DefaultPDASub : MasterPage
     {
-        // PDA 标签绑定使用独立菜单项的 PADD（新增/操作）权限。
-        private const string PdaMenuId = "B13";
         private const string PdaAccessContextKey = "PdaAccessAllowed";
-        protected string PageTitle = "标签绑定 PDA";
+        public string PageTitle = "标签绑定 PDA";
 
         protected override void OnInit(EventArgs e)
         {
@@ -41,15 +39,6 @@ namespace ModuleWorkFlow
                     txtPdaUserName.Focus();
                 }
             }
-            else if (!HasPdaPermission())
-            {
-                Context.Items[PdaAccessContextKey] = false;
-                pnlPdaLogin.Visible = true;
-                labPdaLoginMessage.Text = "当前账号没有 PDA 标签绑定权限（PADD），请联系管理员。";
-                txtPdaUserName.Visible = false;
-                txtPdaPassword.Visible = false;
-                btnPdaLogin.Visible = false;
-            }
             else
             {
                 Context.Items[PdaAccessContextKey] = true;
@@ -61,33 +50,6 @@ namespace ModuleWorkFlow
         {
             return context != null && context.Items[PdaAccessContextKey] is bool
                 && (bool)context.Items[PdaAccessContextKey];
-        }
-
-        private bool HasPdaPermission()
-        {
-            if (Session == null) return false;
-            if (Session["isadmin"] is bool && (bool)Session["isadmin"]) return true;
-
-            // 这里按当前登录会话中的具体菜单权限检查，避免 checkPrivate 的历史兼容逻辑
-            // 将“拥有其它菜单权限”误判为拥有 PDA 权限。
-            IEnumerable privileges = Session["iprivate"] as IEnumerable;
-            if (privileges == null) return false;
-            foreach (object privilege in privileges)
-            {
-                if (privilege == null) continue;
-                Type type = privilege.GetType();
-                object menuValue = type.GetProperty("MENUID") == null
-                    ? null : type.GetProperty("MENUID").GetValue(privilege, null);
-                object paddValue = type.GetProperty("PADD") == null
-                    ? null : type.GetProperty("PADD").GetValue(privilege, null);
-                int padd;
-                if (string.Equals(Convert.ToString(menuValue).Trim(), PdaMenuId, StringComparison.OrdinalIgnoreCase)
-                    && int.TryParse(Convert.ToString(paddValue), out padd) && padd > 0)
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         protected void btnPdaLogin_Click(object sender, EventArgs e)

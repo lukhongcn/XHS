@@ -1,0 +1,21 @@
+﻿<%@ Page Language="C#" CodePage="65001" CodeBehind="DeliveryUploadRecordList.aspx.cs" AutoEventWireup="false" OnLoad="Page_Load" Inherits="ModuleWorkFlow.DeliveryUploadRecordList" MasterPageFile="~/DefaultSub.Master" %>
+<asp:Content ID="Content1" ContentPlaceHolderID="contentHolder" runat="server">
+    <div id="Wrapper">
+        <div id="Header"><div class="headbox"><div class="linebox"><a href="#">生产管理</a><img src="images/arrow.png" /><a href="#"><%= menuname %></a></div><div class="logout"><a href="login.aspx" target="_parent">登出</a></div><div class="clearbox"></div></div></div>
+        <div id="Container"><div id="Content">
+            <div id="Menu"><div class="menubox"><div class="mod1"><ul><li class="btn5"><asp:LinkButton ID="lnk_back" runat="server" OnClick="lnk_back_Click" ToolTip="返回配送单上传">返回配送单上传</asp:LinkButton></li></ul></div><div class="clearbox"></div></div></div>
+            <div class="space1"></div>
+            <div class="container mt-3 border border-primary"><div class="container mt-3">
+                <h5>配送单上传记录查询</h5>
+                <div class="row mb-3"><div class="col-lg-8 d-flex"><asp:Label ID="Label_KDQRCode" runat="server" CssClass="me-10 packing-label" AssociatedControlID="txt_KDQRCode">KD标签</asp:Label><asp:TextBox ID="txt_KDQRCode" runat="server" CssClass="form-control text-start border-primary" /></div><div class="col-lg-4"><asp:Button ID="btn_Search" runat="server" Text="查询" CssClass="btn btn-primary" OnClick="btn_Search_Click" /><asp:Button ID="btn_Clear" runat="server" Text="清空" CssClass="btn btn-secondary ms-2" OnClick="btn_Clear_Click" CausesValidation="false" /></div></div>
+                <asp:Label ID="Label_Message" runat="server" CssClass="text-danger"></asp:Label>
+            </div></div>
+            <asp:Panel ID="pnlPackingRecord" runat="server" Visible="false" CssClass="container mt-3 border border-primary"><div class="container mt-3"><h5>装箱任务</h5>
+                <div class="row mb-3"><div class="col-lg-4"><strong>供货批次号</strong><asp:Label ID="litSupplyBatchNo" runat="server" CssClass="form-control packing-readonly" /></div><div class="col-lg-4"><strong>零件编号</strong><asp:Label ID="litPartNo" runat="server" CssClass="form-control packing-readonly" /></div><div class="col-lg-4"><strong>箱号</strong><asp:Label ID="litCartonNo" runat="server" CssClass="form-control packing-readonly" /></div></div>
+                <div class="row mb-3"><div class="col-lg-4"><strong>KD标签</strong><asp:Label ID="litKDQRCode" runat="server" CssClass="form-control packing-readonly" /></div><div class="col-lg-4"><strong>计划数量</strong><asp:Label ID="litPlanQty" runat="server" CssClass="form-control packing-readonly" /></div><div class="col-lg-4"><strong>装箱数量</strong><asp:Label ID="litPackingQty" runat="server" CssClass="form-control packing-readonly" /></div></div>
+                <div class="row mb-3"><div class="col-lg-4"><strong>装箱状态</strong><asp:Label ID="litPackingStage" runat="server" CssClass="form-control packing-readonly" /></div><div class="col-lg-4"><strong>创建人</strong><asp:Label ID="litCreateUser" runat="server" CssClass="form-control packing-readonly" /></div><div class="col-lg-4"><strong>创建时间</strong><asp:Label ID="litCreateTime" runat="server" CssClass="form-control packing-readonly" /></div></div>
+            </div></asp:Panel>
+            <asp:Panel ID="pnlUploadRecords" runat="server" Visible="false" CssClass="container mt-3 border border-primary"><div class="container mt-3"><h5>配送单上传记录</h5><asp:GridView ID="gvUploadRecords" runat="server" CssClass="table table-bordered table-striped" AutoGenerateColumns="false" EmptyDataText="暂无配送单上传记录。" ShowHeaderWhenEmpty="true"><Columns><asp:BoundField DataField="DeliveryNo" HeaderText="配送单号" /><asp:BoundField DataField="PartNo" HeaderText="零件编号" /><asp:BoundField DataField="UploadStatusText" HeaderText="上传状态" /><asp:BoundField DataField="ResponseCodeText" HeaderText="响应码" /><asp:BoundField DataField="ResponseMessage" HeaderText="平台响应消息" /><asp:BoundField DataField="UploadUser" HeaderText="上传人" /><asp:BoundField DataField="UploadTimeText" HeaderText="上传时间" /><asp:BoundField DataField="CompletedTimeText" HeaderText="完成时间" /><asp:BoundField DataField="ErrorMessage" HeaderText="错误信息" /></Columns></asp:GridView></div></asp:Panel>
+        </div></div>
+    </div>
+</asp:Content>

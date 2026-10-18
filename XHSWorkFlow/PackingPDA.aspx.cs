@@ -27,7 +27,7 @@ namespace ModuleWorkFlow
         private void Page_Load(object sender, EventArgs e)
         {
             menuname = new PartTmenu().findbykey(MenuId).Menuname;
-            if (Master is DefaultSub master) { master.Menuname = menuname; }
+            if (Master is DefaultPDASub master) { master.PageTitle = menuname; }
 
             if (!Private.checkPrivate(this, MenuId, "PEDIT"))
             {
@@ -36,7 +36,10 @@ namespace ModuleWorkFlow
 
             if (Session["userid"] == null)
             {
-                Response.Redirect("login.aspx");
+                string loginUrl = ResolveUrl("~/Login.aspx");
+                string returnUrl = Request.RawUrl;
+                Response.Redirect(loginUrl + "?ReturnUrl=" + Server.UrlEncode(returnUrl));
+             
                 return;
             }
 

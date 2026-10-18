@@ -51,6 +51,7 @@
     <Compile Include="PackingExceptionInfo.cs" />
     <Compile Include="PackingExceptionTypeInfo.cs" />
     <Compile Include="PackingRecordInfo.cs" />
+    <Compile Include="DeliveryUploadRecordInfo.cs" />
     <Compile Include="PackingScanRecordInfo.cs" />
     <Compile Include="LabelCodeRuleInfo.cs" />
     <Compile Include="PackingScanRecordQRCodeTypeInfo.cs" />
