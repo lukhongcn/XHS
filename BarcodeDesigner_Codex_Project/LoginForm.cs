@@ -10,7 +10,7 @@ namespace BarcodeDesigner
 {
     public sealed class LoginForm : Form
     {
-        private const string MenuId = "B03";
+        private const string MenuId = "B08";
         private readonly TextBox userNameTextBox = new TextBox();
         private readonly TextBox passwordTextBox = new TextBox();
         private readonly Label messageLabel = new Label();
