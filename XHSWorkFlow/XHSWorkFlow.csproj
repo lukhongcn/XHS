@@ -135,13 +135,6 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="LabelBinding.aspx.cs">
-      <DependentUpon>LabelBinding.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="LabelBinding.aspx.designer.cs">
-      <DependentUpon>LabelBinding.aspx</DependentUpon>
-    </Compile>
     <Compile Include="GSPartMasterUpload.aspx.cs">
       <DependentUpon>GSPartMasterUpload.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -342,7 +335,6 @@
     <Content Include="Controls\newLeft.aspx" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
-    <Content Include="LabelBinding.aspx" />
     <Content Include="DefaultPDASub.Master" />
     <Content Include="LabelBindingPDA.aspx" />
     <Content Include="LabelBindingRecordList.aspx" />

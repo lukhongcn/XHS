@@ -18,7 +18,7 @@ namespace ModuleWorkFlow
     public partial class XWDPartMasterList : Page
     {
         protected string menuname = "";
-        private const string MenuId = "C01";
+        private const string MenuId = "B08";
 
         protected override void OnInit(EventArgs e)
         {

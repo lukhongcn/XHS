@@ -23,7 +23,7 @@
                         <div class="mod1">
                             <ul>
                                 <li class="btn2">
-                                    <asp:LinkButton ID="lnkbutton_edit" runat="server" OnClick="lnkbutton_edit_Click" ToolTip="编辑/edit">编辑/edit</asp:LinkButton>
+                                    <asp:LinkButton ID="lnkbutton_edit" runat="server" OnClick="lnkbutton_edit_Click" ToolTip="编辑/edit" Visible="false">编辑/edit</asp:LinkButton>
                                 </li>
                             </ul>
                         </div>

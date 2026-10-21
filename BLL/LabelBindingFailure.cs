@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using XHS.IDAL;
 using XHS.Model;
 
@@ -28,6 +28,15 @@ namespace BLL
                 Utility.Log.WriteLog("log.txt", "LabelBindingPDA 失败记录保存失败：" + ex);
                 return false;
             }
+        }
+
+        public System.Collections.Generic.List<LabelBindingPdaScanFailureInfo> GetRecords(
+            string scanRawCode,
+            string failureType,
+            DateTime startTime,
+            DateTime endTime)
+        {
+            return dal.GetRecords(scanRawCode, failureType, startTime, endTime);
         }
     }
 }

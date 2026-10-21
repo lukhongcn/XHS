@@ -19,7 +19,6 @@ namespace ModuleWorkFlow
         protected string menuname = "";
         private const string MenuId = "C01";
         private const string CustomerAbbr = "DSBQ";
-        private const string LabelBindingFlowCode = "LABEL_BINDING";
 
         protected override void OnInit(EventArgs e)
         {
@@ -92,35 +91,7 @@ namespace ModuleWorkFlow
                 info.CustomerAbbr = CustomerAbbr;
             }
 
-            ScanFlowStepInfo customerRuleStep;
-            ScanFlowStepInfo factoryRuleStep;
-            if (!TryGetBindingRuleSteps(out customerRuleStep, out factoryRuleStep))
-            {
-                ShowMessage("光束标签绑定流程未配置客户标签或本厂标签规则。 ");
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(customerRuleStep.CustomerId)
-                || !string.Equals(customerRuleStep.CustomerId, factoryRuleStep.CustomerId, StringComparison.OrdinalIgnoreCase))
-            {
-                ShowMessage("光束标签绑定流程的客户标签与本厂标签客户编号不一致。 ");
-                return;
-            }
-
             PartMaster partMaster = new PartMaster();
-            string codeMessage = partMaster.ValidateGSPartMasterCodes(
-                imported,
-                factoryRuleStep.CustomerId,
-                factoryRuleStep.LabelType,
-                customerRuleStep.LabelType,
-                factoryRuleStep.RuleName,
-                customerRuleStep.RuleName);
-            if (!string.IsNullOrWhiteSpace(codeMessage))
-            {
-                ShowMessage(codeMessage);
-                return;
-            }
-
             List<PartMasterInfo> existing = partMaster.GetPartMasters();
             Dictionary<string, PartMasterInfo> existingByKey = existing
                 .Where(info => info != null)
@@ -152,37 +123,6 @@ namespace ModuleWorkFlow
         protected void lnk_view_Click(object sender, EventArgs e)
         {
             Response.Redirect("GSPartMasterList.aspx");
-        }
-
-        private static bool TryGetBindingRuleSteps(out ScanFlowStepInfo customerRuleStep, out ScanFlowStepInfo factoryRuleStep)
-        {
-            customerRuleStep = null;
-            factoryRuleStep = null;
-
-            List<ScanFlowStepInfo> steps = new global::BLL.ScanFlowStep().GetStepsByFlowCode(LabelBindingFlowCode);
-            if (steps == null)
-            {
-                return false;
-            }
-
-            foreach (ScanFlowStepInfo step in steps)
-            {
-                XHS.BLL.ScanStepHandlerType handlerType = XHS.BLL.ScanStepHandlerRegistry.Resolve(step);
-                if (handlerType == XHS.BLL.ScanStepHandlerType.Customer && customerRuleStep == null)
-                {
-                    customerRuleStep = step;
-                }
-                else if (handlerType == XHS.BLL.ScanStepHandlerType.Factory && factoryRuleStep == null)
-                {
-                    factoryRuleStep = step;
-                }
-            }
-
-            return customerRuleStep != null
-                && factoryRuleStep != null
-                && !string.IsNullOrWhiteSpace(customerRuleStep.CustomerId)
-                && !string.IsNullOrWhiteSpace(customerRuleStep.LabelType)
-                && !string.IsNullOrWhiteSpace(factoryRuleStep.LabelType);
         }
 
         private static string BuildKey(PartMasterInfo info)

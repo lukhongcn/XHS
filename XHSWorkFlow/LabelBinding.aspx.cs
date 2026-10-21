@@ -68,11 +68,8 @@ namespace ModuleWorkFlow
             string rawCode =
                 (txt_FactoryBarcode.Text ?? string.Empty).Trim();
 
-            List<PartInfo> matches = barcodeParser.ParseFactoryBarcode(
-                rawCode,
-                "JHX",
-                "CUSTOMER");
-            PartInfo partInfo = matches != null && matches.Count > 0 ? matches[0] : null;
+            PartInfo partInfo =
+                barcodeParser.ParseFactoryBarcode(rawCode, "JHX", "CUSTOMER");
 
             if (partInfo == null)
             {
