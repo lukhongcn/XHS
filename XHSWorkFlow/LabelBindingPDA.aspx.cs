@@ -13,7 +13,6 @@ namespace ModuleWorkFlow
 {
     public partial class LabelBindingPDA : Page
     {
-        private const string MenuId = "C02";
         private const string ContextKey = "LabelBindingPdaContext";
         private const string FlowName = "光束标签绑定流程";
         private const string FlowCode = "LABEL_BINDING";
@@ -40,12 +39,6 @@ namespace ModuleWorkFlow
                 && !string.IsNullOrWhiteSpace(Convert.ToString(Session["userid"]));
         }
 
-        private bool IsPageAccessAllowed()
-        {
-            return DefaultPDASub.IsPdaAccessAllowed(Context)
-                && ModuleWorkFlow.BLL.Private.checkPrivate(this, MenuId, "PADD");
-        }
-
         [Serializable]
         private sealed class PdaBindingRow
         {
@@ -57,7 +50,6 @@ namespace ModuleWorkFlow
             public string JHSPartNo { get; set; }
             public string JHSBatchNo { get; set; }
             public decimal LabelQty { get; set; }
-            public string LabelQtyText { get { return LabelQty <= 0 ? string.Empty : LabelQty.ToString("0.####", CultureInfo.InvariantCulture); } }
             public decimal BindQty { get; set; }
             public string BindQtyText { get { return BindQty <= 0 ? string.Empty : BindQty.ToString("0.####", CultureInfo.InvariantCulture); } }
             public string ScanTimeText { get; set; }
@@ -90,7 +82,6 @@ namespace ModuleWorkFlow
             public decimal CustomerQty { get; set; }
             public PartInfo CustomerPartMaster { get; set; }
             public List<PdaBindingRow> Rows { get; set; }
-            public List<PdaBindingRow> CompletedRows { get; set; }
             public List<PdaWorkflowScan> Scans { get; set; }
             public List<string> WorkOrderRaws { get; set; }
             public bool IsCompleted { get; set; }
@@ -121,7 +112,7 @@ namespace ModuleWorkFlow
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPageAccessAllowed()) return;
+            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
             if (!IsPostBack)
             {
                 ResetContext();
@@ -135,7 +126,7 @@ namespace ModuleWorkFlow
 
         protected void txtPdaScan_TextChanged(object sender, EventArgs e)
         {
-            if (!IsPageAccessAllowed()) return;
+            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
             PdaContext context = Current;
             if (context.IsCompleted)
             {
@@ -192,7 +183,7 @@ namespace ModuleWorkFlow
 
         protected void btnFailureOk_Click(object sender, EventArgs e)
         {
-            if (!IsPageAccessAllowed()) return;
+            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
             pnlFailureModal.Visible = false;
             labFailureMessage.Text = string.Empty;
             txtPdaScan.Text = string.Empty;
@@ -203,7 +194,7 @@ namespace ModuleWorkFlow
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
-            if (!IsPageAccessAllowed()) return;
+            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
             PdaContext context = Current;
             string saveResult = SaveClearBindingRecord(context);
             if (!string.IsNullOrWhiteSpace(saveResult))
@@ -249,7 +240,7 @@ namespace ModuleWorkFlow
 
         protected void btnEndStep_Click(object sender, EventArgs e)
         {
-            if (!IsPageAccessAllowed()) return;
+            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
             PdaContext context = Current;
             ScanFlowStepInfo step = GetCurrentStep(context);
             if (step == null || !step.AllowRepeat || ScanStepHandlerRegistry.Resolve(step) == ScanStepHandlerType.Customer)
@@ -285,7 +276,7 @@ namespace ModuleWorkFlow
 
         protected void btnCompleteBinding_Click(object sender, EventArgs e)
         {
-            if (!IsPageAccessAllowed()) return;
+            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
             PdaContext context = Current;
             decimal bound = context.Rows.Sum(x => x.BindQty);
             if (context.CustomerPartMaster == null || !context.Rows.Any(x => x.BindQty > 0))
@@ -303,11 +294,8 @@ namespace ModuleWorkFlow
 
         private void ProcessCustomer(string raw, ScanFlowStepInfo step)
         {
-            PartInfo part = barcodeParser.ParseJHSPartnoBarcode(
-                raw,
-                step.CustomerId,
-                step.LabelType,
-                step.RuleName);
+            List<PartInfo> matches = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
             if (part == null)
             {
                 ShowScanFailure("CustomerFormat", "客户标签格式无效，无法按当前流程规则解析。", raw, null);
@@ -321,32 +309,22 @@ namespace ModuleWorkFlow
             }
 
             PdaContext context = Current;
-            PartMaster partMaster = new PartMaster();
-            PartInfo masterPart = string.IsNullOrWhiteSpace(part.JHSMaterialNo)
-                ? partMaster.GetPartMasterByCustomerMaterialNo(part.MaterialNo)
-                : partMaster.GetPartMasterByJHSPartNo(part.JHSMaterialNo);
+            PartInfo masterPart = new PartMaster().GetPartMasterByCustomerMaterialNo(part.MaterialNo);
             if (masterPart == null)
             {
-                ShowScanFailure("PartMasterNotFound", "零件主数据未维护。", raw, part);
+                ShowScanFailure("PartMasterNotFound", "客户物料号未维护零件主数据。", raw, part);
                 return;
             }
 
-            // 新客户标签表示开始新一轮绑定，不能继续复用上一轮的任务和明细。
             context.BindingTaskId = Guid.NewGuid().ToString("D");
-            context.Rows = new List<PdaBindingRow>();
-            context.CompletedRows = new List<PdaBindingRow>();
-            context.Scans = new List<PdaWorkflowScan>();
-
             context.CustomerRaw = raw;
-            context.CustomerMaterial = string.IsNullOrWhiteSpace(part.MaterialNo)
-                ? part.JHSMaterialNo
-                : part.MaterialNo;
+            context.CustomerMaterial = part.MaterialNo;
             context.CustomerPartMaster = masterPart;
             context.ExpectedPart = masterPart.JHSPartNo;
             context.CustomerUnit = part.Unit ?? string.Empty;
             context.CustomerBatch = part.BatchNo ?? string.Empty;
             context.CustomerQty = qty;
-            context.WorkOrderRaws = new List<string>();
+            context.Rows = new List<PdaBindingRow>();
             AddWorkflowScan(context, step, raw, 0, part);
             MarkSuccess(context, raw);
             AdvanceAfterStepSuccess(context, step);
@@ -358,11 +336,8 @@ namespace ModuleWorkFlow
         /// </summary>
         private void ProcessWorkOrder(string raw, ScanFlowStepInfo step)
         {
-            PartInfo part = barcodeParser.ParseWorkOrderBarcode(
-                raw,
-                step.CustomerId,
-                step.LabelType,
-                step.RuleName);
+            List<PartInfo> matches = barcodeParser.ParseWorkOrderBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
             if (part == null || string.IsNullOrWhiteSpace(part.ProcessOrderNo))
             {
                 ShowScanFailure("WorkOrderFormat", "工单条码格式无效，无法按当前流程规则解析。", raw, part);
@@ -382,18 +357,14 @@ namespace ModuleWorkFlow
             {
                 SeqNo = 1,
                 CodeType = "工单",
-                FactoryBarcode = context.CustomerRaw,
                 WorkOrderNo = raw,
-                JHSPartNo = context.ExpectedPart,
-                JHSBatchNo = context.CustomerBatch,
-                LabelQty = context.CustomerQty,
-                BindQty = context.CustomerQty,
                 ScanTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
             });
             ReindexRows();
             AddWorkflowScan(context, step, raw, context.WorkOrderRaws.Count, part);
             MarkSuccess(context, raw);
-            CompleteBinding();
+            AdvanceAfterStepSuccess(context, step);
+            Message("工单扫描成功，请扫描" + GetCurrentStepTitle(context) + "。", true);
         }
 
         private void ProcessFactory(string raw, ScanFlowStepInfo step)
@@ -442,7 +413,7 @@ namespace ModuleWorkFlow
 
             PdaBindingRow bindingRow = Current.Rows.FirstOrDefault(x =>
                 string.Equals(x.CodeType, "工单", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(x.FactoryBarcode, Current.CustomerRaw, StringComparison.OrdinalIgnoreCase));
+                && string.IsNullOrWhiteSpace(x.FactoryBarcode));
             if (bindingRow == null)
             {
                 bindingRow = new PdaBindingRow();
@@ -450,7 +421,7 @@ namespace ModuleWorkFlow
             }
             bindingRow.CodeType = type;
             bindingRow.SteelStampRelation = steelStampRelation;
-            bindingRow.FactoryBarcode = Current.CustomerRaw;
+            bindingRow.FactoryBarcode = raw;
             bindingRow.JHSPartNo = partNo;
             bindingRow.JHSBatchNo = batchNo;
             bindingRow.LabelQty = labelQty;
@@ -464,7 +435,7 @@ namespace ModuleWorkFlow
             AdvanceAfterStepSuccess(Current, step);
 
             decimal bound = Current.Rows.Sum(x => x.BindQty);
-            if (bound == Current.CustomerQty)
+            if (bound >= Current.CustomerQty)
             {
                 CompleteBinding();
             }
@@ -477,9 +448,7 @@ namespace ModuleWorkFlow
         private void CompleteBinding()
         {
             PdaContext context = Current;
-            decimal bound = context.Rows
-                .Where(x => string.Equals(x.FactoryBarcode, context.CustomerRaw, StringComparison.OrdinalIgnoreCase))
-                .Sum(x => x.BindQty);
+            decimal bound = context.Rows.Sum(x => x.BindQty);
             if (bound > context.CustomerQty)
             {
                 ShowScanFailure("OverQuantity", "绑定数量不能大于客户数量。", string.Empty, null);
@@ -495,123 +464,13 @@ namespace ModuleWorkFlow
                 ShowScanFailure("Save", result, string.Empty, null);
                 return;
             }
-            List<ScanFlowScanRecordInfo> savedRecords = new ScanFlowScanRecord()
-                .GetBindingScanRecordsByTaskId(context.BindingTaskId);
-            if (savedRecords != null && savedRecords.Count > 0)
-            {
-                // 本轮已完成的明细移到历史列表，页面上保留每次绑定记录，最新在上。
-                List<PdaBindingRow> completedRows = BuildBindingRowsFromRecords(savedRecords, context);
-                context.CompletedRows = completedRows
-                    .Concat(context.CompletedRows ?? new List<PdaBindingRow>())
-                    .ToList();
-                context.Rows = new List<PdaBindingRow>();
-            }
-            // 本次绑定已经结束，下一次扫描必须使用新的 BindingTaskId，
-            // 否则连续扫描的记录会被合并成同一个绑定。
-            context.BindingTaskId = Guid.NewGuid().ToString("D");
-            context.Scans = new List<PdaWorkflowScan>();
-            context.WorkOrderRaws = new List<string>();
-            context.CurrentStepIndex = 0;
-            Message("绑定成功，请扫描" + GetCurrentStepTitle(context) + "。", true);
+            // 保存成功后保留当前流程、零件 Session 和绑定明细；扫描框置灰。
+            // 下一次绑定由“清空当前绑定”显式清除当前流程，登录 Session 不受影响。
+            context.IsCompleted = true;
+            Message("绑定成功，已完成本次客户标签绑定。", true);
             ApplyContextToControls();
             BindRows();
             Focus(txtPdaScan);
-        }
-
-        private List<PdaBindingRow> BuildBindingRowsFromRecords(List<ScanFlowScanRecordInfo> records, PdaContext oldContext)
-        {
-            List<PdaBindingRow> result = new List<PdaBindingRow>();
-            if (records == null || records.Count == 0 || oldContext == null) return result;
-
-            List<ScanFlowScanRecordInfo> ordered = records
-                .OrderBy(x => x.ScanTime ?? DateTime.MinValue)
-                .ThenBy(x => x.RecordId ?? 0)
-                .ToList();
-            List<ScanFlowScanRecordInfo> currentRound = new List<ScanFlowScanRecordInfo>();
-            foreach (ScanFlowScanRecordInfo record in ordered)
-            {
-                if (string.Equals(record.StepCode, "CUSTOMER", StringComparison.OrdinalIgnoreCase)
-                    && currentRound.Any(x => string.Equals(x.StepCode, "CUSTOMER", StringComparison.OrdinalIgnoreCase)))
-                {
-                    AppendBindingRows(result, currentRound, oldContext);
-                    currentRound = new List<ScanFlowScanRecordInfo>();
-                }
-                currentRound.Add(record);
-            }
-            AppendBindingRows(result, currentRound, oldContext);
-            // 明细表最新扫描记录显示在最上面。
-            result.Reverse();
-            ReindexRows(result);
-            return result;
-        }
-
-        private void AppendBindingRows(List<PdaBindingRow> result, List<ScanFlowScanRecordInfo> round, PdaContext oldContext)
-        {
-            if (round == null || round.Count == 0) return;
-            ScanFlowScanRecordInfo customerRecord = round.FirstOrDefault(x =>
-                string.Equals(x.StepCode, "CUSTOMER", StringComparison.OrdinalIgnoreCase));
-            ScanFlowStepInfo customerStep = oldContext.Steps.FirstOrDefault(x =>
-                string.Equals(x.StepCode, "CUSTOMER", StringComparison.OrdinalIgnoreCase));
-            PartInfo customerPart = customerRecord == null || customerStep == null
-                ? null
-                : barcodeParser.ParseJHSPartnoBarcode(customerRecord.ScanContent,
-                    customerStep.CustomerId, customerStep.LabelType, customerStep.RuleName);
-            string customerRaw = customerRecord == null ? oldContext.CustomerRaw : customerRecord.ScanContent;
-            string partNo = customerPart == null ? oldContext.ExpectedPart : customerPart.JHSMaterialNo;
-            string batchNo = customerPart == null ? oldContext.CustomerBatch : customerPart.JHSBatchNo;
-            decimal customerQty = customerPart == null ? oldContext.CustomerQty : customerPart.Qty;
-            string workOrder = string.Join(", ", round
-                .Where(x => string.Equals(x.StepCode, "WORKORDER", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(x => x.ScanTime ?? DateTime.MinValue)
-                .Select(x => x.ScanContent)
-                .Where(x => !string.IsNullOrWhiteSpace(x)));
-            List<ScanFlowScanRecordInfo> factoryRecords = round
-                .Where(x => string.Equals(x.StepCode, "FACTORY", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(x => x.ScanTime ?? DateTime.MinValue)
-                .ToList();
-            if (factoryRecords.Count == 0)
-            {
-                ScanFlowScanRecordInfo latest = round.OrderByDescending(x => x.ScanTime ?? DateTime.MinValue)
-                    .ThenByDescending(x => x.RecordId ?? 0).FirstOrDefault();
-                result.Add(new PdaBindingRow
-                {
-                    CodeType = "工单", FactoryBarcode = customerRaw, WorkOrderNo = workOrder,
-                    JHSPartNo = partNo, JHSBatchNo = batchNo, LabelQty = customerQty,
-                    BindQty = customerQty, ScanTimeText = FormatScanTime(latest)
-                });
-                return;
-            }
-            foreach (ScanFlowScanRecordInfo factoryRecord in factoryRecords)
-            {
-                ScanFlowStepInfo factoryStep = oldContext.Steps.FirstOrDefault(x =>
-                    string.Equals(x.StepCode, factoryRecord.StepCode, StringComparison.OrdinalIgnoreCase));
-                List<PartInfo> parts = factoryStep == null ? new List<PartInfo>() : barcodeParser.ParseFactoryBarcode(
-                    factoryRecord.ScanContent, factoryStep.CustomerId, factoryStep.LabelType, factoryStep.RuleName);
-                PartInfo factoryPart = parts == null || parts.Count == 0 ? null : parts[0];
-                result.Add(new PdaBindingRow
-                {
-                    CodeType = "本厂标签", FactoryBarcode = customerRaw, WorkOrderNo = workOrder,
-                    JHSPartNo = factoryPart == null ? partNo : factoryPart.JHSMaterialNo,
-                    JHSBatchNo = factoryPart == null ? batchNo : factoryPart.JHSBatchNo,
-                    LabelQty = factoryPart == null ? customerQty : factoryPart.JHSQty,
-                    BindQty = factoryPart == null ? customerQty : factoryPart.JHSQty,
-                    PartName = factoryPart == null ? null : factoryPart.MaterialName,
-                    ScanTimeText = FormatScanTime(factoryRecord)
-                });
-            }
-        }
-
-        private static void ReindexRows(List<PdaBindingRow> rows)
-        {
-            if (rows == null) return;
-            for (int i = 0; i < rows.Count; i++) rows[i].SeqNo = i + 1;
-        }
-
-        private static string FormatScanTime(ScanFlowScanRecordInfo record)
-        {
-            return record == null || !record.ScanTime.HasValue
-                ? string.Empty
-                : record.ScanTime.Value.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         }
 
         private void ShowScanFailure(string type, string reason, string raw, PartInfo part, string parsedType = null)
@@ -655,6 +514,7 @@ namespace ModuleWorkFlow
             if (context.IsCompleted)
             {
                 btnEndStep.Visible = false;
+                btnCompleteBinding.Visible = false;
                 labScanState.Text = "本次绑定已完成，请清空后开始下一次绑定";
                 labScanState.CssClass = "pda-state pda-state-success";
                 txtPdaScan.Enabled = false;
@@ -667,27 +527,36 @@ namespace ModuleWorkFlow
             bool factory = ScanStepHandlerRegistry.Resolve(step) == ScanStepHandlerType.Factory;
             btnEndStep.Visible = isLastStep && factory && context.CustomerPartMaster != null && context.Rows.Any(x => x.BindQty > 0);
             btnEndStep.Text = factory && isLastStep ? "完成绑定" : "结束当前步骤";
+            btnCompleteBinding.Visible = false;
             string title = GetCurrentStepTitle(context);
             labScanState.Text = step == null ? "流程未加载" : "请扫描" + title;
             labScanState.CssClass = "pda-state " + (customer ? "pda-state-customer" : "pda-state-factory");
             hidScanStage.Value = step == null ? string.Empty : step.StepCode;
+            labCustomerRaw.Text = context.CustomerRaw ?? string.Empty;
+            labCustomerMaterial.Text = context.CustomerMaterial ?? string.Empty;
+            labExpectedPart.Text = context.ExpectedPart ?? string.Empty;
+            labCustomerBatch.Text = context.CustomerBatch ?? string.Empty;
+            labCustomerUnit.Text = context.CustomerUnit ?? string.Empty;
             hidCustomerQty.Value = context.CustomerQty.ToString(CultureInfo.InvariantCulture);
             hidBoundQty.Value = context.Rows.Sum(x => x.BindQty).ToString(CultureInfo.InvariantCulture);
+            hidRemainingQty.Value = Math.Max(0, context.CustomerQty - context.Rows.Sum(x => x.BindQty)).ToString(CultureInfo.InvariantCulture);
         }
 
         private void BindRows()
         {
             PdaContext context = Current;
-            // 当前轮次在上，已完成的历史绑定在下，均保持最新在上。
-            List<PdaBindingRow> rows = (context.Rows ?? new List<PdaBindingRow>())
-                .Concat(context.CompletedRows ?? new List<PdaBindingRow>())
-                .ToList();
+            List<PdaBindingRow> rows = context.Rows ?? new List<PdaBindingRow>();
             gvBindingRecords.DataSource = rows;
             gvBindingRecords.DataBind();
+            decimal bound = rows.Sum(x => x.BindQty);
+            labCustomerQty.Text = context.CustomerQty.ToString("0.####", CultureInfo.InvariantCulture);
+            labBoundQty.Text = bound.ToString("0.####", CultureInfo.InvariantCulture);
+            labRemainingQty.Text = Math.Max(0, context.CustomerQty - bound).ToString("0.####", CultureInfo.InvariantCulture);
+            progressBar.Style["width"] = (context.CustomerQty <= 0 ? 0 : Math.Min(100, bound * 100 / context.CustomerQty)).ToString("0.##", CultureInfo.InvariantCulture) + "%";
         }
 
         private void ResetContext() { Session[ContextKey] = NewContext(); }
-        private static PdaContext NewContext() { return new PdaContext { BindingTaskId = Guid.NewGuid().ToString("D"), Steps = new List<ScanFlowStepInfo>(), Rows = new List<PdaBindingRow>(), CompletedRows = new List<PdaBindingRow>(), Scans = new List<PdaWorkflowScan>(), WorkOrderRaws = new List<string>() }; }
+        private static PdaContext NewContext() { return new PdaContext { BindingTaskId = Guid.NewGuid().ToString("D"), Steps = new List<ScanFlowStepInfo>(), Rows = new List<PdaBindingRow>(), Scans = new List<PdaWorkflowScan>(), WorkOrderRaws = new List<string>() }; }
         private bool InitializeWorkflow()
         {
             PdaContext context = Current;
@@ -811,4 +680,3 @@ namespace ModuleWorkFlow
         }
     }
 }
-

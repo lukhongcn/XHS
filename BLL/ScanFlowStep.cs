@@ -75,7 +75,7 @@ namespace BLL
             if (decimal.TryParse(endValue.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out endNumber)
                 && decimal.TryParse(compareValue.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out compareNumber))
             {
-                return endNumber == compareNumber;
+                return endNumber >= compareNumber;
             }
 
             return string.Equals(endValue.Trim(), compareValue.Trim(), StringComparison.OrdinalIgnoreCase);
