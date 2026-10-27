@@ -34,7 +34,7 @@
                     <div class="container mt-3 mb-3">
                         <div class="row mb-3">
                             <div class="col-lg-6 d-flex">
-                                <asp:Label ID="Label_CustomerProductNo" runat="server" CssClass="me-10 record-search-label" AssociatedControlID="TextBox_CustomerProductNo">工单号</asp:Label>
+                                <asp:Label ID="Label_CustomerProductNo" runat="server" CssClass="me-10 record-search-label" AssociatedControlID="TextBox_CustomerProductNo">客户零件编号</asp:Label>
                                 <asp:TextBox ID="TextBox_CustomerProductNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary" />
                             </div>
                             <div class="col-lg-6 d-flex">
@@ -61,7 +61,7 @@
                             <HeaderStyle HorizontalAlign="Center" VerticalAlign="Middle" CssClass="table-primary"></HeaderStyle>
                             <RowStyle HorizontalAlign="Center" VerticalAlign="Middle" Wrap="true" CssClass="wrap-text"></RowStyle>
                             <Columns>
-                                <asp:BoundField DataField="WorkOrderNo" HeaderText="工单号"></asp:BoundField>
+                                <asp:BoundField DataField="CustomerPartNo" HeaderText="客户零件编号"></asp:BoundField>
                                 <asp:BoundField DataField="FactoryBarcode" HeaderText="本厂条码"></asp:BoundField>
                                 <asp:BoundField DataField="JHSPartNo" HeaderText="本厂品号"></asp:BoundField>
                                 <asp:BoundField DataField="JHSBatchNo" HeaderText="批号"></asp:BoundField>

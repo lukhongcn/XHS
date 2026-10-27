@@ -294,8 +294,7 @@ namespace ModuleWorkFlow
 
         private void ProcessCustomer(string raw, ScanFlowStepInfo step)
         {
-            List<PartInfo> matches = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
-            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
+            PartInfo part = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
             if (part == null)
             {
                 ShowScanFailure("CustomerFormat", "客户标签格式无效，无法按当前流程规则解析。", raw, null);
@@ -336,8 +335,7 @@ namespace ModuleWorkFlow
         /// </summary>
         private void ProcessWorkOrder(string raw, ScanFlowStepInfo step)
         {
-            List<PartInfo> matches = barcodeParser.ParseWorkOrderBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
-            PartInfo part = matches != null && matches.Count > 0 ? matches[0] : null;
+            PartInfo part = barcodeParser.ParseWorkOrderBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
             if (part == null || string.IsNullOrWhiteSpace(part.ProcessOrderNo))
             {
                 ShowScanFailure("WorkOrderFormat", "工单条码格式无效，无法按当前流程规则解析。", raw, part);

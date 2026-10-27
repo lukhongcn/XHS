@@ -59,7 +59,7 @@ namespace BLL
             }
 
             var filtered = result.AsEnumerable()
-                .Where(row => Contains(row.Field<string>("WorkOrderNo"), customerFilter))
+                .Where(row => Contains(row.Field<string>("CustomerPartNo"), customerFilter))
                 .Where(row => Contains(row.Field<string>("JHSPartNo"), productFilter))
                 .OrderByDescending(row => row.Field<string>("ScanTimeText"))
                 .ToList();
@@ -76,9 +76,16 @@ namespace BLL
 
             PartInfo customerPart = barcodeParser.ParseJHSPartnoBarcode(
                 customer.ScanContent, customer.CustomerId, customer.LabelType, customer.RuleName);
+            PartInfo customerProduct = barcodeParser.ParseCustomerBarcode(
+                customer.ScanContent, customer.CustomerId, customer.LabelType, customer.RuleName);
+            string customerPartNo = customerProduct == null
+                ? (customerPart == null ? string.Empty : customerPart.JHSMaterialNo)
+                : (customerProduct.MaterialNo ?? string.Empty);
             string partNo = customerPart == null ? string.Empty : customerPart.JHSMaterialNo;
             string batchNo = customerPart == null ? string.Empty : customerPart.JHSBatchNo;
-            decimal customerQty = customerPart == null ? 0M : customerPart.Qty;
+            decimal customerQty = customerProduct == null
+                ? (customerPart == null ? 0M : customerPart.Qty)
+                : customerProduct.Qty;
             string workOrder = string.Join(", ", round
                 .Where(x => string.Equals(x.StepCode, "WORKORDER", StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(x => x.ScanTime ?? DateTime.MinValue)
@@ -93,7 +100,7 @@ namespace BLL
             {
                 ScanFlowScanRecordInfo latest = round.OrderByDescending(x => x.ScanTime ?? DateTime.MinValue)
                     .ThenByDescending(x => x.RecordId ?? 0).FirstOrDefault();
-                AddResultRow(result, customer.ScanUser, customer.ScanContent, workOrder,
+                AddResultRow(result, customer.ScanUser, customer.ScanContent, customerPartNo, workOrder,
                     partNo, batchNo, customerQty, latest == null ? customer.ScanTime : latest.ScanTime);
                 return;
             }
@@ -103,7 +110,7 @@ namespace BLL
                 List<PartInfo> matches = barcodeParser.ParseFactoryBarcode(
                     factory.ScanContent, factory.CustomerId, factory.LabelType, factory.RuleName);
                 PartInfo factoryPart = matches == null || matches.Count == 0 ? null : matches[0];
-                AddResultRow(result, customer.ScanUser, customer.ScanContent, workOrder,
+                AddResultRow(result, customer.ScanUser, customer.ScanContent, customerPartNo, workOrder,
                     factoryPart == null ? partNo : factoryPart.JHSMaterialNo,
                     factoryPart == null ? batchNo : factoryPart.JHSBatchNo,
                     factoryPart == null ? customerQty : factoryPart.JHSQty,
@@ -112,9 +119,11 @@ namespace BLL
         }
 
         private static void AddResultRow(DataTable result, string scanUser, string customerRaw,
-            string workOrder, string partNo, string batchNo, decimal qty, DateTime? scanTime)
+            string customerPartNo, string workOrder, string partNo, string batchNo,
+            decimal qty, DateTime? scanTime)
         {
             DataRow row = result.NewRow();
+            row["CustomerPartNo"] = customerPartNo ?? string.Empty;
             row["WorkOrderNo"] = workOrder ?? string.Empty;
             row["FactoryBarcode"] = customerRaw ?? string.Empty;
             row["JHSPartNo"] = partNo ?? string.Empty;
@@ -156,6 +165,7 @@ namespace BLL
         private static DataTable CreateResultTable()
         {
             DataTable table = new DataTable();
+            table.Columns.Add("CustomerPartNo", typeof(string));
             table.Columns.Add("WorkOrderNo", typeof(string));
             table.Columns.Add("FactoryBarcode", typeof(string));
             table.Columns.Add("JHSPartNo", typeof(string));

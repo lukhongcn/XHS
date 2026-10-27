@@ -107,6 +107,7 @@ namespace ModuleWorkFlow
         private void BindEmptyGrid()
         {
             DataTable table = new DataTable();
+            table.Columns.Add("CustomerPartNo");
             table.Columns.Add("WorkOrderNo");
             table.Columns.Add("FactoryBarcode");
             table.Columns.Add("JHSPartNo");
