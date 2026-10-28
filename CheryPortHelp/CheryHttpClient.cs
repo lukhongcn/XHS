@@ -245,7 +245,7 @@ namespace CheryPortHelp
             return content;
         }
 
-        private static string SerializeRequest(CheryCheckRecordRequest request)
+        public static string SerializeRequest(CheryCheckRecordRequest request)
         {
             return JsonConvert.SerializeObject(
                 request,

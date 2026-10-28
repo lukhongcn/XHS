@@ -23,7 +23,7 @@
                         <div class="mod2">
                             <ul>
                                 <li class="btn8"><asp:LinkButton ID="lnkbutton_search" runat="server" ToolTip="搜索/search" OnClick="lnkbutton_search_Click">搜索/search</asp:LinkButton></li>
-                                <li class="btn9"><asp:LinkButton ID="lnkbutton_print" runat="server" ToolTip="打印/print" OnClick="lnkbutton_print_Click" OnClientClick="return preparePrintClientId();">打印/print</asp:LinkButton></li>
+                                <li class="btn9"><asp:LinkButton ID="lnkbutton_print" runat="server" ToolTip="打印/print" OnClick="lnkbutton_print_Click">打印/print</asp:LinkButton></li>
                             </ul>
                         </div>
                         <div class="clearbox"></div>
@@ -49,6 +49,12 @@
                             <div class="col-lg-3 d-flex">
                                 <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label" AssociatedControlID="DropDownList_PrinterName">打印机名</asp:Label>
                                 <asp:DropDownList ID="DropDownList_PrinterName" runat="server" CssClass="form-select custom-heighter-width text-start border-primary"></asp:DropDownList>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-lg-3 d-flex">
+                                <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label" AssociatedControlID="TextBox_DeliveryNo">配送单号</asp:Label>
+                                <asp:TextBox ID="TextBox_DeliveryNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -80,6 +86,7 @@
                                 <asp:BoundColumn DataField="PartEnglishName" HeaderText="零件英文名称"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="Quantity" HeaderText="数量"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="SupplyBatchNo" HeaderText="供货批次号"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="DeliveryNo" HeaderText="配送单号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="CartonNo" HeaderText="纸箱编号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="Status" HeaderText="状态"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="PrintCount" HeaderText="打印次数"></asp:BoundColumn>
@@ -100,7 +107,7 @@
                             <td width="10%" height="28">
                                 <div align="center"><b><asp:Label ID="Label2" runat="server">提示</asp:Label></b></div>
                             </td>
-                            <td class="msg" width="85%">&nbsp;&nbsp;<asp:Label ID="Label_Message" runat="server"></asp:Label></td>
+                            <td class="msg" width="85%">&nbsp;&nbsp;<asp:Label ID="Label_Message" runat="server"></asp:Label><asp:Literal ID="Literal_DownloadLink" runat="server" Mode="PassThrough"></asp:Literal></td>
                         </tr>
                     </table>
                 </div>

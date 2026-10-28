@@ -77,9 +77,25 @@
                                 <asp:TextBox ID="txt_Quantity" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
                             <div class="col-lg-6 d-flex">
-                                <asp:Label ID="Label_SupplyBatchNo" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_SupplyBatchNo">供货批次号</asp:Label>
-                                <asp:TextBox ID="txt_SupplyBatchNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
+                                <asp:Label ID="Label_OrderQuantity" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_OrderQuantity">订单数量</asp:Label>
+                                <asp:TextBox ID="txt_OrderQuantity" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
                             </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-lg-6 d-flex">
+                                <asp:Label ID="Label_SupplyBatchNo" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_SupplyBatchNo">供货批次号</asp:Label>
+                                <asp:TextBox ID="txt_SupplyBatchNo" runat="server" CssClass="form-control shipping-goods-batch-no text-start border-primary shipping-goods-required"></asp:TextBox>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-lg-6 d-flex">
+                                <asp:Label ID="Label_DeliveryNo" runat="server" CssClass="me-10 shipping-goods-label" AssociatedControlID="txt_DeliveryNo">配送单号</asp:Label>
+                                <asp:TextBox ID="txt_DeliveryNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary shipping-goods-required"></asp:TextBox>
+                                <span class="shipping-goods-auto-delivery-no"><asp:CheckBox ID="chk_AutoDeliveryNo" runat="server" Text="自动产生配送单号" AutoPostBack="true" OnCheckedChanged="chk_AutoDeliveryNo_CheckedChanged" /></span>
+                            </div>
+                            <div class="col-lg-6 d-flex"></div>
                         </div>
 
                         <div class="row mb-3">
@@ -146,6 +162,17 @@
 
         .shipping-goods-barcode {
             width: 100%;
+        }
+
+        .shipping-goods-batch-no {
+            width: 260px;
+            min-width: 260px;
+        }
+
+        .shipping-goods-auto-delivery-no {
+            margin-left: 10px;
+            line-height: 30px;
+            white-space: nowrap;
         }
 
         .shipping-goods-required {

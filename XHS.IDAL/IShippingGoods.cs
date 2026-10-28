@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using XHS.Model;
 
 namespace XHS.IDAL
@@ -18,14 +19,23 @@ namespace XHS.IDAL
 
         List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo);
 
+        List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo);
+
+        string GetNextAutoDeliveryNo(DateTime date);
+
         ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
 
         ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
 
-        ParamterInfo UpdateShippingGoodsClose(List<ShippingGoodsInfo> shippingGoodsInfos);
+        ParamterInfo UpdateShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos, string deliveryNo);
+
+        ParamterInfo UpdatePrintedDeliveryNo(string supplyBatchNo, string partNo, string cartonNo, string oldDeliveryNo, string newDeliveryNo);
+
+        ParamterInfo UpdateShippingGoodsClose(string supplyBatchNo, string partNo, string deliveryNo, string closer, DateTime closeDate);
 
         ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos);
 
+        ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos, string deliveryNo);
         ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos);
     }
 }

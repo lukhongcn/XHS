@@ -38,6 +38,7 @@ namespace ModuleWorkFlow
 
             if (!IsPostBack)
             {
+                InitializePrintTypeOptions();
                 InitializeFiltersFromQueryString();
                 BindData();
             }
@@ -126,8 +127,34 @@ namespace ModuleWorkFlow
             string printType = Request.QueryString["printType"];
             if (!string.IsNullOrWhiteSpace(printType))
             {
-                TextBox_PrintType.Text = printType.Trim();
+                ListItem item = DropDownList_PrintType.Items.FindByValue(printType.Trim());
+                DropDownList_PrintType.SelectedValue = item == null ? string.Empty : item.Value;
             }
+        }
+
+        private void InitializePrintTypeOptions()
+        {
+            List<PrintRecordInfo> printRecordInfos = new XHS.BLL.PrintRecord().GetPrintRecords();
+            var printTypes = (printRecordInfos ?? new List<PrintRecordInfo>())
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.PrintType))
+                .GroupBy(item => item.PrintType.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(group => new
+                {
+                    PrintType = group.First().PrintType.Trim(),
+                    PrintCount = group.Sum(item => item.PrintCount ?? 0)
+                })
+                .OrderBy(item => item.PrintType, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            DropDownList_PrintType.Items.Clear();
+            DropDownList_PrintType.Items.Add(new ListItem("全部", string.Empty));
+            foreach (var printType in printTypes)
+            {
+                DropDownList_PrintType.Items.Add(new ListItem(
+                    string.Format("{0}（打印次数：{1}）", printType.PrintType, printType.PrintCount),
+                    printType.PrintType));
+            }
+            DropDownList_PrintType.SelectedIndex = 0;
         }
 
         private void BindData()
@@ -137,7 +164,7 @@ namespace ModuleWorkFlow
                 TextBox_SupplyBatchNo.Text.Trim(),
                 TextBox_PartNo.Text.Trim(),
                 TextBox_CartonNo.Text.Trim(),
-                TextBox_PrintType.Text.Trim());
+                DropDownList_PrintType.SelectedValue.Trim());
 
             List<PrintRecordGroupViewModel> groups = BuildGroups(printRecordInfos);
             MainDataGrid.DataSource = groups;
@@ -186,6 +213,7 @@ namespace ModuleWorkFlow
                             SequenceText = string.Format("第{0}次", detailIndex + 1),
                             PrintUser = SafeValue(item.PrintUser),
                             PrintTimeText = FormatDateTime(item.PrintTime),
+                            PrintCountText = item.PrintCount.HasValue ? item.PrintCount.Value.ToString() : "0",
                             ReprintReason = SafeValue(item.ReprintReason),
                             StatusText = GetStatusText(item.Status)
                         }).ToList()
@@ -261,6 +289,7 @@ namespace ModuleWorkFlow
             public string SequenceText { get; set; }
             public string PrintUser { get; set; }
             public string PrintTimeText { get; set; }
+            public string PrintCountText { get; set; }
             public string ReprintReason { get; set; }
             public string StatusText { get; set; }
         }

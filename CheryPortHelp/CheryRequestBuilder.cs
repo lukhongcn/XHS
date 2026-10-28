@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using XHS.Model;
 
 namespace CheryPortHelp
@@ -19,8 +19,9 @@ namespace CheryPortHelp
             return new CheryCheckRecordRequest
             {
                 supplNo = CheryPortConfig.SupplNo,
-                baseNo = CheryPortConfig.BaseNo,
+                baseNo = string.IsNullOrWhiteSpace(info.BaseNo) ? CheryPortConfig.BaseNo : info.BaseNo,
                 deliveryType = CheryPortConfig.DeliveryType,
+                operateType = string.IsNullOrWhiteSpace(info.operateType) ? "1" : info.operateType,
                 deliveryNo = info.DeliveryNo,
                 sxCardSeq = info.SxCardSeq,
                 materialNo = info.MaterialNo,

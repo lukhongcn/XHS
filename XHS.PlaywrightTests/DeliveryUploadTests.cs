@@ -10,7 +10,7 @@ public class DeliveryUploadTests : PageTest
         get
         {
             string? value = Environment.GetEnvironmentVariable("XHS_BASE_URL");
-            return string.IsNullOrWhiteSpace(value) ? "http://localhost:55426" : value.TrimEnd('/');
+            return string.IsNullOrWhiteSpace(value) ? "http://localhost/XHS" : value.TrimEnd('/');
         }
     }
 

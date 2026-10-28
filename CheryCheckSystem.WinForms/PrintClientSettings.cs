@@ -13,6 +13,7 @@ namespace CheryCheckSystem.PrintClient
         public string MachineId { get; private set; }
         public string PrinterName { get; private set; }
         public int PollIntervalSeconds { get; private set; }
+        public int PendingBatchSize { get; private set; }
         public int PrintPauseMilliseconds { get; private set; }
         public int LockTimeoutMinutes { get; private set; }
         public string LogFolder { get; private set; }
@@ -29,8 +30,9 @@ namespace CheryCheckSystem.PrintClient
                 MachineId = GetSetting("PrintClient.MachineId", "PRT-01"),
                 PrinterName = GetSetting("PrintClient.PrinterName", string.Empty),
                 PollIntervalSeconds = GetIntSetting("PrintClient.PollIntervalSeconds", 10, 1, 3600),
+                PendingBatchSize = GetIntSetting("PrintClient.PendingBatchSize", 1, 1, 30),
                 PrintPauseMilliseconds = GetIntSetting("PrintClient.PrintPauseMilliseconds", 1500, 0, 60000),
-                LockTimeoutMinutes = GetIntSetting("PrintClient.LockTimeoutMinutes", 3, 1, 60),
+                LockTimeoutMinutes = GetIntSetting("PrintClient.LockTimeoutMinutes", 30, 1, 60),
                 LogFolder = GetSetting("PrintClient.LogFolder", @"C:\CheryMES\PrintService\logs")
             };
         }

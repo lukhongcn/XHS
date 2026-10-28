@@ -9,7 +9,7 @@ using XHS.Model;
 namespace ModuleWorkFlow.Api
 {
     /// <summary>
-    /// 返回并锁定指定打印机最多 30 条待打印标签数据。
+    /// 返回并锁定指定打印机的待打印标签数据。
     /// </summary>
     public class PrintPendingLabelsHandler : IHttpHandler
     {
@@ -26,6 +26,12 @@ namespace ModuleWorkFlow.Api
                 lockTimeoutMinutes = 3;
             }
             lockTimeoutMinutes = Math.Max(1, Math.Min(60, lockTimeoutMinutes));
+            int maxCount;
+            if (!int.TryParse(context.Request.QueryString["maxCount"], out maxCount))
+            {
+                maxCount = 1;
+            }
+            maxCount = Math.Max(1, Math.Min(30, maxCount));
             if (string.IsNullOrWhiteSpace(machineId))
             {
                 WriteJson(context, new
@@ -40,7 +46,7 @@ namespace ModuleWorkFlow.Api
             try
             {
                 XHS.BLL.PrintRecord printrecord = new XHS.BLL.PrintRecord();
-                List<PrintRecordInfo> printRecordInfos = printrecord.LockPendingPrintRecords(machineId, 30, lockTimeoutMinutes);
+                List<PrintRecordInfo> printRecordInfos = printrecord.LockPendingPrintRecords(machineId, maxCount, lockTimeoutMinutes);
                 WriteJson(context, new
                 {
                     success = true,

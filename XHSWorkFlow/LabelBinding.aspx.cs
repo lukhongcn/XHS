@@ -69,7 +69,7 @@ namespace ModuleWorkFlow
                 (txt_FactoryBarcode.Text ?? string.Empty).Trim();
 
             PartInfo partInfo =
-                barcodeParser.ParseFactoryBarcode(rawCode, "JHX");
+                barcodeParser.ParseFactoryBarcode(rawCode, "JHX", "CUSTOMER");
 
             if (partInfo == null)
             {

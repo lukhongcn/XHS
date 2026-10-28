@@ -18,6 +18,9 @@ namespace XHS.Tests
             {
                 TestCustomerQRCodeTextChanged();
                 TestUnRegularTableImportGetList();
+                TestSearchPackingExceptions();
+                TestSearchPackingExceptionsWithFilters();
+                TestParseFactoryBarcodePackingPartScan();
                 Console.WriteLine("All tests passed.");
                 return 0;
             }
@@ -126,6 +129,119 @@ namespace XHS.Tests
             AssertEqual("48-48", last.CartonNo, "最后一箱纸箱编号不正确。");
         }
 
+        /// <summary>
+        /// 测试 PackingException.SearchPackingExceptions 两参数重载（kdCode + status）。
+        /// </summary>
+        private static void TestSearchPackingExceptions()
+        {
+            var service = new XHS.BLL.PackingException();
+
+            // 不传任何条件，查询全部异常
+            List<PackingExceptionInfo> all = service.SearchPackingExceptions(null, null);
+            AssertNotNull(all, "查询全部异常不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(null, null) 返回 " + all.Count + " 条记录。");
+            AssertEqual(true, all.Count >= 0, "查询全部异常应返回 0 条及以上记录。");
+
+            // 按状态过滤：仅待处理
+            List<PackingExceptionInfo> pending = service.SearchPackingExceptions(null, 0);
+            AssertNotNull(pending, "按待处理状态查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(null, 0) 返回 " + pending.Count + " 条待处理记录。");
+
+            // 按 KD 标签模糊搜索
+            List<PackingExceptionInfo> byKd = service.SearchPackingExceptions("F26", null);
+            AssertNotNull(byKd, "按 KD 标签查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(\"F26\", null) 返回 " + byKd.Count + " 条记录。");
+
+            // 验证每条记录的 KDPartNo 已被解析
+            foreach (PackingExceptionInfo record in all)
+            {
+                AssertEqual(false, record.KDPartNo == null,
+                    "KDPartNo 不应为 null，记录 Id=" + (record.Id ?? -1));
+            }
+
+            Console.WriteLine("TestSearchPackingExceptions 通过。");
+        }
+
+        /// <summary>
+        /// 测试 PackingException.SearchPackingExceptions 五参数重载（kdCode + partNo + dateFrom + dateTo + status）。
+        /// </summary>
+        private static void TestSearchPackingExceptionsWithFilters()
+        {
+            var service = new XHS.BLL.PackingException();
+
+            // 无过滤条件
+            List<PackingExceptionInfo> all = service.SearchPackingExceptions(null, null, null, null, null);
+            AssertNotNull(all, "五参数重载：无过滤查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(null,null,null,null,null) 返回 " + all.Count + " 条记录。");
+
+            // 按日期范围过滤
+            DateTime from = new DateTime(2026, 8, 1);
+            DateTime to = new DateTime(2026, 8, 31);
+            List<PackingExceptionInfo> byDate = service.SearchPackingExceptions(null, null, from, to, null);
+            AssertNotNull(byDate, "按日期范围查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(日期范围 2026-08-01~2026-08-31) 返回 " + byDate.Count + " 条记录。");
+            // 确保日期范围内的记录 CreateTime 都在范围内
+            foreach (PackingExceptionInfo record in byDate)
+            {
+                AssertEqual(true, record.CreateTime >= from,
+                    "记录 CreateTime 应在起始日期之后，记录 Id=" + (record.Id ?? -1));
+                AssertEqual(true, record.CreateTime < to.AddDays(1),
+                    "记录 CreateTime 应在结束日期之前，记录 Id=" + (record.Id ?? -1));
+            }
+
+            // 按零件编号过滤
+            List<PackingExceptionInfo> byPartNo = service.SearchPackingExceptions(null, "F26", null, null, null);
+            AssertNotNull(byPartNo, "按零件编号查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(partNo=\"F26\") 返回 " + byPartNo.Count + " 条记录。");
+            AssertEqual(true, byPartNo.Count > 0, "按零件编号 F26 应匹配到记录。");
+
+            // 组合过滤：日期 + 状态
+            List<PackingExceptionInfo> byDateAndStatus = service.SearchPackingExceptions(null, null, from, to, 0);
+            AssertNotNull(byDateAndStatus, "组合条件查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(日期+待处理) 返回 " + byDateAndStatus.Count + " 条记录。");
+
+            // 组合过滤：KD + 日期 + 状态
+            List<PackingExceptionInfo> combined = service.SearchPackingExceptions("F26", "F26", from, to, null);
+            AssertNotNull(combined, "KD+零件+日期组合查询不应返回 null。");
+            Console.WriteLine("  SearchPackingExceptions(KD=F26, PartNo=F26, 日期范围) 返回 " + combined.Count + " 条记录。");
+
+            Console.WriteLine("TestSearchPackingExceptionsWithFilters 通过。");
+        }
+
+        /// <summary>
+        /// 测试 PackingPartScan 规则：零件标签二维码能解析，KD 标签二维码不匹配。
+        /// </summary>
+        private static void TestParseFactoryBarcodePackingPartScan()
+        {
+            var parser = new XHS.BLL.FactoryBarcodeParser();
+
+            // 零件标签二维码：应正确解析
+            string partQr = "10#F26-3301010$11#3051$12#202607290052$33#A40093051TGW005280$";
+            PartInfo part = parser.ParseFactoryBarcode(partQr, "FZXHS", "PackingPartScan");
+            AssertNotNull(part, "零件标签二维码应解析成功，不应返回 null。");
+            AssertEqual("F26-3301010", part.JHSMaterialNo, "零件编号(MaterialNo)解析不正确。");
+            AssertEqual("3051", part.SupplierCode, "供应商代码(SupplierCode)解析不正确。");
+            AssertEqual("202607290052", part.ProductDate, "生产日期(ProductDate)解析不正确。");
+            Console.WriteLine("  零件标签解析成功：MaterialNo=" + part.JHSMaterialNo + "，SupplierCode=" + part.SupplierCode + "，ProductDate=" + part.ProductDate);
+
+            // 不带 33# 的零件标签二维码：33# 可选，也应正确解析
+            string partQrNo33 = "10#F26-3301010$11#3051$12#202607290052$";
+            PartInfo partNo33 = parser.ParseFactoryBarcode(partQrNo33, "FZXHS", "PackingPartScan");
+            AssertNotNull(partNo33, "不带 33# 的零件标签二维码应解析成功，不应返回 null。");
+            AssertEqual("F26-3301010", partNo33.JHSMaterialNo, "不带 33# 时零件编号(MaterialNo)解析不正确。");
+            AssertEqual("3051", partNo33.SupplierCode, "不带 33# 时供应商代码(SupplierCode)解析不正确。");
+            AssertEqual("202607290052", partNo33.ProductDate, "不带 33# 时生产日期(ProductDate)解析不正确。");
+            Console.WriteLine("  不带 33# 的零件标签解析成功：MaterialNo=" + partNo33.JHSMaterialNo + "，SupplierCode=" + partNo33.SupplierCode + "，ProductDate=" + partNo33.ProductDate);
+
+            // KD 标签二维码：不应匹配 PackingPartScan 规则，应返回 null
+            string kdQr = "10#F26-3301010$11#3051$17#6$18#33963-CT2EV260418$19#3$20#20260706$31#10-3$230.5KG";
+            PartInfo kd = parser.ParseFactoryBarcode(kdQr, "FZXHS", "PackingPartScan");
+            AssertEqual(null, kd, "KD 标签二维码不应匹配 PackingPartScan 规则，应返回 null。");
+            Console.WriteLine("  KD 标签二维码未匹配 PackingPartScan 规则，返回 null。");
+
+            Console.WriteLine("TestParseFactoryBarcodePackingPartScan 通过。");
+        }
+
         private static void ExecuteUpdateSql(string updateSqlPath)
         {
             string sql = File.ReadAllText(updateSqlPath);
@@ -165,6 +281,14 @@ namespace XHS.Tests
             }
 
             throw new InvalidOperationException("未找到解决方案根目录。");
+        }
+
+        private static void AssertNotNull<T>(T value, string message)
+        {
+            if (value == null)
+            {
+                throw new InvalidOperationException(message + " 值为 null。");
+            }
         }
 
         private static void AssertEqual<T>(T expected, T actual, string message)

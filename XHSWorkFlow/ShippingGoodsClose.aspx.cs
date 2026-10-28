@@ -41,7 +41,7 @@ namespace ModuleWorkFlow
 
             if (!IsPostBack)
             {
-                BindData(new List<ShippingGoodsInfo>(), "请先扫描批次和零件编号。", false);
+                BindData(new List<ShippingGoodsInfo>(), "请先扫描批次、零件编号和配送单号。", false);
             }
         }
 
@@ -50,15 +50,27 @@ namespace ModuleWorkFlow
             MainDataGrid.CurrentPageIndex = 0;
             if (string.IsNullOrWhiteSpace(SafeValue(TextBox_SupplyBatchNo.Text)))
             {
+                TextBox_PartNo.Text = string.Empty;
+                TextBox_DeliveryNo.Text = string.Empty;
                 BindData(new List<ShippingGoodsInfo>(), "请先扫描批次。", false);
                 return;
             }
 
+            TextBox_PartNo.Text = string.Empty;
+            TextBox_DeliveryNo.Text = string.Empty;
             BindData(new List<ShippingGoodsInfo>(), "请继续扫描零件编号。", false);
             TextBox_PartNo.Focus();
         }
 
         protected void TextBox_PartNo_TextChanged(object sender, EventArgs e)
+        {
+            MainDataGrid.CurrentPageIndex = 0;
+            TextBox_DeliveryNo.Text = string.Empty;
+            BindData(new List<ShippingGoodsInfo>(), "请继续扫描配送单号。", false);
+            TextBox_DeliveryNo.Focus();
+        }
+
+        protected void TextBox_DeliveryNo_TextChanged(object sender, EventArgs e)
         {
             MainDataGrid.CurrentPageIndex = 0;
             BindCurrentShippingGoods(true);
@@ -86,9 +98,10 @@ namespace ModuleWorkFlow
             if (shippingGoodsInfos.Count == 0)
             {
                 string message = string.Format(
-                    "未找到批次“{0}”与零件编号“{1}”对应的出货货品数据。",
+                    "未找到批次“{0}”、零件编号“{1}”与配送单号“{2}”对应的出货货品数据。",
                     SafeValue(TextBox_SupplyBatchNo.Text),
-                    SafeValue(TextBox_PartNo.Text));
+                    SafeValue(TextBox_PartNo.Text),
+                    SafeValue(TextBox_DeliveryNo.Text));
                 BindData(shippingGoodsInfos, message, showPopupWhenMissing);
                 return;
             }
@@ -103,7 +116,8 @@ namespace ModuleWorkFlow
         {
             string supplyBatchNo = SafeValue(TextBox_SupplyBatchNo.Text);
             string partNo = SafeValue(TextBox_PartNo.Text);
-            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo))
+            string deliveryNo = SafeValue(TextBox_DeliveryNo.Text);
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo) || string.IsNullOrWhiteSpace(deliveryNo))
             {
                 return new List<ShippingGoodsInfo>();
             }
@@ -112,7 +126,8 @@ namespace ModuleWorkFlow
             return shippingGoodsInfos
                 .Where(item => item != null &&
                     string.Equals(SafeValue(item.SupplyBatchNo), supplyBatchNo, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(SafeValue(item.PartNo), partNo, StringComparison.OrdinalIgnoreCase))
+                    string.Equals(SafeValue(item.PartNo), partNo, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(SafeValue(item.DeliveryNo), deliveryNo, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
@@ -128,9 +143,10 @@ namespace ModuleWorkFlow
         {
             string supplyBatchNo = SafeValue(TextBox_SupplyBatchNo.Text);
             string partNo = SafeValue(TextBox_PartNo.Text);
-            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo))
+            string deliveryNo = SafeValue(TextBox_DeliveryNo.Text);
+            if (string.IsNullOrWhiteSpace(supplyBatchNo) || string.IsNullOrWhiteSpace(partNo) || string.IsNullOrWhiteSpace(deliveryNo))
             {
-                ShowMessage("请先扫描批次和零件编号，再执行结案保存。", true);
+                ShowMessage("请先扫描批次、零件编号和配送单号，再执行结案保存。", true);
                 return;
             }
 
@@ -138,22 +154,19 @@ namespace ModuleWorkFlow
             if (shippingGoodsInfos.Count == 0)
             {
                 ShowMessage(
-                    string.Format("未找到批次“{0}”与零件编号“{1}”对应的数据，无法结案。", supplyBatchNo, partNo),
+                    string.Format("未找到批次“{0}”、零件编号“{1}”与配送单号“{2}”对应的数据，无法结案。", supplyBatchNo, partNo, deliveryNo),
                     true);
                 BindData(new List<ShippingGoodsInfo>(), Label_Message.Text, false);
                 return;
             }
 
             string currentUser = SafeValue(Session["userid"] == null ? string.Empty : Session["userid"].ToString());
-            DateTime closeDate = DateTime.Now;
-            foreach (ShippingGoodsInfo shippingGoodsInfo in shippingGoodsInfos)
-            {
-                shippingGoodsInfo.Status = ShippingGoodsStatusInfo.Closed;
-                shippingGoodsInfo.Closer = currentUser;
-                shippingGoodsInfo.CloseDate = closeDate;
-            }
-
-            string saveMessage = new ShippingGoods().UpdateShippingGoodsClose(shippingGoodsInfos);
+            string saveMessage = new ShippingGoods().UpdateShippingGoodsClose(
+                supplyBatchNo,
+                partNo,
+                deliveryNo,
+                currentUser,
+                DateTime.Now);
             if (!string.IsNullOrWhiteSpace(saveMessage))
             {
                 ShowMessage(saveMessage, true);

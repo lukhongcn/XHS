@@ -222,6 +222,18 @@ namespace XHS.MSSQL
             return BuildPackingRecordFromRow(ds.Tables[0].Rows[0]);
         }
 
+        /// <summary>查询最新创建的装箱记录。</summary>
+        public PackingRecordInfo GetLatestPackingRecord(SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "select top 1 " + PackingRecordSelectColumns + " from tb_PackingRecord order by CreateTime desc, Id desc";
+            DataSet ds = ExecuteDatasetInternal(connection, transaction, sql, null);
+            if (ds == null || ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+            {
+                return null;
+            }
+            return BuildPackingRecordFromRow(ds.Tables[0].Rows[0]);
+        }
+
         /// <summary>事务内插入装箱记录，返回新 Id。</summary>
         public long InsertPackingRecord(PackingRecordInfo info, SqlConnection connection, SqlTransaction transaction)
         {
@@ -261,6 +273,32 @@ namespace XHS.MSSQL
             };
             int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
             return rows == 1;
+        }
+
+        public ParamterInfo DeletePackingRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            const string sql = "delete from tb_PackingRecord where exists (select 1 from tb_ShippingGoods sg where sg.SupplyBatchNo=tb_PackingRecord.SupplyBatchNo and sg.PartNo=tb_PackingRecord.PartNo and sg.CartonNo=tb_PackingRecord.CartonNo and sg.SupplyBatchNo=@SupplyBatchNo and sg.PartNo=@PartNo and sg.DeliveryNo=@DeliveryNo)";
+            return BuildBusinessKeyDeleteParameterInfo(sql, supplyBatchNo, partNo, deliveryNo);
+        }
+
+        private ParamterInfo BuildBusinessKeyDeleteParameterInfo(string sql, string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            return new ParamterInfo
+            {
+                Sql = sql,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList { sql },
+                AlPAR = new ArrayList
+                {
+                    new SqlParameter[]
+                    {
+                        new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 50) { Value = supplyBatchNo ?? string.Empty },
+                        new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? string.Empty },
+                        new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = deliveryNo ?? string.Empty }
+                    }
+                },
+                AlCOM = new ArrayList { CommandType.Text }
+            };
         }
 
         /// <summary>事务内为重新装箱审核锁定记录，允许当前记录已经完成但不允许已上传。</summary>

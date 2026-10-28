@@ -14,6 +14,8 @@ namespace XHS.IDAL
 
         List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerId(string customerId);
 
+        List<LabelCodeRuleInfo> GetLabelCodeRulesByCustomerIdAndLabelType(string customerId, string labelType);
+
         ParamterInfo InsertLabelCodeRules(List<LabelCodeRuleInfo> labelCodeRuleInfos);
 
         ParamterInfo UpdateLabelCodeRules(List<LabelCodeRuleInfo> labelCodeRuleInfos);

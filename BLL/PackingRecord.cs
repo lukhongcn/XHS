@@ -64,6 +64,23 @@ namespace XHS.BLL
             }
         }
 
+        public PackingRecordInfo GetLatestPackingRecord()
+        {
+            try
+            {
+                using (var connection = new System.Data.SqlClient.SqlConnection(
+                    System.Configuration.ConfigurationManager.AppSettings["MsSQLConnString"]))
+                {
+                    connection.Open();
+                    return dal.GetLatestPackingRecord(connection, null);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         /// <summary>按主键只读获取装箱记录。</summary>
         public PackingRecordInfo GetPackingRecordById(long packingId)
         {

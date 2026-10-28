@@ -18,6 +18,7 @@ namespace XHS.IDAL
         ParamterInfo InsertPackingRecord(List<PackingRecordInfo> packingRecordInfos);
 
         ParamterInfo UpdatePackingRecord(List<PackingRecordInfo> packingRecordInfos);
+        ParamterInfo DeletePackingRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo);
 
         /// <summary>在事务内以 UPDLOCK 读取装箱记录。</summary>
         PackingRecordInfo GetPackingRecordForUpdate(long packingId, SqlConnection connection, SqlTransaction transaction);
@@ -30,6 +31,9 @@ namespace XHS.IDAL
 
         /// <summary>按 KD 二维码查询装箱记录。</summary>
         PackingRecordInfo GetPackingRecordByKdQRCode(string kdQRCode, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>查询最新创建的装箱记录。</summary>
+        PackingRecordInfo GetLatestPackingRecord(SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>事务内插入装箱记录，返回新 Id。</summary>
         long InsertPackingRecord(PackingRecordInfo info, SqlConnection connection, SqlTransaction transaction);
