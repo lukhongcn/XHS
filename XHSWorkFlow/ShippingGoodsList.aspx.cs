@@ -82,6 +82,11 @@ namespace ModuleWorkFlow
             Search();
         }
 
+        protected void DropDownList_PackingStatus_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Search();
+        }
+
         protected void lnk_upload_Click(object sender, EventArgs e)
         {
             string url = "ShippingGoodsUpload.aspx";
@@ -196,7 +201,8 @@ namespace ModuleWorkFlow
                 TextBox_PartNo.Text.Trim(),
                 TextBox_PartName.Text.Trim(),
                 TextBox_SupplyBatchNo.Text.Trim(),
-                DropDownList_CloseStatus.SelectedValue);
+                DropDownList_CloseStatus.SelectedValue,
+                DropDownList_PackingStatus.SelectedValue);
 
             string deliveryNo = TextBox_DeliveryNo.Text.Trim();
             if (!string.IsNullOrWhiteSpace(deliveryNo))

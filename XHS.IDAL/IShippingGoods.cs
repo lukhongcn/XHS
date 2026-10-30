@@ -15,6 +15,8 @@ namespace XHS.IDAL
 
         List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus);
 
+        List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus, string packingStatus);
+
         List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo);
 
         List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo);

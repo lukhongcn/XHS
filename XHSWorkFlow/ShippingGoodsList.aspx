@@ -1,4 +1,4 @@
-﻿<%@ Page Language="c#" CodeBehind="ShippingGoodsList.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.ShippingGoodsList" MasterPageFile="~/DefaultSub.Master" %>
+﻿<%@ Page Language="c#" CodePage="65001" CodeBehind="ShippingGoodsList.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.ShippingGoodsList" MasterPageFile="~/DefaultSub.Master" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="contentHolder" runat="server">
     <div id="Wrapper">
@@ -61,7 +61,7 @@
                                 <asp:TextBox ID="TextBox_PartName" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
                             </div>
                             <div class="col-lg-3 d-flex">
-                                <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label">批次</asp:Label>
+                                <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label">供货批次号</asp:Label>
                                 <asp:TextBox ID="TextBox_SupplyBatchNo" runat="server" CssClass="form-control custom-heighter-width text-start border-primary"></asp:TextBox>
                             </div>
                             <div class="col-lg-3 d-flex">
@@ -73,6 +73,15 @@
                                 <asp:DropDownList ID="DropDownList_CloseStatus" runat="server" CssClass="form-select custom-heighter-width text-start border-primary" AutoPostBack="true" OnSelectedIndexChanged="DropDownList_CloseStatus_SelectedIndexChanged">
                                     <asp:ListItem Text="未结案" Value="未结案" Selected="True"></asp:ListItem>
                                     <asp:ListItem Text="结案" Value="已结案"></asp:ListItem>
+                                </asp:DropDownList>
+                            </div>
+                            <div class="col-lg-3 d-flex">
+                                <asp:Label runat="server" CssClass="me-10 shipping-goods-search-label" AssociatedControlID="DropDownList_PackingStatus">装箱状态</asp:Label>
+                                <asp:DropDownList ID="DropDownList_PackingStatus" runat="server" CssClass="form-select custom-heighter-width text-start border-primary" AutoPostBack="true" OnSelectedIndexChanged="DropDownList_PackingStatus_SelectedIndexChanged">
+                                    <asp:ListItem Text="全部" Value="" Selected="True"></asp:ListItem>
+                                    <asp:ListItem Text="未装箱" Value="Unpacked"></asp:ListItem>
+                                    <asp:ListItem Text="已装箱" Value="Packed"></asp:ListItem>
+                                    <asp:ListItem Text="已上传" Value="Uploaded"></asp:ListItem>
                                 </asp:DropDownList>
                             </div>
                         </div>
@@ -99,6 +108,7 @@
                                 <asp:BoundColumn DataField="DeliveryNo" HeaderText="配送单号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="CartonNo" HeaderText="纸箱编号"></asp:BoundColumn>
                                 <asp:BoundColumn DataField="Status" HeaderText="状态"></asp:BoundColumn>
+                                <asp:BoundColumn DataField="PackingStageName" HeaderText="装箱阶段"></asp:BoundColumn>
                                 <asp:TemplateColumn HeaderText="打印次数">
                                     <ItemTemplate>
                                         <asp:HyperLink ID="HyperLink_PrintCount" runat="server"></asp:HyperLink>

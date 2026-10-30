@@ -35,6 +35,11 @@ namespace BLL
             return dal.GetShippingGoods(partNo, partName, supplyBatchNo, closeStatus);
         }
 
+        public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus, string packingStatus)
+        {
+            return dal.GetShippingGoods(partNo, partName, supplyBatchNo, closeStatus, packingStatus);
+        }
+
         public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
         {
             return dal.GetShippingGoodsBySupplyBatchNo(supplyBatchNo, cartonNo);

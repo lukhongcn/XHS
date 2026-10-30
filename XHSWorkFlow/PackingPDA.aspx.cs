@@ -1,6 +1,8 @@
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Web;
 using System.Web.Script.Services;
 using System.Web.Services;
@@ -17,19 +19,47 @@ namespace ModuleWorkFlow
     public partial class PackingPDA : Page
     {
         private const string MenuId = "B12";
+        private const string RequiredPrivilege = "PEDIT";
+        private const string PermissionName = "装箱";
         private const string PartScanLabelType = "PackingPartScan";
         protected string menuname = "";
         private readonly PackingOperationService packingService = new PackingOperationService();
         private string currentPackingStage = string.Empty;
         private bool currentPackingLocked;
-        private long currentApprovedRepackScanId;
+
+        protected override void OnPreInit(EventArgs e)
+        {
+            string loginUrl = ResolveUrl("~/Login.aspx");
+            string returnUrl = Request.RawUrl;
+
+            if (!IsLoggedIn())
+            {
+                Response.Redirect(loginUrl + "?ReturnUrl=" + Server.UrlEncode(returnUrl), false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
+            if (!HasPdaPermission())
+            {
+                Response.Redirect(
+                    loginUrl
+                    + "?ReturnUrl=" + Server.UrlEncode(returnUrl)
+                    + "&LoginMessage=NoPermission"
+                    + "&PermissionName=" + Server.UrlEncode(PermissionName),
+                    false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
+            base.OnPreInit(e);
+        }
 
         private void Page_Load(object sender, EventArgs e)
         {
             menuname = new PartTmenu().findbykey(MenuId).Menuname;
             if (Master is DefaultPDASub master) { master.PageTitle = menuname; }
 
-            if (!Private.checkPrivate(this, MenuId, "PEDIT"))
+            if (!HasPdaPermission())
             {
                 return;
             }
@@ -44,14 +74,76 @@ namespace ModuleWorkFlow
             }
 
             txt_ScanQRCode.Attributes["autocomplete"] = "off";
-            txt_ScanQRCode.Attributes["onkeydown"] = "return packingScanKeyDown(event);";
-            txt_RepackQRCode.Attributes["autocomplete"] = "off";
-            txt_RepackQRCode.Attributes["onkeydown"] = "return packingRepackKeyDown(event);";
             if (!IsPostBack) { LoadPackingRecord(); }
+        }
+
+        private bool IsLoggedIn()
+        {
+            return Session != null
+                && Session["islogin"] is bool
+                && (bool)Session["islogin"]
+                && !string.IsNullOrWhiteSpace(Convert.ToString(Session["userid"]));
+        }
+
+        private bool HasPdaPermission()
+        {
+            if (Session != null && Session["isadmin"] is bool && (bool)Session["isadmin"])
+            {
+                return true;
+            }
+
+            IList privileges = Session == null ? null : Session["iprivate"] as IList;
+            if (privileges == null) return false;
+
+            foreach (object privilege in privileges)
+            {
+                if (!string.Equals(
+                    Convert.ToString(GetPrivilegeMember(privilege, "menuid")),
+                    MenuId,
+                    StringComparison.OrdinalIgnoreCase)) continue;
+
+                int editPermission;
+                return int.TryParse(
+                    Convert.ToString(GetPrivilegeMember(privilege, RequiredPrivilege)),
+                    out editPermission)
+                    && editPermission > 0;
+            }
+
+            return false;
+        }
+
+        private static object GetPrivilegeMember(object privilege, string memberName)
+        {
+            if (privilege == null) return null;
+
+            Type type = privilege.GetType();
+            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (string.Equals(property.Name, memberName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return property.GetValue(privilege, null);
+                }
+            }
+
+            foreach (FieldInfo field in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (string.Equals(field.Name, memberName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return field.GetValue(privilege);
+                }
+            }
+
+            return null;
         }
 
         protected void lnk_view_Click(object sender, EventArgs e) { Response.Redirect("Packing.aspx"); }
         protected void txt_ScanQRCode_TextChanged(object sender, EventArgs e) { ProcessScan(); }
+
+        protected void lnk_continue_packing_Click(object sender, EventArgs e)
+        {
+            BindWaitingForKdState();
+            hidPendingMessage.Value = string.Empty;
+        }
 
         [WebMethod(EnableSession = true)]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
@@ -59,7 +151,7 @@ namespace ModuleWorkFlow
         {
             HttpContext context = HttpContext.Current;
             PackingPDA page = context == null ? null : context.Handler as PackingPDA;
-            if (context == null || context.Session["userid"] == null || page == null || !Private.checkPrivate(page, MenuId, "PEDIT"))
+            if (context == null || context.Session["userid"] == null || page == null || !page.HasPdaPermission())
             {
                 return PackingPageStatusResponse.Fail("当前用户没有装箱编辑权限，请重新登录或联系管理员。");
             }
@@ -78,100 +170,94 @@ namespace ModuleWorkFlow
                 return PackingPageStatusResponse.Fail("装箱任务不存在。");
             }
 
-            bool isLocked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
+            bool isLocked = false;
             bool tokenChanged = !string.Equals(SafeValue(record.LockToken), SafeValue(lockToken), StringComparison.Ordinal);
             return PackingPageStatusResponse.Ok(
                 isLocked,
                 !isLocked || tokenChanged,
-                service.GetApprovedRepackTargetScanId(record.Id.Value));
+                0L);
         }
 
         protected void gvScanRecords_RowCommand(object sender, System.Web.UI.WebControls.GridViewCommandEventArgs e)
         {
-            if (!string.Equals(e.CommandName, "Repack", StringComparison.OrdinalIgnoreCase)) return;
+            if (!string.Equals(e.CommandName, "Delete", StringComparison.OrdinalIgnoreCase)) return;
             long scanRecordId;
             if (!long.TryParse(SafeValue(Convert.ToString(e.CommandArgument)), out scanRecordId) || scanRecordId <= 0)
             {
-                ShowMessage("重新装箱目标明细无效。");
+                ShowMessage("删除目标明细无效。");
                 return;
             }
 
-            long packingId = GetRequiredPackingId();
-            if (packingId <= 0) return;
-
-            PackingOperationResult state = packingService.GetPackingState(GetTaskId());
-            if (state.PackingRecord == null)
-            {
-                ShowMessage("装箱任务不存在，请重新进入页面。");
-                return;
-            }
-
-            BindPackingRecord(state.PackingRecord);
-            currentApprovedRepackScanId = packingService.GetApprovedRepackTargetScanId(packingId);
-            if (currentPackingLocked)
-            {
-                ShowMessage("重新装箱申请已提交，请等待审核。");
-                return;
-            }
-            if (string.Equals(currentPackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase))
-            {
-                ShowMessage("该装箱记录已经上传，不允许重新装箱。");
-                return;
-            }
-
-            if (currentApprovedRepackScanId > 0)
-            {
-                if (currentApprovedRepackScanId != scanRecordId)
-                {
-                    ShowMessage("请在本次审核通过的目标明细上执行重新装箱。");
-                    return;
-                }
-
-                hidRepackScanId.Value = scanRecordId.ToString();
-                txt_RepackQRCode.Text = string.Empty;
-                ClientScript.RegisterStartupScript(GetType(), "PackingRepackModal", "window.setTimeout(function(){showPackingRepackModal();}, 0);", true);
-                return;
-            }
-
-            PackingOperationResult result = packingService.RequestRepack(
-                packingId, scanRecordId, GetUserName(), Environment.MachineName);
-            if (result.PackingRecord != null)
-            {
-                BindPackingRecord(result.PackingRecord);
-                BindScanRecords(result.PackingRecord);
-            }
-            ShowMessage(result.Message);
+            ClientScript.RegisterStartupScript(GetType(), "PackingDeleteModal", "window.setTimeout(function(){showPackingPdaDeleteModal(" + scanRecordId + ");}, 0);", true);
         }
 
-        protected void lnkbutton_repack_save_Click(object sender, EventArgs e)
+        protected void lnkbutton_delete_Click(object sender, EventArgs e)
         {
             long packingId = GetRequiredPackingId();
             long scanRecordId;
-            string qrCode = SafeValue(txt_RepackQRCode.Text);
             if (packingId <= 0) return;
-            if (!long.TryParse(SafeValue(hidRepackScanId.Value), out scanRecordId) || scanRecordId <= 0)
+            if (!long.TryParse(SafeValue(hidDeleteScanId.Value), out scanRecordId) || scanRecordId <= 0)
             {
-                ShowMessage("重新装箱目标明细无效。");
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(qrCode))
-            {
-                ShowMessage("请输入或扫描产品二维码。");
-                ClientScript.RegisterStartupScript(GetType(), "PackingRepackModal", "window.setTimeout(function(){showPackingRepackModal();}, 0);", true);
+                ShowMessage("删除目标明细无效。");
                 return;
             }
 
-            PackingOperationResult result = packingService.ExecuteApprovedRepack(
-                packingId, scanRecordId, SafeValue(hidLockToken.Value), qrCode, GetUserName());
+            PackingOperationResult result = packingService.DeleteMaterialScan(
+                packingId,
+                scanRecordId,
+                SafeValue(hidLockToken.Value),
+                GetUserName());
             if (result.PackingRecord != null)
             {
                 BindPackingRecord(result.PackingRecord);
                 BindScanRecords(result.PackingRecord);
             }
-            if (!result.Success)
+            hidDeleteScanId.Value = string.Empty;
+            ShowMessage(result.Message);
+        }
+
+        protected void lnkbutton_reset_kd_Click(object sender, EventArgs e)
+        {
+            long packingId = GetRequiredPackingId();
+            long scanRecordId;
+            if (packingId <= 0) return;
+            if (!long.TryParse(SafeValue(hidResetKdScanId.Value), out scanRecordId) || scanRecordId <= 0)
             {
-                hidRepackScanId.Value = scanRecordId.ToString();
-                ClientScript.RegisterStartupScript(GetType(), "PackingRepackModal", "window.setTimeout(function(){showPackingRepackModal();}, 0);", true);
+                ShowMessage("重置 KD 的目标明细无效。");
+                return;
+            }
+
+            PackingOperationResult result = packingService.ResetKd(
+                packingId,
+                scanRecordId,
+                SafeValue(hidLockToken.Value),
+                SafeValue(txt_ResetKd.Text),
+                GetUserName());
+            if (result.PackingRecord != null)
+            {
+                BindPackingRecord(result.PackingRecord);
+                BindScanRecords(result.PackingRecord);
+            }
+            if (!string.IsNullOrWhiteSpace(result.NewToken)) hidLockToken.Value = result.NewToken;
+            hidResetKdScanId.Value = string.Empty;
+            txt_ResetKd.Text = string.Empty;
+            ShowMessage(result.Message);
+        }
+
+        protected void lnk_unbind_Click(object sender, EventArgs e)
+        {
+            long packingId = GetRequiredPackingId();
+            if (packingId <= 0) return;
+
+            PackingOperationResult result = packingService.UnbindPacking(
+                packingId,
+                SafeValue(hidLockToken.Value),
+                GetUserName());
+            if (result.Success)
+            {
+                Response.Redirect("PackingPDA.aspx", false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
             }
             ShowMessage(result.Message);
         }
@@ -212,22 +298,31 @@ namespace ModuleWorkFlow
         private void BindWaitingForKdState()
         {
             BindEmptyScanRecords();
-            currentApprovedRepackScanId = 0L;
             hidPackingId.Value = string.Empty;
             hidTaskId.Value = string.Empty;
             ViewState["ActivePackingId"] = null;
             hidLockToken.Value = string.Empty;
             hidPackingCompleteMode.Value = string.Empty;
+            lnk_unbind.Visible = false;
             txt_LockToken.Text = string.Empty;
+            txt_SupplyBatchNo.Text = string.Empty;
+            txt_PartNo.Text = string.Empty;
+            txt_DeliveryNo.Text = string.Empty;
+            txt_CartonNo.Text = string.Empty;
+            txt_PlanQty.Text = string.Empty;
+            txt_MaterialNo.Text = string.Empty;
             txt_Status.Text = "等待 KD 标签";
             Label_PdaState.Text = "等待 KD 标签";
+            Label_Message.Text = string.Empty;
             txt_ExceptionStatus.Text = "正常";
             txt_Qty.Text = "0";
             txt_ScanQRCode.Enabled = true;
+            lnk_continue_packing.Enabled = false;
             txt_MaterialNo.Enabled = false;
             txt_Qty.Enabled = false;
             pnlLocked.Style["display"] = "none";
             SetScanTypeState(false);
+            rblScanType.SelectedValue = "KD";
         }
 
         private void ProcessScan()
@@ -313,16 +408,18 @@ namespace ModuleWorkFlow
                 qrCode,
                 GetUserName());
 
-            if (result.PackingRecord != null && result.PackingRecord.TaskId.HasValue)
+            if (result.PackingRecord != null)
             {
-                // 新创建的任务 → 跳转带上 taskId
-                if (result.PackingRecord.TaskId.Value != Guid.Empty && GetTaskId() != result.PackingRecord.TaskId.Value)
+                // 有有效 TaskId 且不是当前任务时跳转；历史记录可能没有 TaskId，仍需直接绑定装箱明细。
+                if (result.PackingRecord.TaskId.HasValue &&
+                    result.PackingRecord.TaskId.Value != Guid.Empty &&
+                    GetTaskId() != result.PackingRecord.TaskId.Value)
                 {
                     RedirectToTask(result.PackingRecord);
                     return;
                 }
 
-                // 已有任务 → 进入 HandleResult，由 SetScanTypeState 根据 PackingStage 自动选中
+                // 已有任务或历史任务 → 绑定当前 PackId 下的全部扫描明细。
                 HandleResult(result);
                 return;
             }
@@ -446,7 +543,10 @@ namespace ModuleWorkFlow
                 return;
             }
 
-            ShowMessage(result.Message);
+            if (!string.Equals(result.Status, "NORMAL", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowMessage(result.Message);
+            }
         }
 
         private Guid GetTaskId()
@@ -530,7 +630,7 @@ namespace ModuleWorkFlow
         private void BindPackingRecord(PackingRecordInfo record)
         {
             currentPackingStage = SafeValue(record.PackingStage);
-            currentPackingLocked = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0;
+            currentPackingLocked = false;
             hidPackingId.Value = record.Id.HasValue ? record.Id.Value.ToString() : string.Empty;
             hidTaskId.Value = record.TaskId.HasValue ? record.TaskId.Value.ToString() : string.Empty;
             ViewState["ActivePackingId"] = record.Id;
@@ -557,16 +657,16 @@ namespace ModuleWorkFlow
                 : string.Equals(record.PackingStage, PackingStageInfo.装箱完成.Status, StringComparison.OrdinalIgnoreCase)
                     ? "等待扫描随箱卡"
                     : "等待扫描零件标签";
-            txt_ExceptionStatus.Text = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0 ? "异常暂停" : "正常";
+            txt_ExceptionStatus.Text = record.ExceptionStatus.HasValue && record.ExceptionStatus.Value != 0 ? "异常记录（不阻断扫描）" : "正常";
 
             bool locked = currentPackingLocked;
             bool completed = record.Status.HasValue && record.Status.Value == 1;
+            lnk_unbind.Visible = !string.Equals(record.PackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase);
+            lnk_continue_packing.Enabled = completed;
             pnlLocked.Visible = true;
-            pnlLocked.Style["display"] = locked ? "flex !important" : "none";
-            Label_LockMessage.Text = locked
-                ? string.Format("KD标签：{0}；箱号：{1}；该箱已锁定，等待主管审核解除。", SafeValue(record.KDQRCode), SafeValue(record.CartonNo))
-                : string.Empty;
-            txt_ScanQRCode.Enabled = !locked && !completed;
+            pnlLocked.Style["display"] = "none";
+            Label_LockMessage.Text = string.Empty;
+            txt_ScanQRCode.Enabled = !completed;
             txt_MaterialNo.Enabled = !locked && !completed;
             txt_Qty.Enabled = !locked && !completed;
             SetScanTypeState(locked || completed, record.PackingStage);
@@ -599,10 +699,6 @@ namespace ModuleWorkFlow
             var materialItem = rblScanType.Items.FindByValue("Material");
             long packingId;
             bool hasActiveTask = long.TryParse(SafeValue(hidPackingId.Value), out packingId) && packingId > 0;
-            if (!hasActiveTask)
-            {
-                hasActiveTask = GetTaskId() != Guid.Empty;
-            }
 
             if (lockedOrCompleted)
             {
@@ -677,14 +773,6 @@ namespace ModuleWorkFlow
 
         private void BindScanRecords(PackingRecordInfo record)
         {
-            currentApprovedRepackScanId = record != null && record.Id.HasValue
-                ? packingService.GetApprovedRepackTargetScanId(record.Id.Value)
-                : 0L;
-            if (currentApprovedRepackScanId > 0)
-            {
-                ApplyApprovedRepackState();
-                hidRepackScanId.Value = currentApprovedRepackScanId.ToString();
-            }
             List<PackingScanRecordInfo> records = record != null && record.Id.HasValue
                 ? packingService.GetScanRecordsByPackingId(record.Id.Value)
                 : new List<PackingScanRecordInfo>();
@@ -692,57 +780,30 @@ namespace ModuleWorkFlow
             gvScanRecords.DataBind();
         }
 
-        private void ApplyApprovedRepackState()
-        {
-            txt_ExceptionStatus.Text = "重新装箱待执行";
-            txt_ScanQRCode.Enabled = false;
-            txt_MaterialNo.Enabled = false;
-            txt_Qty.Enabled = false;
-            foreach (System.Web.UI.WebControls.ListItem item in rblScanType.Items)
-            {
-                item.Enabled = false;
-            }
-            UpdateRadioStyles();
-        }
-
-        protected string GetRepackLinkText(object scanRecordId)
+        protected string GetDeleteClientClick(object scanRecordId)
         {
             long rowScanId;
-            return long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) && rowScanId == currentApprovedRepackScanId
-                ? "重新装箱"
-                : "删除";
+            return long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) && rowScanId > 0
+                ? "return showPackingPdaDeleteModal(" + rowScanId + ");"
+                : string.Empty;
         }
 
-        protected string GetRepackLinkToolTip(object scanRecordId)
-        {
-            return GetRepackLinkText(scanRecordId) == "重新装箱" ? "重新装箱" : "删除此零件";
-        }
-
-        protected string GetRepackClientClick(object scanRecordId)
+        protected string GetResetKdClientClick(object scanRecordId)
         {
             long rowScanId;
-            if (!long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) || rowScanId != currentApprovedRepackScanId)
-            {
-                return string.Empty;
-            }
-            return "return openApprovedRepackModal(" + rowScanId + ");";
-        }
-
-        protected bool CanUseRepackLink(object scanRecordId)
-        {
-            if (currentPackingLocked || string.Equals(currentPackingStage, PackingStageInfo.上传完成.Status, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            long rowScanId;
-            if (!long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId)) return false;
-            return currentApprovedRepackScanId <= 0 || currentApprovedRepackScanId == rowScanId;
+            return long.TryParse(SafeValue(Convert.ToString(scanRecordId)), out rowScanId) && rowScanId > 0
+                ? "return showPackingPdaResetKdModal(" + rowScanId + ");"
+                : string.Empty;
         }
 
         protected bool IsMaterialScanRecord(object qrCodeType)
         {
             return string.Equals(SafeValue(Convert.ToString(qrCodeType)), PackingScanRecordQRCodeTypeInfo.MaterialLabel, StringComparison.OrdinalIgnoreCase);
+        }
+
+        protected bool IsKdScanRecord(object qrCodeType)
+        {
+            return string.Equals(SafeValue(Convert.ToString(qrCodeType)), PackingScanRecordQRCodeTypeInfo.KD, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool CheckShippingGoodsExists(string supplyBatchNo, string partNo, string cartonNo)
@@ -792,8 +853,8 @@ namespace ModuleWorkFlow
 
         private void ShowMessage(string message)
         {
-            Label_Message.Text = SafeValue(message);
-            ClientScript.RegisterStartupScript(GetType(), "PackingMessage", string.Format("showMessageModal('{0}');", HttpUtility.JavaScriptStringEncode(SafeValue(message))), true);
+            string safeMessage = SafeValue(message);
+            Label_Message.Text = safeMessage;
         }
 
         private static string SafeValue(string value) { return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim(); }

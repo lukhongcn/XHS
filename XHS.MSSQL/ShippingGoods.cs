@@ -30,35 +30,58 @@ namespace XHS.MSSQL
 
         public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus)
         {
+            return GetShippingGoods(partNo, partName, supplyBatchNo, closeStatus, string.Empty);
+        }
+
+        public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus, string packingStatus)
+        {
             string queryString = "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods where 1=1";
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             if (!string.IsNullOrWhiteSpace(partNo))
             {
-                queryString += string.Format(" and PartNo like '%{0}%'", SafeSqlValue(partNo));
+                queryString += " and PartNo like @PartNo";
+                parameters.Add(new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = "%" + partNo.Trim() + "%" });
             }
 
             if (!string.IsNullOrWhiteSpace(partName))
             {
-                string safePartName = SafeSqlValue(partName);
-                queryString += string.Format(" and (PartChineseName like '%{0}%' or PartEnglishName like '%{0}%')", safePartName);
+                queryString += " and (PartChineseName like @PartName or PartEnglishName like @PartName)";
+                parameters.Add(new SqlParameter("@PartName", SqlDbType.NVarChar, 200) { Value = "%" + partName.Trim() + "%" });
             }
 
             if (!string.IsNullOrWhiteSpace(supplyBatchNo))
             {
-                queryString += string.Format(" and SupplyBatchNo like '%{0}%'", SafeSqlValue(supplyBatchNo));
+                queryString += " and SupplyBatchNo like @SupplyBatchNo";
+                parameters.Add(new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = "%" + supplyBatchNo.Trim() + "%" });
             }
 
             if (string.Equals(closeStatus, ShippingGoodsStatusInfo.Closed, StringComparison.OrdinalIgnoreCase))
             {
-                queryString += string.Format(" and Status='{0}'", SafeSqlValue(ShippingGoodsStatusInfo.Closed));
+                queryString += " and Status=@ClosedStatus";
+                parameters.Add(new SqlParameter("@ClosedStatus", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Closed });
             }
             else if (!string.IsNullOrWhiteSpace(closeStatus))
             {
-                queryString += string.Format(" and (Status is null or Status='' or Status<>'{0}')", SafeSqlValue(ShippingGoodsStatusInfo.Closed));
+                queryString += " and (Status is null or Status='' or Status<>@ClosedStatus)";
+                parameters.Add(new SqlParameter("@ClosedStatus", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Closed });
+            }
+
+            if (string.Equals(packingStatus, "Unpacked", StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += " and not exists (select 1 from tb_PackingRecord pr where pr.SupplyBatchNo=tb_ShippingGoods.SupplyBatchNo and pr.PartNo=tb_ShippingGoods.PartNo and pr.CartonNo=tb_ShippingGoods.CartonNo and ISNULL(pr.PackingStage,'') in ('Completed','Uploaded'))";
+            }
+            else if (string.Equals(packingStatus, "Packed", StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += " and exists (select 1 from tb_PackingRecord pr where pr.SupplyBatchNo=tb_ShippingGoods.SupplyBatchNo and pr.PartNo=tb_ShippingGoods.PartNo and pr.CartonNo=tb_ShippingGoods.CartonNo and pr.PackingStage='Completed')";
+            }
+            else if (string.Equals(packingStatus, "Uploaded", StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += " and exists (select 1 from tb_PackingRecord pr where pr.SupplyBatchNo=tb_ShippingGoods.SupplyBatchNo and pr.PartNo=tb_ShippingGoods.PartNo and pr.CartonNo=tb_ShippingGoods.CartonNo and pr.PackingStage='Uploaded')";
             }
 
             queryString += ShippingGoodsOrderBy;
-            return GetShippingGoodsBySql(queryString);
+            return GetShippingGoodsBySql(queryString, parameters.ToArray());
         }
 
         public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
@@ -220,8 +243,15 @@ namespace XHS.MSSQL
 
         private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string queryString)
         {
+            return GetShippingGoodsBySql(queryString, null);
+        }
+
+        private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string queryString, SqlParameter[] parameters)
+        {
             List<ShippingGoodsInfo> result = new List<ShippingGoodsInfo>();
-            DataSet dataSet = Data.getDataSet(queryString);
+            DataSet dataSet = parameters == null
+                ? Data.getDataSet(queryString)
+                : Data.getDataSet(queryString, parameters);
             if (dataSet.Tables.Count == 0)
             {
                 return result;

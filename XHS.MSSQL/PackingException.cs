@@ -223,6 +223,17 @@ namespace XHS.MSSQL
             return rows > 0;
         }
 
+        /// <summary>在事务内插入异常记录并返回主键。</summary>
+        public long InsertExceptionAndReturnId(PackingExceptionInfo info, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "insert into tb_PackingException (PackingId,BoxCode,CartonNo,ExceptionCode,ExceptionMessage,TriggerQRCode,LockToken,Status,CreateUser,CreateTime,AuditRemark) values (@PackingId,@BoxCode,@CartonNo,@ExceptionCode,@ExceptionMessage,@TriggerQRCode,@LockToken,@Status,@CreateUser,@CreateTime,@AuditRemark); select cast(scope_identity() as bigint);";
+            SqlParameter[] parameters = BuildInsertParameters(info);
+            Array.Resize(ref parameters, parameters.Length + 1);
+            parameters[parameters.Length - 1] = new SqlParameter("@AuditRemark", SqlDbType.NVarChar, 500) { Value = info.AuditRemark ?? (object)DBNull.Value };
+            object result = SqlHelper.ExecuteScalar(transaction, CommandType.Text, sql, parameters);
+            return result == null || result == DBNull.Value ? 0L : Convert.ToInt64(result);
+        }
+
         /// <summary>在事务内更新异常审核信息。</summary>
         public bool AuditException(long exceptionId, string auditUser, string auditRemark, int newStatus, SqlConnection connection, SqlTransaction transaction)
         {

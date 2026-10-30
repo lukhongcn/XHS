@@ -47,6 +47,7 @@
     <Compile Include="UnRegularTableImportFieldInfo.cs" />
     <Compile Include="Label\LabelInfo.cs" />
     <Compile Include="LabelCodeRuleFieldInfo.cs" />
+    <Compile Include="LabelCodeRuleSubInfo.cs" />
     <Compile Include="PackingDetailInfo.cs" />
     <Compile Include="PackingExceptionInfo.cs" />
     <Compile Include="PackingExceptionTypeInfo.cs" />
@@ -56,6 +57,7 @@
     <Compile Include="LabelCodeRuleInfo.cs" />
     <Compile Include="PackingScanRecordQRCodeTypeInfo.cs" />
     <Compile Include="PackingStageInfo.cs" />
+    <Compile Include="PackingUnboundScanRecordInfo.cs" />
     <Compile Include="ParamterInfo.cs" />
     <Compile Include="PartInfo.cs" />
     <Compile Include="BatchRuleInfo.cs" />

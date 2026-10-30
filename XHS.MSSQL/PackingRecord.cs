@@ -246,7 +246,7 @@ namespace XHS.MSSQL
         /// <summary>事务内更新装箱扫描数量和新 Token。</summary>
         public bool UpdatePackingRecordScan(long packingId, string pageToken, int newPackingQty, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set PackingQty=@PackingQty,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            const string sql = "update tb_PackingRecord set PackingQty=@PackingQty,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and Status=0";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -262,7 +262,7 @@ namespace XHS.MSSQL
         /// <summary>事务内锁定装箱记录。</summary>
         public bool LockPackingRecord(long packingId, string pageToken, string newToken, string userName, string machineId, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set ExceptionStatus=1,LockToken=@NewToken,LockTime=GETDATE(),LockUser=@UserName,LockMachine=@MachineId,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            const string sql = "update tb_PackingRecord set ExceptionStatus=1,LockToken=@NewToken,LockTime=GETDATE(),LockUser=@UserName,LockMachine=@MachineId,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and Status=0";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -304,7 +304,7 @@ namespace XHS.MSSQL
         /// <summary>事务内为重新装箱审核锁定记录，允许当前记录已经完成但不允许已上传。</summary>
         public bool LockPackingRecordForRepack(long packingId, string pageToken, string newToken, string userName, string machineId, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set ExceptionStatus=1,LockToken=@NewToken,LockTime=GETDATE(),LockUser=@UserName,LockMachine=@MachineId,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and ISNULL(PackingStage,'')<>@UploadedStage";
+            const string sql = "update tb_PackingRecord set ExceptionStatus=1,LockToken=@NewToken,LockTime=GETDATE(),LockUser=@UserName,LockMachine=@MachineId,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ISNULL(PackingStage,'')<>@UploadedStage";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -321,7 +321,7 @@ namespace XHS.MSSQL
         /// <summary>事务内完成装箱。</summary>
         public bool CompletePackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set Status=1,PackingStage='Completed',PackingUser=@UserName,PackingTime=GETDATE(),LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            const string sql = "update tb_PackingRecord set Status=1,PackingStage='Completed',PackingUser=@UserName,PackingTime=GETDATE(),LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and Status=0";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -366,7 +366,7 @@ namespace XHS.MSSQL
         /// <summary>事务内更新装箱随箱码。</summary>
         public bool UpdatePackingQRCode(long packingId, string pageToken, string packingQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set PackingQRCode=@PackingQRCode,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            const string sql = "update tb_PackingRecord set PackingQRCode=@PackingQRCode,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and Status=0";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -379,10 +379,58 @@ namespace XHS.MSSQL
             return rows == 1;
         }
 
+        /// <summary>事务内替换 KD 标签；已上传记录不允许更新。</summary>
+        public bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingRecord set KDQRCode=@KDQRCode,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and PackingStage<>@UploadedStage";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@PageToken", SqlDbType.NVarChar, 100) { Value = pageToken ?? (object)DBNull.Value },
+                new SqlParameter("@KDQRCode", SqlDbType.NVarChar, 100) { Value = kdQRCode ?? (object)DBNull.Value },
+                new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken },
+                new SqlParameter("@UserName", SqlDbType.NVarChar, 50) { Value = userName ?? (object)DBNull.Value },
+                new SqlParameter("@UploadedStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status }
+            };
+            return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;
+        }
+
+        /// <summary>事务内解除绑定；已上传记录不能被修改。</summary>
+        public bool UnbindPackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingRecord set KDQRCode=NULL,PackingQRCode=NULL,Status=2,PackingQty=0,PackingStage=@PackingStage,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ISNULL(PackingStage,'')<>@UploadedStage";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@PageToken", SqlDbType.NVarChar, 100) { Value = pageToken ?? (object)DBNull.Value },
+                new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.已解除绑定.Status },
+                new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken },
+                new SqlParameter("@UserName", SqlDbType.NVarChar, 50) { Value = userName ?? (object)DBNull.Value },
+                new SqlParameter("@UploadedStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status }
+            };
+            return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;
+        }
+
+        public bool HasUploadedShippingGoods(string supplyBatchNo, string partNo, string cartonNo, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "select COUNT(1) from tb_ShippingGoods where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and Status=@UploadedStatus";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? (object)DBNull.Value },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? (object)DBNull.Value },
+                new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = cartonNo ?? (object)DBNull.Value },
+                new SqlParameter("@UploadedStatus", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Uploaded }
+            };
+            object result = transaction == null
+                ? SqlHelper.ExecuteScalar(connection, CommandType.Text, sql, parameters)
+                : SqlHelper.ExecuteScalar(transaction, CommandType.Text, sql, parameters);
+            return result != null && result != DBNull.Value && Convert.ToInt32(result) > 0;
+        }
+
         /// <summary>事务内更新装箱阶段。</summary>
         public bool UpdatePackingStage(long packingId, string pageToken, string packingStage, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set PackingStage=@PackingStage,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and ExceptionStatus=0 and Status=0";
+            const string sql = "update tb_PackingRecord set PackingStage=@PackingStage,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and Status=0";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
@@ -397,7 +445,7 @@ namespace XHS.MSSQL
 
         public bool MarkPackingRecordUploaded(long packingId, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set PackingStage=@PackingStage,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and Status=1 and ISNULL(ExceptionStatus,0)=0";
+            const string sql = "update tb_PackingRecord set PackingStage=@PackingStage,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and Status=1";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },

@@ -40,6 +40,9 @@ namespace XHS.IDAL
         /// <summary>在事务中插入异常记录。</summary>
         bool InsertException(PackingExceptionInfo info, SqlConnection connection, SqlTransaction transaction);
 
+        /// <summary>在事务中插入异常记录并返回主键。</summary>
+        long InsertExceptionAndReturnId(PackingExceptionInfo info, SqlConnection connection, SqlTransaction transaction);
+
         /// <summary>在事务中更新异常审核信息。</summary>
         bool AuditException(long exceptionId, string auditUser, string auditRemark, int newStatus, SqlConnection connection, SqlTransaction transaction);
 

@@ -59,6 +59,15 @@ namespace XHS.IDAL
         /// <summary>事务内更新装箱随箱码。</summary>
         bool UpdatePackingQRCode(long packingId, string pageToken, string packingQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
 
+        /// <summary>事务内替换 KD 标签。</summary>
+        bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内解除装箱绑定并清空当前任务的 KD/随箱卡。</summary>
+        bool UnbindPackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内检查当前业务货品是否存在已上传记录。</summary>
+        bool HasUploadedShippingGoods(string supplyBatchNo, string partNo, string cartonNo, SqlConnection connection, SqlTransaction transaction);
+
         /// <summary>事务内更新装箱阶段。</summary>
         bool UpdatePackingStage(long packingId, string pageToken, string packingStage, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
 
