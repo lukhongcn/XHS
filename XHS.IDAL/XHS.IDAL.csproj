@@ -46,6 +46,7 @@
     <Compile Include="IPackingRecord.cs" />
     <Compile Include="IDeliveryUploadRecord.cs" />
     <Compile Include="IPackingScanRecord.cs" />
+    <Compile Include="IPackingUnboundScanRecord.cs" />
     <Compile Include="IPartMaster.cs" />
     <Compile Include="IPrintRecord.cs" />
     <Compile Include="IReprintReason.cs" />

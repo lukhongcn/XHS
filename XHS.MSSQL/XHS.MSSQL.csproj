@@ -46,6 +46,7 @@
     <Compile Include="PackingRecord.cs" />
     <Compile Include="DeliveryUploadRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />
+    <Compile Include="PackingUnboundScanRecord.cs" />
     <Compile Include="PartMaster.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />

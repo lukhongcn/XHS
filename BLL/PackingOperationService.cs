@@ -17,6 +17,7 @@ namespace XHS.BLL
     {
         private readonly IPackingRecord packingRecordDal;
         private readonly IPackingScanRecord packingScanRecordDal;
+        private readonly IPackingUnboundScanRecord packingUnboundScanRecordDal;
         private readonly IPackingException packingExceptionDal;
         private readonly string connectionString;
 
@@ -24,6 +25,7 @@ namespace XHS.BLL
         {
             this.packingRecordDal = XHS.DALFactory.PackingRecord.Create();
             this.packingScanRecordDal = XHS.DALFactory.PackingScanRecord.Create();
+            this.packingUnboundScanRecordDal = XHS.DALFactory.PackingUnboundScanRecord.Create();
             this.packingExceptionDal = XHS.DALFactory.PackingException.Create();
             this.connectionString = ConfigurationSettings.AppSettings["MsSQLConnString"];
         }
@@ -961,7 +963,7 @@ namespace XHS.BLL
                         };
                         long packingExceptionId = packingExceptionDal.InsertExceptionAndReturnId(unbindException, connection, transaction);
                         if (packingExceptionId <= 0) return RollbackError(transaction, "保存解除绑定历史失败。");
-                        if (!packingScanRecordDal.ArchiveScanRecordsForUnbind(packingId, packingExceptionId, userName, connection, transaction)) return RollbackError(transaction, "保存解绑扫描历史失败。");
+                        if (!packingUnboundScanRecordDal.ArchiveScanRecordsForUnbind(packingId, packingExceptionId, userName, connection, transaction)) return RollbackError(transaction, "保存解绑扫描历史失败。");
                         if (!packingRecordDal.UnbindPackingRecord(packingId, pageToken, newToken, userName, connection, transaction)) return RollbackError(transaction, "解除装箱绑定失败，请重新加载页面。");
                         packingRecordDal.UpdateShippingGoodsPackingStage(record.SupplyBatchNo, record.PartNo, record.CartonNo, PackingStageInfo.未装箱.Status, connection, transaction);
 

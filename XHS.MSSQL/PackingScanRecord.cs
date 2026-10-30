@@ -385,26 +385,6 @@ namespace XHS.MSSQL
             return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;
         }
 
-        /// <summary>事务内归档并移除当前装箱的全部扫描明细，保留解绑历史。</summary>
-        public bool ArchiveScanRecordsForUnbind(long packingId, long packingExceptionId, string unbindUser, SqlConnection connection, SqlTransaction transaction)
-        {
-            const string sql = @"insert into tb_PackingUnboundScanRecord
-                (PackingExceptionId,OriginalPackingId,QRCodeType,QRCode,MaterialNo,Qty,ScanUser,ScanTime,UnbindUser,UnbindTime)
-                select @PackingExceptionId,PackingId,QRCodeType,QRCode,MaterialNo,Qty,ScanUser,ScanTime,@UnbindUser,GETDATE()
-                from tb_PackingScanRecord
-                where PackingId=@PackingId;
-                delete from tb_PackingScanRecord
-                where PackingId=@PackingId;";
-            SqlParameter[] parameters = new[]
-            {
-                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
-                new SqlParameter("@PackingExceptionId", SqlDbType.BigInt) { Value = packingExceptionId },
-                new SqlParameter("@UnbindUser", SqlDbType.NVarChar, 50) { Value = unbindUser ?? (object)DBNull.Value }
-            };
-            SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
-            return true;
-        }
-
         /// <summary>事务内删除指定零件扫描明细。</summary>
         public bool DeleteScanRecord(long scanRecordId, long packingId, SqlConnection connection, SqlTransaction transaction)
         {

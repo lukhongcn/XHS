@@ -53,7 +53,5 @@ namespace XHS.IDAL
         /// <summary>事务内更新 KD 扫描明细。</summary>
         bool UpdateKdScanRecord(long scanRecordId, long packingId, string qrCode, string scanUser, SqlConnection connection, SqlTransaction transaction);
 
-        /// <summary>事务内归档并移除当前装箱未上传的全部扫描明细。</summary>
-        bool ArchiveScanRecordsForUnbind(long packingId, long packingExceptionId, string unbindUser, SqlConnection connection, SqlTransaction transaction);
     }
 }
