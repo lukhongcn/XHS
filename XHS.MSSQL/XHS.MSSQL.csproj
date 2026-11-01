@@ -51,6 +51,7 @@
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="LabelCodeRuleField.cs" />
+    <Compile Include="LabelCodeRuleSub.cs" />
     <Compile Include="ShippingGoods.cs" />
     <Compile Include="LabelCodeRule.cs" />
     <Compile Include="UnRegularTableImportField.cs" />

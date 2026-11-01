@@ -70,6 +70,7 @@
     <Compile Include="Class1.cs" />
     <Compile Include="Label.cs" />
     <Compile Include="LabelCodeRuleField.cs" />
+    <Compile Include="LabelCodeRuleSub.cs" />
     <Compile Include="PackingExceptionType.cs" />
     <Compile Include="PackingException.cs" />
     <Compile Include="PackingOperationResult.cs" />
