@@ -15,6 +15,7 @@ namespace ModuleWorkFlow
         protected string menuname = string.Empty;
         private readonly PackingRecord packingRecordService = new PackingRecord();
         private readonly PackingOperationService packingService = new PackingOperationService();
+        private readonly PackingScanRecord packingScanRecordService = new PackingScanRecord();
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -28,13 +29,24 @@ namespace ModuleWorkFlow
         protected void btn_Search_Click(object sender, EventArgs e)
         {
             string kdQRCode = (txt_KDQRCode.Text ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(kdQRCode)) { ClearResult(); ShowMessage("请输入KD标签。"); return; }
+            string materialQRCode = (txt_MaterialQRCode.Text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(kdQRCode) && string.IsNullOrWhiteSpace(materialQRCode)) { ClearResult(); ShowMessage("请输入KD标签或零件QRCode。"); return; }
 
-            PackingRecordInfo record = packingRecordService.GetPackingRecordByKdQRCode(kdQRCode);
+            PackingRecordInfo record = string.IsNullOrWhiteSpace(kdQRCode)
+                ? GetPackingRecordByMaterialQRCode(materialQRCode)
+                : packingRecordService.GetPackingRecordByKdQRCode(kdQRCode);
+            if (record != null && !string.IsNullOrWhiteSpace(materialQRCode) && !string.IsNullOrWhiteSpace(kdQRCode))
+            {
+                PackingRecordInfo materialRecord = GetPackingRecordByMaterialQRCode(materialQRCode);
+                if (materialRecord == null || !materialRecord.Id.HasValue || !record.Id.HasValue || materialRecord.Id.Value != record.Id.Value)
+                {
+                    record = null;
+                }
+            }
             if (record == null || !record.Id.HasValue || record.Id.Value <= 0)
             {
                 ClearResult();
-                ShowMessage("未找到该KD标签对应的装箱记录。");
+                ShowMessage("未找到对应的装箱记录。");
                 return;
             }
 
@@ -50,6 +62,7 @@ namespace ModuleWorkFlow
         protected void btn_Clear_Click(object sender, EventArgs e)
         {
             txt_KDQRCode.Text = string.Empty;
+            txt_MaterialQRCode.Text = string.Empty;
             ClearResult();
             ShowMessage(string.Empty);
         }
@@ -66,6 +79,7 @@ namespace ModuleWorkFlow
             }
 
             txt_KDQRCode.Text = record.KDQRCode ?? string.Empty;
+            txt_MaterialQRCode.Text = string.Empty;
             BindPackingRecord(record);
             List<PackingScanRecordInfo> scanRecords = packingService.GetScanRecordsByPackingId(record.Id.Value);
             gvScanRecords.DataSource = scanRecords ?? new List<PackingScanRecordInfo>();
@@ -103,5 +117,16 @@ namespace ModuleWorkFlow
         }
 
         private void ShowMessage(string message) { Label_Message.Text = Server.HtmlEncode(message ?? string.Empty); }
+
+        private PackingRecordInfo GetPackingRecordByMaterialQRCode(string materialQRCode)
+        {
+            List<PackingScanRecordInfo> records = packingScanRecordService.GetPackingScanRecordsByMaterialQRCode(materialQRCode);
+            if (records == null || records.Count == 0 || !records[0].PackingId.HasValue || records[0].PackingId.Value <= 0)
+            {
+                return null;
+            }
+
+            return packingRecordService.GetPackingRecordById(records[0].PackingId.Value);
+        }
     }
 }

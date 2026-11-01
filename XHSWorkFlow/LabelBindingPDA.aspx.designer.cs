@@ -22,6 +22,11 @@
         protected global::System.Web.UI.WebControls.Button btnEndStep;
 
         protected global::System.Web.UI.WebControls.Button btnCompleteBinding;
+
+        /// <summary>
+        /// btnFinishBinding 控件。
+        /// </summary>
+        protected global::System.Web.UI.WebControls.Button btnFinishBinding;
         protected global::System.Web.UI.WebControls.Panel pnlFailureModal;
         protected global::System.Web.UI.WebControls.Label labFailureTitle;
         protected global::System.Web.UI.WebControls.Label labFailureMessage;
@@ -32,4 +37,3 @@
         protected global::System.Web.UI.WebControls.HiddenField hidRemainingQty;
     }
 }
-

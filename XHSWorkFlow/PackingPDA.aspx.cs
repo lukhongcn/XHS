@@ -236,7 +236,8 @@ namespace ModuleWorkFlow
             if (result.PackingRecord != null)
             {
                 BindPackingRecord(result.PackingRecord);
-                BindScanRecords(result.PackingRecord);
+                // 重置 KD 后同步更新网格中已读出的原 KD 明细，避免主记录已更新但网格仍显示旧值。
+                BindScanRecords(result.PackingRecord, result.Success ? SafeValue(txt_ResetKd.Text) : null, scanRecordId);
             }
             if (!string.IsNullOrWhiteSpace(result.NewToken)) hidLockToken.Value = result.NewToken;
             hidResetKdScanId.Value = string.Empty;
@@ -771,11 +772,25 @@ namespace ModuleWorkFlow
                 SafeValue(reason));
         }
 
-        private void BindScanRecords(PackingRecordInfo record)
+        private void BindScanRecords(PackingRecordInfo record, string replacedKdQRCode = null, long replacedKdScanRecordId = 0)
         {
             List<PackingScanRecordInfo> records = record != null && record.Id.HasValue
                 ? packingService.GetScanRecordsByPackingId(record.Id.Value)
                 : new List<PackingScanRecordInfo>();
+
+            if (!string.IsNullOrWhiteSpace(replacedKdQRCode) && replacedKdScanRecordId > 0)
+            {
+                foreach (PackingScanRecordInfo scanRecord in records)
+                {
+                    if (scanRecord != null && scanRecord.Id.HasValue && scanRecord.Id.Value == replacedKdScanRecordId &&
+                        string.Equals(scanRecord.QRCodeType, PackingScanRecordQRCodeTypeInfo.KD, StringComparison.OrdinalIgnoreCase))
+                    {
+                        scanRecord.QRCode = replacedKdQRCode;
+                        break;
+                    }
+                }
+            }
+
             gvScanRecords.DataSource = records ?? new List<PackingScanRecordInfo>();
             gvScanRecords.DataBind();
         }

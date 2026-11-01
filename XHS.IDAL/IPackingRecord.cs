@@ -60,7 +60,7 @@ namespace XHS.IDAL
         bool UpdatePackingQRCode(long packingId, string pageToken, string packingQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>事务内替换 KD 标签。</summary>
-        bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+        bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string supplyBatchNo, string cartonNo, int planQty, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>事务内解除装箱绑定并清空当前任务的 KD/随箱卡。</summary>
         bool UnbindPackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);

@@ -90,6 +90,19 @@ namespace XHS.MSSQL
             return GetPackingScanRecordsBySql(queryString);
         }
 
+        public List<PackingScanRecordInfo> GetPackingScanRecordsByMaterialQRCode(string qrCode)
+        {
+            const string queryString = "select " + PackingScanRecordSelectColumns +
+                " from tb_PackingScanRecord psr where psr.QRCodeType=@QRCodeType and psr.QRCode=@QRCode" +
+                " order by psr.ScanTime desc,psr.Id desc";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel },
+                new SqlParameter("@QRCode", SqlDbType.NVarChar, 200) { Value = qrCode }
+            };
+            return GetPackingScanRecordsBySql(queryString, parameters);
+        }
+
         public ParamterInfo InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos)
         {
             const string sql = "insert into tb_PackingScanRecord (PackingId,QRCodeType,QRCode,MaterialNo,Qty,ScanUser,ScanTime) values (@PackingId,@QRCodeType,@QRCode,@MaterialNo,@Qty,@ScanUser,@ScanTime)";
@@ -182,7 +195,14 @@ namespace XHS.MSSQL
 
         private List<PackingScanRecordInfo> GetPackingScanRecordsBySql(string queryString)
         {
-            DataSet dataSet = Data.getDataSet(queryString);
+            return GetPackingScanRecordsBySql(queryString, null);
+        }
+
+        private List<PackingScanRecordInfo> GetPackingScanRecordsBySql(string queryString, SqlParameter[] parameters)
+        {
+            DataSet dataSet = parameters == null
+                ? Data.getDataSet(queryString)
+                : Data.getDataSet(queryString, parameters);
             List<PackingScanRecordInfo> result = new List<PackingScanRecordInfo>();
             if (dataSet == null || dataSet.Tables.Count == 0)
             {

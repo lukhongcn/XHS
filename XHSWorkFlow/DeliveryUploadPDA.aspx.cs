@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Web;
 using System.Web.UI;
 using BLL;
@@ -15,6 +17,10 @@ namespace ModuleWorkFlow
     public partial class DeliveryUploadPDA : Page
     {
         private const string MenuId = "B121";
+        private const string DefaultDeliveryPackageCode = "0001";
+        private const string DefaultDeliveryPackageName = "纸箱";
+        private const string RequiredPrivilege = "PEDIT";
+        private const string PermissionName = "配送单上传";
         protected string menuname = "";
         private readonly PackingOperationService packingService = new PackingOperationService();
         private readonly DeliveryUploadRecord uploadRecordService = new DeliveryUploadRecord();
@@ -71,12 +77,39 @@ namespace ModuleWorkFlow
             set { ViewState["KdPartName"] = value; }
         }
 
+        protected override void OnPreInit(EventArgs e)
+        {
+            string loginUrl = ResolveUrl("~/Login.aspx");
+            string returnUrl = Request.RawUrl;
+
+            if (!IsLoggedIn())
+            {
+                Response.Redirect(loginUrl + "?ReturnUrl=" + Server.UrlEncode(returnUrl), false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
+            if (!HasPdaPermission())
+            {
+                Response.Redirect(
+                    loginUrl
+                    + "?ReturnUrl=" + Server.UrlEncode(returnUrl)
+                    + "&LoginMessage=NoPermission"
+                    + "&PermissionName=" + Server.UrlEncode(PermissionName),
+                    false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
+            base.OnPreInit(e);
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             menuname = new PartTmenu().findbykey(MenuId).Menuname;
-            if (Master is DefaultSub master) { master.Menuname = menuname; }
+            if (Master is DefaultPDASub master) { master.PageTitle = menuname; }
 
-            if (!Private.checkPrivate(this, MenuId, "PEDIT"))
+            if (!HasPdaPermission())
             {
                 return;
             }
@@ -94,10 +127,80 @@ namespace ModuleWorkFlow
             if (!IsPostBack) { BindInitialState(); }
         }
 
+        private bool IsLoggedIn()
+        {
+            return Session != null
+                && Session["islogin"] is bool
+                && (bool)Session["islogin"]
+                && !string.IsNullOrWhiteSpace(Convert.ToString(Session["userid"]));
+        }
+
+        private bool HasPdaPermission()
+        {
+            if (Session != null && Session["isadmin"] is bool && (bool)Session["isadmin"])
+            {
+                return true;
+            }
+
+            IList privileges = Session == null ? null : Session["iprivate"] as IList;
+            if (privileges == null) return false;
+
+            foreach (object privilege in privileges)
+            {
+                if (!string.Equals(
+                    Convert.ToString(GetPrivilegeMember(privilege, "menuid")),
+                    MenuId,
+                    StringComparison.OrdinalIgnoreCase)) continue;
+
+                int editPermission;
+                return int.TryParse(
+                    Convert.ToString(GetPrivilegeMember(privilege, RequiredPrivilege)),
+                    out editPermission)
+                    && editPermission > 0;
+            }
+
+            return false;
+        }
+
+        private static object GetPrivilegeMember(object privilege, string memberName)
+        {
+            if (privilege == null) return null;
+
+            Type type = privilege.GetType();
+            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (string.Equals(property.Name, memberName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return property.GetValue(privilege, null);
+                }
+            }
+
+            foreach (FieldInfo field in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (string.Equals(field.Name, memberName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return field.GetValue(privilege);
+                }
+            }
+
+            return null;
+        }
+
         protected void lnk_view_Click(object sender, EventArgs e) { Response.Redirect("DeliveryUploadPDA.aspx"); }
         protected void txt_ScanQRCode_TextChanged(object sender, EventArgs e) { ProcessScan(); }
         protected void txt_SxCardSeq_TextChanged(object sender, EventArgs e) { RecheckMatch(); }
         protected void btn_upload_Click(object sender, EventArgs e) { UploadDelivery(); }
+        protected void btn_rescan_Click(object sender, EventArgs e)
+        {
+            KdInfo = null;
+            DeliveryInfo = null;
+            KdPackingId = 0L;
+            KdRawBarcode = string.Empty;
+            PackageNameDefault = string.Empty;
+            DeliveryNoDefault = string.Empty;
+            KdPartName = string.Empty;
+            BindInitialState();
+        }
 
         private void BindInitialState()
         {
@@ -105,6 +208,9 @@ namespace ModuleWorkFlow
             ClearDeliveryDisplay();
             txt_DeliveryMatch.Text = string.Empty;
             btn_upload.Enabled = false;
+            btn_rescan.Enabled = false;
+            txt_DeliveryMatch.Text = string.Empty;
+            hidPendingMessage.Value = string.Empty;
             SetDeliveryRadioState(false);
         }
 
@@ -215,6 +321,7 @@ namespace ModuleWorkFlow
 
             KdInfo = parsedInfo;
             KdRawBarcode = qrCode;
+            btn_rescan.Enabled = true;
             BindKdInfo(parsedInfo);
 
             // KD 扫描成功，KD 标签灰色禁用，配送单启用
@@ -222,12 +329,13 @@ namespace ModuleWorkFlow
 
             // 清除旧配送单和核验结果
             ClearDeliveryDisplay();
-            txt_DeliveryPackageName.Text = PackageNameDefault;
+            txt_DeliveryPackageCode.Text = DefaultDeliveryPackageCode;
+            txt_DeliveryPackageName.Text = DefaultDeliveryPackageName;
             txt_DeliveryNo.Text = DeliveryNoDefault;
             txt_DeliveryMatch.Text = string.Empty;
 
             RecheckMatch();
-            ShowMessage("KD 标签扫描成功，装箱已完成，请扫描配送单。");
+            txt_DeliveryMatch.Text = "KD 标签扫描成功，装箱已完成，请扫描配送单。";
         }
 
         private void ScanDelivery(string qrCode)
@@ -251,6 +359,8 @@ namespace ModuleWorkFlow
 
             DeliveryInfo = parsedInfo;
             BindDeliveryInfo(parsedInfo);
+            txt_DeliveryPackageCode.Text = DefaultDeliveryPackageCode;
+            txt_DeliveryPackageName.Text = DefaultDeliveryPackageName;
 
             RecheckMatch();
         }
@@ -299,6 +409,9 @@ namespace ModuleWorkFlow
                 ShowMessage("请先扫描 KD 标签和配送单。");
                 return;
             }
+
+            txt_DeliveryPackageCode.Text = DefaultDeliveryPackageCode;
+            txt_DeliveryPackageName.Text = DefaultDeliveryPackageName;
 
             // 校验必填字段
             if (string.IsNullOrWhiteSpace(txt_SxCardSeq.Text))
@@ -508,11 +621,14 @@ namespace ModuleWorkFlow
 
         private void ShowMessage(string message)
         {
-            Label_Message.Text = SafeValue(message);
-            ClientScript.RegisterStartupScript(
+            string safeMessage = SafeValue(message);
+            txt_DeliveryMatch.Text = safeMessage;
+            hidPendingMessage.Value = safeMessage;
+            ScriptManager.RegisterStartupScript(
+                this,
                 GetType(),
-                "DeliveryUploadPDAMessage",
-                string.Format("showMessageModal('{0}');", HttpUtility.JavaScriptStringEncode(SafeValue(message))),
+                "DeliveryUploadPDAMessage" + DateTime.Now.Ticks,
+                string.Format("window.setTimeout(function(){{if(window.showMessageModal)showMessageModal('{0}');}},50);", HttpUtility.JavaScriptStringEncode(safeMessage)),
                 true);
         }
 

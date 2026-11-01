@@ -14,6 +14,7 @@ using XHS.Model.ZPLLabel;
 using XHS.service;
 using XHS.service.Barcode;
 using XHS.service.Formatter;
+using XHS.service.SerialNumber;
 
 namespace BarcodeDesigner
 {
@@ -269,6 +270,10 @@ namespace BarcodeDesigner
         private void PartNoComboBox_SelectedValueChanged(object sender, EventArgs e)
         {
             UpdateDrawingVersionFromPartMaster();
+            if (fieldControls.ContainsKey("SerialNo"))
+            {
+                RefreshSerialNumber();
+            }
         }
 
         private void UpdateDrawingVersionFromPartMaster()
@@ -394,14 +399,27 @@ namespace BarcodeDesigner
 
             foreach (DataRow row in barcodeResult.Rows)
             {
+                string barcode = Convert.ToString(row["Barcode"]);
+                string partNo = Convert.ToString(row["PartNo"]);
+                string supplierCode = Convert.ToString(row["SupplierCode"]);
+                if (supplierCode.Length < 2)
+                {
+                    throw new InvalidOperationException("供应商代号长度不能少于 2 位。");
+                }
+
+                // 按标签样式分成两行：第一行比 PartNo 多显示供应商代号前两位，
+                // 第二行显示供应商代号剩余部分以及日期、版本、批次和序列号。
+                string firstLine = partNo + supplierCode.Substring(0, 2);
+                string secondLine = supplierCode.Substring(2)
+                    + Convert.ToString(row["ProductionDate"])
+                    + Convert.ToString(row["DrawingVersion"])
+                    + Convert.ToString(row["BatchNo"])
+                    + Convert.ToString(row["SerialNo"]);
                 List<string> values = new List<string>
                 {
-                    Convert.ToString(row["Barcode"]),
-                    Convert.ToString(row["PartNo"]),
-                    Convert.ToString(row["SupplierCode"])
-                        + Convert.ToString(row["DrawingVersion"])
-                        + Convert.ToString(row["BatchNo"])
-                        + Convert.ToString(row["SerialNo"])
+                    barcode,
+                    firstLine,
+                    secondLine
                 };
 
                 ZplResult generated = generator.Generate(templatePath, values);
@@ -514,12 +532,18 @@ namespace BarcodeDesigner
             serialNumberFormatter = new FormatterFactory().Get(
                 serialField,
                 GetXwdLabelPrintCount);
-            SetFieldText("SerialNo", serialNumberFormatter.Encode(DateTime.Today));
+            Control partNoControl;
+            string partNo = fieldControls.TryGetValue("PartNo", out partNoControl)
+                ? GetControlValue(partNoControl).Trim()
+                : string.Empty;
+            SetFieldText(
+                "SerialNo",
+                serialNumberFormatter.Encode(new SerialNumberInput(DateTime.Today, partNo)));
         }
 
-        private int GetXwdLabelPrintCount(DateTime printTime)
+        private int GetXwdLabelPrintCount(DateTime printTime, string partNo)
         {
-            return printRecord.GetPrintCount(PrintTypeXwdLabel, printTime);
+            return printRecord.GetPrintCount(PrintTypeXwdLabel, printTime, partNo);
         }
 
         private IDictionary<string, object> CollectFieldValues()

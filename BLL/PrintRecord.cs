@@ -53,6 +53,11 @@ namespace XHS.BLL
             return dal.GetPrintCount(printType, printTime);
         }
 
+        public int GetPrintCount(string printType, System.DateTime printTime, string partNo)
+        {
+            return dal.GetPrintCount(printType, printTime, partNo);
+        }
+
         public int GetPrintCount(System.DateTime printTime)
         {
             return dal.GetPrintCount(printTime);

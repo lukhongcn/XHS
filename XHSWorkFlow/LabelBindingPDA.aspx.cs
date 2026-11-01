@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -13,6 +15,8 @@ namespace ModuleWorkFlow
 {
     public partial class LabelBindingPDA : Page
     {
+        private const string MenuId = "C02";
+        private const string RequiredPrivilege = "PADD";
         private const string ContextKey = "LabelBindingPdaContext";
         private const string FlowName = "光束标签绑定流程";
         private const string FlowCode = "LABEL_BINDING";
@@ -24,7 +28,22 @@ namespace ModuleWorkFlow
             {
                 string loginUrl = ResolveUrl("~/Login.aspx");
                 string returnUrl = Request.RawUrl;
-                Response.Redirect(loginUrl + "?ReturnUrl=" + Server.UrlEncode(returnUrl));
+                Response.Redirect(loginUrl + "?ReturnUrl=" + Server.UrlEncode(returnUrl), false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
+            if (!HasPdaPermission())
+            {
+                string loginUrl = ResolveUrl("~/Login.aspx");
+                string returnUrl = Request.RawUrl;
+                Response.Redirect(
+                    loginUrl
+                    + "?ReturnUrl=" + Server.UrlEncode(returnUrl)
+                    + "&LoginMessage=NoPermission"
+                    + "&PermissionName=" + Server.UrlEncode("光束标签绑定"),
+                    false);
+                Context.ApplicationInstance.CompleteRequest();
                 return;
             }
 
@@ -39,11 +58,60 @@ namespace ModuleWorkFlow
                 && !string.IsNullOrWhiteSpace(Convert.ToString(Session["userid"]));
         }
 
+        private bool IsPdaPermissionAllowed()
+        {
+            return DefaultPDASub.IsPdaAccessAllowed(Context)
+                && HasPdaPermission();
+        }
+
+        private bool HasPdaPermission()
+        {
+            if (Session != null && Session["isadmin"] is bool && (bool)Session["isadmin"])
+            {
+                return true;
+            }
+
+            IList privileges = Session == null ? null : Session["iprivate"] as IList;
+            if (privileges == null) return false;
+
+            foreach (object privilege in privileges)
+            {
+                string menuId = Convert.ToString(GetPrivilegeMember(privilege, "menuid"));
+                if (!string.Equals(menuId, MenuId, StringComparison.OrdinalIgnoreCase)) continue;
+
+                int addPermission;
+                return int.TryParse(
+                    Convert.ToString(GetPrivilegeMember(privilege, RequiredPrivilege)),
+                    out addPermission)
+                    && addPermission > 0;
+            }
+
+            return false;
+        }
+
+        private static object GetPrivilegeMember(object privilege, string memberName)
+        {
+            if (privilege == null) return null;
+
+            Type type = privilege.GetType();
+            PropertyInfo property = type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(x => string.Equals(x.Name, memberName, StringComparison.OrdinalIgnoreCase));
+            if (property != null) return property.GetValue(privilege, null);
+
+            FieldInfo field = type.GetFields(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(x => string.Equals(x.Name, memberName, StringComparison.OrdinalIgnoreCase));
+            return field == null ? null : field.GetValue(privilege);
+        }
+
         [Serializable]
         private sealed class PdaBindingRow
         {
             public int SeqNo { get; set; }
             public string CodeType { get; set; }
+            public string CustomerMaterialNo { get; set; }
+            public string CustomerPartNo { get; set; }
+            public decimal CustomerQty { get; set; }
+            public string CustomerQtyText { get { return CustomerQty <= 0 ? string.Empty : CustomerQty.ToString("0.####", CultureInfo.InvariantCulture); } }
             public string SteelStampRelation { get; set; }
             public string FactoryBarcode { get; set; }
             public string WorkOrderNo { get; set; }
@@ -54,6 +122,27 @@ namespace ModuleWorkFlow
             public string BindQtyText { get { return BindQty <= 0 ? string.Empty : BindQty.ToString("0.####", CultureInfo.InvariantCulture); } }
             public string ScanTimeText { get; set; }
             public string PartName { get; set; }
+        }
+
+        [Serializable]
+        private sealed class PdaCustomerItem
+        {
+            public string CustomerMaterialNo { get; set; }
+            public string JHSPartNo { get; set; }
+            public string CustomerBatchNo { get; set; }
+            public string CustomerUnit { get; set; }
+            public decimal CustomerQty { get; set; }
+            public decimal BoundQty { get; set; }
+            public List<PdaFactoryBinding> FactoryBindings { get; set; }
+        }
+
+        [Serializable]
+        private sealed class PdaFactoryBinding
+        {
+            public string RawCode { get; set; }
+            public string PartNo { get; set; }
+            public string BatchNo { get; set; }
+            public decimal Qty { get; set; }
         }
 
         [Serializable]
@@ -80,6 +169,7 @@ namespace ModuleWorkFlow
             public string CustomerBatch { get; set; }
             public string CustomerUnit { get; set; }
             public decimal CustomerQty { get; set; }
+            public List<PdaCustomerItem> CustomerItems { get; set; }
             public PartInfo CustomerPartMaster { get; set; }
             public List<PdaBindingRow> Rows { get; set; }
             public List<PdaWorkflowScan> Scans { get; set; }
@@ -112,7 +202,7 @@ namespace ModuleWorkFlow
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
+            if (!IsPdaPermissionAllowed()) return;
             if (!IsPostBack)
             {
                 ResetContext();
@@ -126,7 +216,7 @@ namespace ModuleWorkFlow
 
         protected void txtPdaScan_TextChanged(object sender, EventArgs e)
         {
-            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
+            if (!IsPdaPermissionAllowed()) return;
             PdaContext context = Current;
             if (context.IsCompleted)
             {
@@ -183,7 +273,7 @@ namespace ModuleWorkFlow
 
         protected void btnFailureOk_Click(object sender, EventArgs e)
         {
-            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
+            if (!IsPdaPermissionAllowed()) return;
             pnlFailureModal.Visible = false;
             labFailureMessage.Text = string.Empty;
             txtPdaScan.Text = string.Empty;
@@ -194,7 +284,8 @@ namespace ModuleWorkFlow
 
         protected void btnClear_Click(object sender, EventArgs e)
         {
-            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
+            if (!IsPdaPermissionAllowed()) return;
+            Focus(txtPdaScan);
             PdaContext context = Current;
             string saveResult = SaveClearBindingRecord(context);
             if (!string.IsNullOrWhiteSpace(saveResult))
@@ -240,7 +331,8 @@ namespace ModuleWorkFlow
 
         protected void btnEndStep_Click(object sender, EventArgs e)
         {
-            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
+            if (!IsPdaPermissionAllowed()) return;
+            Focus(txtPdaScan);
             PdaContext context = Current;
             ScanFlowStepInfo step = GetCurrentStep(context);
             if (step == null || !step.AllowRepeat || ScanStepHandlerRegistry.Resolve(step) == ScanStepHandlerType.Customer)
@@ -252,15 +344,9 @@ namespace ModuleWorkFlow
             bool isLastStep = context.Steps != null && context.CurrentStepIndex >= context.Steps.Count - 1;
             if (isLastStep && ScanStepHandlerRegistry.Resolve(step) == ScanStepHandlerType.Factory)
             {
-                decimal bound = context.Rows.Sum(x => x.BindQty);
-                if (context.CustomerPartMaster == null || !context.Rows.Any(x => x.BindQty > 0))
+                if (!AreAllCustomerItemsComplete(context))
                 {
-                    Message("请至少扫描一张本厂标签后再完成绑定。", false);
-                    return;
-                }
-                if (bound > context.CustomerQty)
-                {
-                    ShowScanFailure("OverQuantity", "绑定数量不能大于客户数量。", string.Empty, null);
+                    Message("每个客户零件的本厂标签数量都达到客户数量后，才能完成绑定。", false);
                     return;
                 }
                 CompleteBinding();
@@ -276,17 +362,12 @@ namespace ModuleWorkFlow
 
         protected void btnCompleteBinding_Click(object sender, EventArgs e)
         {
-            if (!DefaultPDASub.IsPdaAccessAllowed(Context)) return;
+            if (!IsPdaPermissionAllowed()) return;
+            Focus(txtPdaScan);
             PdaContext context = Current;
-            decimal bound = context.Rows.Sum(x => x.BindQty);
-            if (context.CustomerPartMaster == null || !context.Rows.Any(x => x.BindQty > 0))
+            if (!AreAllCustomerItemsComplete(context))
             {
-                Message("请至少扫描一张本厂标签后再完成绑定。", false);
-                return;
-            }
-            if (bound > context.CustomerQty)
-            {
-                ShowScanFailure("OverQuantity", "绑定数量不能大于客户数量。", string.Empty, null);
+                Message("每个客户零件的本厂标签数量都达到客户数量后，才能完成绑定。", false);
                 return;
             }
             CompleteBinding();
@@ -294,40 +375,80 @@ namespace ModuleWorkFlow
 
         private void ProcessCustomer(string raw, ScanFlowStepInfo step)
         {
-            PartInfo part = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
-            if (part == null)
+            List<PartInfo> parts = barcodeParser.ParseCustomerBarcodes(raw, step.CustomerId, step.LabelType, step.RuleName);
+            if (parts == null || parts.Count == 0)
+            {
+                PartInfo singlePart = barcodeParser.ParseCustomerBarcode(raw, step.CustomerId, step.LabelType, step.RuleName);
+                if (singlePart != null) parts = new List<PartInfo> { singlePart };
+            }
+            if (parts == null || parts.Count == 0)
             {
                 ShowScanFailure("CustomerFormat", "客户标签格式无效，无法按当前流程规则解析。", raw, null);
                 return;
             }
-            decimal qty = part.Qty;
-            if (qty != decimal.Truncate(qty))
+
+            List<PdaCustomerItem> customerItems = new List<PdaCustomerItem>();
+            foreach (PartInfo part in parts)
             {
-                ShowScanFailure("CustomerQty", "客户标签数量必须为整数，当前绑定表不支持小数数量。", raw, null);
-                return;
+                if (part.Qty <= 0 || part.Qty != decimal.Truncate(part.Qty))
+                {
+                    ShowScanFailure("CustomerQty", "客户标签数量必须为正整数。", raw, part);
+                    return;
+                }
+
+                PartInfo masterPart = new PartMaster().GetPartMasterByCustomerMaterialNo(part.MaterialNo);
+                if (masterPart == null)
+                {
+                    ShowScanFailure("PartMasterNotFound", "客户物料号未维护零件主数据：" + part.MaterialNo, raw, part);
+                    return;
+                }
+
+                PdaCustomerItem item = customerItems.FirstOrDefault(x =>
+                    string.Equals(x.JHSPartNo, masterPart.JHSPartNo, StringComparison.OrdinalIgnoreCase));
+                if (item == null)
+                {
+                    customerItems.Add(new PdaCustomerItem
+                    {
+                        CustomerMaterialNo = part.MaterialNo,
+                        JHSPartNo = masterPart.JHSPartNo,
+                        CustomerBatchNo = part.BatchNo ?? string.Empty,
+                        CustomerUnit = part.Unit ?? string.Empty,
+                        CustomerQty = part.Qty,
+                        FactoryBindings = new List<PdaFactoryBinding>()
+                    });
+                }
+                else
+                {
+                    item.CustomerQty += part.Qty;
+                    if (!string.IsNullOrWhiteSpace(part.BatchNo)) item.CustomerBatchNo += "," + part.BatchNo;
+                }
             }
 
             PdaContext context = Current;
-            PartInfo masterPart = new PartMaster().GetPartMasterByCustomerMaterialNo(part.MaterialNo);
-            if (masterPart == null)
-            {
-                ShowScanFailure("PartMasterNotFound", "客户物料号未维护零件主数据。", raw, part);
-                return;
-            }
-
             context.BindingTaskId = Guid.NewGuid().ToString("D");
             context.CustomerRaw = raw;
-            context.CustomerMaterial = part.MaterialNo;
-            context.CustomerPartMaster = masterPart;
-            context.ExpectedPart = masterPart.JHSPartNo;
-            context.CustomerUnit = part.Unit ?? string.Empty;
-            context.CustomerBatch = part.BatchNo ?? string.Empty;
-            context.CustomerQty = qty;
-            context.Rows = new List<PdaBindingRow>();
-            AddWorkflowScan(context, step, raw, 0, part);
+            context.CustomerItems = customerItems;
+            context.CustomerMaterial = string.Join(", ", customerItems.Select(x => x.CustomerMaterialNo));
+            context.ExpectedPart = string.Join(", ", customerItems.Select(x => x.JHSPartNo));
+            context.CustomerUnit = string.Join(", ", customerItems.Select(x => x.CustomerUnit).Distinct(StringComparer.OrdinalIgnoreCase));
+            context.CustomerBatch = string.Join(", ", customerItems.Select(x => x.CustomerBatchNo));
+            context.CustomerQty = customerItems.Sum(x => x.CustomerQty);
+            context.CustomerPartMaster = new PartInfo { JHSPartNo = customerItems[0].JHSPartNo };
+            context.Rows = customerItems.Select(item => new PdaBindingRow
+            {
+                CodeType = "客户标签",
+                CustomerMaterialNo = item.CustomerMaterialNo,
+                CustomerPartNo = item.JHSPartNo,
+                JHSPartNo = item.JHSPartNo,
+                JHSBatchNo = item.CustomerBatchNo,
+                CustomerQty = item.CustomerQty,
+                ScanTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+            }).ToList();
+            ReindexRows();
+            AddWorkflowScan(context, step, raw, 0, parts[0]);
             MarkSuccess(context, raw);
             AdvanceAfterStepSuccess(context, step);
-            Message("客户标签校验成功，请扫描" + GetCurrentStepTitle(context) + "。", true);
+            Message("客户标签校验成功，已生成 " + customerItems.Count + " 个零件明细，请扫描" + GetCurrentStepTitle(context) + "。", true);
         }
 
         /// <summary>
@@ -393,64 +514,171 @@ namespace ModuleWorkFlow
                 ShowScanFailure("Quantity", "本厂条码没有有效标签数量，不能绑定。", raw, part, type);
                 return;
             }
-            string expectedFactoryPartNo = Current.CustomerPartMaster == null
-                ? string.Empty
-                : Current.CustomerPartMaster.JHSPartNo;
-            if (!string.Equals((expectedFactoryPartNo ?? string.Empty).Trim(), partNo.Trim(), StringComparison.OrdinalIgnoreCase))
+            PdaCustomerItem customerItem = Current.CustomerItems == null
+                ? null
+                : Current.CustomerItems.FirstOrDefault(x =>
+                    string.Equals((x.JHSPartNo ?? string.Empty).Trim(), partNo.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (customerItem == null)
             {
-                ShowScanFailure("PartMismatch", "本厂品号与客户物料号不匹配。", raw, part, type);
+                ShowScanFailure("PartMismatch", "本厂品号不在客户标签零件明细中。", raw, part, type);
                 return;
             }
-
-            decimal remaining = Current.CustomerQty - Current.Rows.Sum(x => x.BindQty);
-            if (labelQty > remaining)
+            if (customerItem.BoundQty >= customerItem.CustomerQty)
             {
-                ShowScanFailure("OverQuantity", string.Format(CultureInfo.InvariantCulture, "本次绑定数量 {0:0.####} 超过客户剩余数量 {1:0.####}。", labelQty, remaining), raw, part, type);
+                ShowScanFailure("OverQuantity", "该零件累计数量已达到客户数量，不能继续扫描本厂条码。", raw, part, type);
                 return;
             }
 
             PdaBindingRow bindingRow = Current.Rows.FirstOrDefault(x =>
-                string.Equals(x.CodeType, "工单", StringComparison.OrdinalIgnoreCase)
-                && string.IsNullOrWhiteSpace(x.FactoryBarcode));
+                string.Equals(x.CustomerPartNo, customerItem.JHSPartNo, StringComparison.OrdinalIgnoreCase));
             if (bindingRow == null)
             {
-                bindingRow = new PdaBindingRow();
-                Current.Rows.Insert(0, bindingRow);
+                ShowScanFailure("PartMismatch", "客户标签明细行不存在。", raw, part, type);
+                return;
             }
             bindingRow.CodeType = type;
             bindingRow.SteelStampRelation = steelStampRelation;
-            bindingRow.FactoryBarcode = raw;
+            if (customerItem.FactoryBindings == null) customerItem.FactoryBindings = new List<PdaFactoryBinding>();
+            customerItem.FactoryBindings.Add(new PdaFactoryBinding
+            {
+                RawCode = raw,
+                PartNo = partNo,
+                BatchNo = batchNo,
+                Qty = labelQty
+            });
             bindingRow.JHSPartNo = partNo;
-            bindingRow.JHSBatchNo = batchNo;
-            bindingRow.LabelQty = labelQty;
-            bindingRow.BindQty = labelQty;
             bindingRow.PartName = part.MaterialName;
             bindingRow.WorkOrderNo = string.Join(", ", Current.WorkOrderRaws ?? new List<string>());
             bindingRow.ScanTimeText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+            RefreshBindingRow(bindingRow, customerItem);
             ReindexRows();
-            AddWorkflowScan(Current, step, raw, Current.Rows[0].SeqNo, part);
+            AddWorkflowScan(Current, step, raw, bindingRow.SeqNo, part);
             MarkSuccess(Current, raw);
-            AdvanceAfterStepSuccess(Current, step);
 
-            decimal bound = Current.Rows.Sum(x => x.BindQty);
-            if (bound >= Current.CustomerQty)
-            {
-                CompleteBinding();
-            }
-            else
-            {
-                Message("扫描成功，请继续扫描" + GetCurrentStepTitle(Current) + "。", true);
-            }
+            Message(AreAllCustomerItemsComplete(Current)
+                ? "数量已满足，请点击“绑定结束”开始下一轮绑定。"
+                : "扫描成功，请继续扫描" + GetCurrentStepTitle(Current) + "。", true);
+            ApplyContextToControls();
+            BindRows();
+            Focus(txtPdaScan);
         }
 
-        private void CompleteBinding()
+        protected void btnFinishBinding_Click(object sender, EventArgs e)
+        {
+            if (!IsPdaPermissionAllowed()) return;
+            Focus(txtPdaScan);
+            if (!AreAllCustomerItemsComplete(Current))
+            {
+                Message("每个客户零件的本厂标签数量都达到客户数量后，才能结束绑定。", false);
+                return;
+            }
+
+            if (!CompleteBinding()) return;
+
+            ResetContext();
+            InitializeWorkflow();
+            Message("本轮绑定已结束，请扫描客户标签开始下一轮绑定。", true);
+            ApplyContextToControls();
+            BindRows();
+            Focus(txtPdaScan);
+        }
+
+        protected void gvBindingRecords_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (!string.Equals(e.CommandName, "DeleteFactory", StringComparison.OrdinalIgnoreCase)) return;
+            DeleteFactoryBarcode(Convert.ToString(e.CommandArgument));
+        }
+
+        protected void repFactoryBarcodes_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            if (!string.Equals(e.CommandName, "DeleteFactory", StringComparison.OrdinalIgnoreCase)) return;
+            DeleteFactoryBarcode(Convert.ToString(e.CommandArgument));
+        }
+
+        private void DeleteFactoryBarcode(string rawToDelete)
+        {
+            if (!IsPdaPermissionAllowed()) return;
+
+            PdaContext context = Current;
+            if (context.IsCompleted)
+            {
+                Message("本次绑定已经完成，不能再删除本厂标签。", false);
+                return;
+            }
+
+            PdaCustomerItem item = context.CustomerItems == null
+                ? null
+                : context.CustomerItems.FirstOrDefault(x => x.FactoryBindings != null
+                    && x.FactoryBindings.Any(y => string.Equals(y.RawCode, rawToDelete, StringComparison.Ordinal)));
+            if (item == null || item.FactoryBindings == null || item.FactoryBindings.Count == 0)
+            {
+                Message("删除失败，找不到对应的本厂条码。", false);
+                return;
+            }
+
+            PdaFactoryBinding deleted = item.FactoryBindings.LastOrDefault(x =>
+                string.Equals(x.RawCode, rawToDelete, StringComparison.Ordinal));
+            if (deleted == null)
+            {
+                Message("删除失败，找不到对应的本厂条码。", false);
+                return;
+            }
+            item.FactoryBindings.Remove(deleted);
+            item.BoundQty = item.FactoryBindings.Sum(x => x.Qty);
+            if (context.Scans != null)
+            {
+                PdaWorkflowScan scan = context.Scans.LastOrDefault(x =>
+                    string.Equals(x.StepCode, "FACTORY", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(x.RawCode, deleted.RawCode, StringComparison.Ordinal));
+                if (scan != null) context.Scans.Remove(scan);
+            }
+
+            PdaBindingRow row = context.Rows.FirstOrDefault(x =>
+                string.Equals(x.CustomerPartNo, item.JHSPartNo, StringComparison.OrdinalIgnoreCase));
+            RefreshBindingRow(row, item);
+            ReindexRows();
+            Message("已删除本厂标签，数量已重新计算。", true);
+            ApplyContextToControls();
+            BindRows();
+            Focus(txtPdaScan);
+        }
+
+        protected IEnumerable<object> GetFactoryBarcodeLinks(object dataItem)
+        {
+            PdaBindingRow row = dataItem as PdaBindingRow;
+            if (row == null || Current.CustomerItems == null) return Enumerable.Empty<object>();
+            PdaCustomerItem item = Current.CustomerItems.FirstOrDefault(x =>
+                string.Equals(x.JHSPartNo, row.CustomerPartNo, StringComparison.OrdinalIgnoreCase));
+            return item == null || item.FactoryBindings == null
+                ? Enumerable.Empty<object>()
+                : item.FactoryBindings.Cast<object>();
+        }
+
+        private static void RefreshBindingRow(PdaBindingRow row, PdaCustomerItem item)
+        {
+            if (row == null || item == null) return;
+            if (item.FactoryBindings == null) item.FactoryBindings = new List<PdaFactoryBinding>();
+            row.CustomerMaterialNo = item.CustomerMaterialNo;
+            row.CustomerPartNo = item.JHSPartNo;
+            row.CustomerQty = item.CustomerQty;
+            row.FactoryBarcode = string.Join("\r\n", item.FactoryBindings.Select(x => x.RawCode));
+            row.JHSPartNo = item.JHSPartNo;
+            row.JHSBatchNo = string.Join(",", new[] { item.CustomerBatchNo }
+                .Concat(item.FactoryBindings.Select(x => x.BatchNo))
+                .Where(x => !string.IsNullOrWhiteSpace(x)));
+            row.LabelQty = item.FactoryBindings.Sum(x => x.Qty);
+            row.BindQty = row.LabelQty;
+            item.BoundQty = row.BindQty;
+            row.CodeType = item.FactoryBindings.Count == 0 ? "客户标签" : "本厂标签";
+        }
+
+        private bool CompleteBinding()
         {
             PdaContext context = Current;
-            decimal bound = context.Rows.Sum(x => x.BindQty);
-            if (bound > context.CustomerQty)
+            if (!AreAllCustomerItemsComplete(context))
             {
-                ShowScanFailure("OverQuantity", "绑定数量不能大于客户数量。", string.Empty, null);
-                return;
+                ShowScanFailure("Incomplete", "每个客户零件都必须由本厂零件匹配，并且本厂数量达到客户数量。", string.Empty, null);
+                return false;
             }
             List<ScanFlowScanRecordInfo> records = context.Scans
                 .Select(BuildScanRecord)
@@ -460,7 +688,7 @@ namespace ModuleWorkFlow
             if (!string.IsNullOrWhiteSpace(result))
             {
                 ShowScanFailure("Save", result, string.Empty, null);
-                return;
+                return false;
             }
             // 保存成功后保留当前流程、零件 Session 和绑定明细；扫描框置灰。
             // 下一次绑定由“清空当前绑定”显式清除当前流程，登录 Session 不受影响。
@@ -469,6 +697,15 @@ namespace ModuleWorkFlow
             ApplyContextToControls();
             BindRows();
             Focus(txtPdaScan);
+            return true;
+        }
+
+        private static bool AreAllCustomerItemsComplete(PdaContext context)
+        {
+            return context != null
+                && context.CustomerItems != null
+                && context.CustomerItems.Count > 0
+                && context.CustomerItems.All(x => x != null && x.BoundQty >= x.CustomerQty);
         }
 
         private void ShowScanFailure(string type, string reason, string raw, PartInfo part, string parsedType = null)
@@ -513,6 +750,7 @@ namespace ModuleWorkFlow
             {
                 btnEndStep.Visible = false;
                 btnCompleteBinding.Visible = false;
+                btnFinishBinding.Enabled = false;
                 labScanState.Text = "本次绑定已完成，请清空后开始下一次绑定";
                 labScanState.CssClass = "pda-state pda-state-success";
                 txtPdaScan.Enabled = false;
@@ -523,9 +761,9 @@ namespace ModuleWorkFlow
             bool customer = ScanStepHandlerRegistry.Resolve(step) == ScanStepHandlerType.Customer;
             bool isLastStep = step != null && context.Steps != null && context.CurrentStepIndex >= context.Steps.Count - 1;
             bool factory = ScanStepHandlerRegistry.Resolve(step) == ScanStepHandlerType.Factory;
-            btnEndStep.Visible = isLastStep && factory && context.CustomerPartMaster != null && context.Rows.Any(x => x.BindQty > 0);
-            btnEndStep.Text = factory && isLastStep ? "完成绑定" : "结束当前步骤";
+            btnEndStep.Visible = false;
             btnCompleteBinding.Visible = false;
+            btnFinishBinding.Enabled = AreAllCustomerItemsComplete(context);
             string title = GetCurrentStepTitle(context);
             labScanState.Text = step == null ? "流程未加载" : "请扫描" + title;
             labScanState.CssClass = "pda-state " + (customer ? "pda-state-customer" : "pda-state-factory");
@@ -546,7 +784,7 @@ namespace ModuleWorkFlow
             List<PdaBindingRow> rows = context.Rows ?? new List<PdaBindingRow>();
             gvBindingRecords.DataSource = rows;
             gvBindingRecords.DataBind();
-            decimal bound = rows.Sum(x => x.BindQty);
+            decimal bound = rows.Where(x => !string.Equals(x.CodeType, "工单", StringComparison.OrdinalIgnoreCase)).Sum(x => x.BindQty);
             labCustomerQty.Text = context.CustomerQty.ToString("0.####", CultureInfo.InvariantCulture);
             labBoundQty.Text = bound.ToString("0.####", CultureInfo.InvariantCulture);
             labRemainingQty.Text = Math.Max(0, context.CustomerQty - bound).ToString("0.####", CultureInfo.InvariantCulture);

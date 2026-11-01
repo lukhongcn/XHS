@@ -5,16 +5,17 @@ using System.IO;
 using System.Linq;
 using XHS.Model.BarcodeCreateRule;
 using XHS.service.Formatter;
+using XHS.service.SerialNumber;
 
 namespace XHS.service.Barcode
 {
     public sealed class BarcodeBuilder
     {
-        private readonly Func<DateTime, int> getPrintCount;
+        private readonly Func<DateTime, string, int> getPrintCount;
         private readonly BarcodeDesignerJsonRuleLoader ruleLoader = new BarcodeDesignerJsonRuleLoader();
         private readonly FormatterFactory formatterFactory = new FormatterFactory();
 
-        public BarcodeBuilder(Func<DateTime, int> getPrintCount)
+        public BarcodeBuilder(Func<DateTime, string, int> getPrintCount)
         {
             if (getPrintCount == null)
             {
@@ -74,7 +75,16 @@ namespace XHS.service.Barcode
                     if (!string.IsNullOrWhiteSpace(field.Formatter))
                     {
                         ICodeFormatter code = formatters[field.Name];
-                        values[field.Name] = code.Encode(rawValue);
+                        if (string.Equals(field.Formatter, "DailySerialNumber", StringComparison.OrdinalIgnoreCase))
+                        {
+                            DateTime date = (DateTime)rawValue;
+                            string partNo = values.ContainsKey("PartNo") ? values["PartNo"] : string.Empty;
+                            values[field.Name] = code.Encode(new SerialNumberInput(date, partNo));
+                        }
+                        else
+                        {
+                            values[field.Name] = code.Encode(rawValue);
+                        }
                     }
                     else
                     {

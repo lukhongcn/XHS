@@ -41,6 +41,7 @@ namespace ModuleWorkFlow
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btn_upload;
+        protected global::System.Web.UI.WebControls.Button btn_rescan;
 
         /// <summary>
         /// Label_ScanQRCode control.
@@ -268,6 +269,6 @@ namespace ModuleWorkFlow
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label Label_Message;
+        protected global::System.Web.UI.WebControls.HiddenField hidPendingMessage;
     }
 }

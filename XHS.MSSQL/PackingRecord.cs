@@ -380,14 +380,17 @@ namespace XHS.MSSQL
         }
 
         /// <summary>事务内替换 KD 标签；已上传记录不允许更新。</summary>
-        public bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
+        public bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string supplyBatchNo, string cartonNo, int planQty, string newToken, string userName, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "update tb_PackingRecord set KDQRCode=@KDQRCode,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and PackingStage<>@UploadedStage";
+            const string sql = "update tb_PackingRecord set KDQRCode=@KDQRCode,SupplyBatchNo=@SupplyBatchNo,CartonNo=@CartonNo,PlanQty=@PlanQty,LockToken=@NewToken,UpdateUser=@UserName,UpdateTime=GETDATE() where Id=@PackingId and LockToken=@PageToken and PackingStage<>@UploadedStage";
             SqlParameter[] parameters = new[]
             {
                 new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
                 new SqlParameter("@PageToken", SqlDbType.NVarChar, 100) { Value = pageToken ?? (object)DBNull.Value },
                 new SqlParameter("@KDQRCode", SqlDbType.NVarChar, 100) { Value = kdQRCode ?? (object)DBNull.Value },
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? (object)DBNull.Value },
+                new SqlParameter("@CartonNo", SqlDbType.NVarChar, 100) { Value = cartonNo ?? (object)DBNull.Value },
+                new SqlParameter("@PlanQty", SqlDbType.Int) { Value = planQty },
                 new SqlParameter("@NewToken", SqlDbType.NVarChar, 100) { Value = newToken },
                 new SqlParameter("@UserName", SqlDbType.NVarChar, 50) { Value = userName ?? (object)DBNull.Value },
                 new SqlParameter("@UploadedStage", SqlDbType.NVarChar, 30) { Value = PackingStageInfo.上传完成.Status }

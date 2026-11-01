@@ -96,16 +96,16 @@ namespace BarcodeDesigner
                 return false;
             }
 
-            if (userInfo.IsAdmin == 1 || HasQueryPermission(userName, userInfo))
+            if (userInfo.IsAdmin == 1 || HasDeletePermission(userName, userInfo))
             {
                 return true;
             }
 
-            message = "当前账号没有 BarcodeDesigner 的查询权限。";
+            message = "当前账号没有 BarcodeDesigner 的删除权限。";
             return false;
         }
 
-        private static bool HasQueryPermission(string userName, UserInfo userInfo)
+        private static bool HasDeletePermission(string userName, UserInfo userInfo)
         {
             IList privileges = new Private().getPrivateByUserName(userName) as IList;
             if ((privileges == null || privileges.Count == 0) && userInfo != null)
@@ -125,7 +125,7 @@ namespace BarcodeDesigner
             return privileges.Cast<object>()
                 .OfType<PrivateInfo>()
                 .Any(item => string.Equals((item.MENUID ?? string.Empty).Trim(), MenuId, StringComparison.OrdinalIgnoreCase)
-                    && item.PQUERY > 0);
+                    && item.PDEL > 0);
         }
     }
 }

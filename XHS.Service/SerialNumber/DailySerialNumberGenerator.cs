@@ -4,16 +4,30 @@ using XHS.service.Formatter;
 
 namespace XHS.service.SerialNumber
 {
+    public sealed class SerialNumberInput
+    {
+        public SerialNumberInput(DateTime date, string partNo)
+        {
+            Date = date;
+            PartNo = partNo ?? string.Empty;
+        }
+
+        public DateTime Date { get; private set; }
+
+        public string PartNo { get; private set; }
+    }
+
     public sealed class DailySerialNumberGenerator : ICodeFormatter
     {
-        private readonly Func<DateTime, int> getPrintCount;
+        private readonly Func<DateTime, string, int> getPrintCount;
         private readonly int initialValue;
         private readonly string format;
         private DateTime? currentDate;
+        private string currentPartNo;
         private int nextNumber;
 
         public DailySerialNumberGenerator(
-            Func<DateTime, int> getPrintCount,
+            Func<DateTime, string, int> getPrintCount,
             string initialValue,
             string format)
         {
@@ -34,15 +48,18 @@ namespace XHS.service.SerialNumber
 
         public string Encode(object value)
         {
-            if (!(value is DateTime))
+            SerialNumberInput input = value as SerialNumberInput;
+            if (input == null)
             {
-                throw new FormatException("序列号 Formatter 需要 DateTime 类型输入。");
+                throw new FormatException("序列号 Formatter 需要日期和零件号输入。");
             }
 
-            DateTime date = (DateTime)value;
-            if (!currentDate.HasValue || currentDate.Value.Date != date.Date)
+            DateTime date = input.Date;
+            if (!currentDate.HasValue
+                || currentDate.Value.Date != date.Date
+                || !string.Equals(currentPartNo, input.PartNo, StringComparison.OrdinalIgnoreCase))
             {
-                int printedCount = getPrintCount(date.Date);
+                int printedCount = getPrintCount(date.Date, input.PartNo);
                 if (printedCount < 0)
                 {
                     throw new InvalidOperationException("当天已打印数量不能为负数。当天已打印数量：" + printedCount);
@@ -52,6 +69,7 @@ namespace XHS.service.SerialNumber
                     ? initialValue
                     : printedCount + 1;
                 currentDate = date.Date;
+                currentPartNo = input.PartNo;
             }
 
             if (nextNumber > 99999)

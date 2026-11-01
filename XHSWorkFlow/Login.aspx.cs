@@ -33,6 +33,18 @@ namespace ModuleWorkFlow
             if (!this.IsPostBack)
             {
                 Session.Abandon();
+
+                if (string.Equals(
+                    Request.QueryString["LoginMessage"],
+                    "NoPermission",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    string permissionName = Request.QueryString["PermissionName"];
+                    if (string.IsNullOrWhiteSpace(permissionName)) permissionName = "当前页面";
+                    Label_Message.Text = "当前账号没有"
+                        + Server.HtmlEncode(permissionName)
+                        + "操作权限，请联系管理员分配对应权限。";
+                }
             }
             showVersion();
 		}

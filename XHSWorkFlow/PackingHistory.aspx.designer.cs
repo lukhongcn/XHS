@@ -10,6 +10,8 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.LinkButton lnk_back;
         protected global::System.Web.UI.WebControls.Label Label_KDQRCode;
         protected global::System.Web.UI.WebControls.TextBox txt_KDQRCode;
+        protected global::System.Web.UI.WebControls.Label Label_MaterialQRCode;
+        protected global::System.Web.UI.WebControls.TextBox txt_MaterialQRCode;
         protected global::System.Web.UI.WebControls.Button btn_Search;
         protected global::System.Web.UI.WebControls.Button btn_Clear;
         protected global::System.Web.UI.WebControls.Label Label_Message;

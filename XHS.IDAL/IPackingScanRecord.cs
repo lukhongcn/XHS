@@ -15,6 +15,8 @@ namespace XHS.IDAL
 
         List<PackingScanRecordInfo> GetExPackingScanRecordsByPartNo(string partNo);
 
+        List<PackingScanRecordInfo> GetPackingScanRecordsByMaterialQRCode(string qrCode);
+
         ParamterInfo InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos);
 
         ParamterInfo UpdatePackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos);

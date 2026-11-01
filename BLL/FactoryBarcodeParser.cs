@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Utility;
 using XHS.Model;
 
@@ -221,6 +222,147 @@ namespace XHS.BLL
                 };
             }
 
+            return null;
+        }
+
+        /// <summary>
+        /// 按主规则和重复明细子规则解析客户标签。
+        /// 子规则的命名分组可以重复出现，重复分组按 Captures 下标组成多个零件。
+        /// </summary>
+        public List<PartInfo> ParseCustomerBarcodes(
+            string rawCode,
+            string customerId,
+            string labelType,
+            string ruleName)
+        {
+            rawCode = (rawCode ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Trim();
+            List<PartInfo> result = new List<PartInfo>();
+            if (string.IsNullOrEmpty(rawCode)) return result;
+
+            List<LabelCodeRuleInfo> rules = new LabelCodeRule()
+                .GetLabelCodeRulesByCustomerIdAndLabelType(customerId, labelType);
+            if (rules == null) return result;
+
+            LabelCodeRuleSub subRuleService = new LabelCodeRuleSub();
+            foreach (LabelCodeRuleInfo rule in rules
+                .Where(x => x != null && (!x.Enabled.HasValue || x.Enabled.Value))
+                .OrderByDescending(x => string.Equals(x.RuleName, ruleName, StringComparison.Ordinal)))
+            {
+                if (string.IsNullOrWhiteSpace(rule.MatchRegex)) continue;
+
+                IDictionary<string, string> parentFields;
+                if (!regexParser.TryParse(rawCode, rule.MatchRegex, out parentFields)) continue;
+
+                List<LabelCodeRuleSubInfo> subRules = rule.RuleId.HasValue
+                    ? subRuleService.GetLabelCodeRuleSubsByRuleId(rule.RuleId.Value)
+                    : new List<LabelCodeRuleSubInfo>();
+                subRules = subRules == null
+                    ? new List<LabelCodeRuleSubInfo>()
+                    : subRules.Where(x => x != null && (!x.Enabled.HasValue || x.Enabled.Value))
+                        .OrderBy(x => x.SortNo ?? 0)
+                        .ThenBy(x => x.SubRuleId ?? 0)
+                        .ToList();
+
+                if (subRules.Count == 0) continue;
+
+                string itemText = GetFieldValue(parentFields, "ItemList");
+                if (string.IsNullOrWhiteSpace(itemText))
+                {
+                    itemText = rawCode;
+                }
+
+                foreach (LabelCodeRuleSubInfo subRule in subRules)
+                {
+                    List<PartInfo> parsed = ParseSubRuleItems(itemText, rawCode, rule, subRule);
+                    if (parsed.Count > 0) return parsed;
+                }
+            }
+
+            return result;
+        }
+
+        private static List<PartInfo> ParseSubRuleItems(
+            string itemText,
+            string rawCode,
+            LabelCodeRuleInfo rule,
+            LabelCodeRuleSubInfo subRule)
+        {
+            List<PartInfo> result = new List<PartInfo>();
+            if (string.IsNullOrWhiteSpace(itemText) || string.IsNullOrWhiteSpace(subRule.ItemRegex))
+                return result;
+
+            string[] itemTexts = string.IsNullOrWhiteSpace(subRule.ItemSeparator)
+                ? new[] { itemText }
+                : itemText.Split(new[] { subRule.ItemSeparator }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string currentItemText in itemTexts)
+            {
+                Match match;
+                try
+                {
+                    match = Regex.Match(currentItemText, subRule.ItemRegex, RegexOptions.CultureInvariant);
+                }
+                catch (ArgumentException)
+                {
+                    return new List<PartInfo>();
+                }
+
+                if (!match.Success || match.Length != currentItemText.Length) continue;
+
+                Group materialGroup = GetGroup(match, "MaterialNo", "CustomerMaterialNo");
+                Group qtyGroup = GetGroup(match, "Qty", "CustomerQty");
+                Group unitGroup = GetGroup(match, "Unit", "CustomerUnit");
+                Group batchGroup = GetGroup(match, "BatchNo", "CustomerBatchNo");
+                if (materialGroup == null || qtyGroup == null) continue;
+
+                List<Capture> materialCaptures = materialGroup.Captures.Cast<Capture>().ToList();
+                List<Capture> qtyCaptures = qtyGroup.Captures.Cast<Capture>().ToList();
+                List<Capture> unitCaptures = unitGroup == null
+                    ? new List<Capture>()
+                    : unitGroup.Captures.Cast<Capture>().ToList();
+                List<Capture> batchCaptures = batchGroup == null
+                    ? new List<Capture>()
+                    : batchGroup.Captures.Cast<Capture>().ToList();
+                int count = materialCaptures.Count;
+                if (count == 0 || qtyCaptures.Count != count) continue;
+
+                for (int index = 0; index < count; index++)
+                {
+                    decimal qty;
+                    if (!decimal.TryParse(qtyCaptures[index].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out qty)
+                        || qty <= 0)
+                    {
+                        return new List<PartInfo>();
+                    }
+
+                    result.Add(new PartInfo
+                    {
+                        MaterialNo = materialCaptures[index].Value,
+                        BatchNo = batchCaptures.Count > index ? batchCaptures[index].Value : string.Empty,
+                        Unit = unitCaptures.Count > index ? unitCaptures[index].Value : string.Empty,
+                        Qty = qty,
+                        LabelInfo = rawCode,
+                        BarcodeType = "CUSTOMER",
+                        RuleId = rule.RuleId,
+                        RuleName = rule.RuleName
+                    });
+                }
+                return result;
+            }
+
+            return result;
+        }
+
+        private static Group GetGroup(Match match, params string[] names)
+        {
+            foreach (string name in names)
+            {
+                Group group = match.Groups[name];
+                if (group != null && group.Success) return group;
+            }
             return null;
         }
 

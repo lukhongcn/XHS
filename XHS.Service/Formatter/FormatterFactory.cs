@@ -27,7 +27,7 @@ namespace XHS.service.Formatter
 
         public ICodeFormatter Get(
             BarcodeFieldRule field,
-            Func<DateTime, int> getPrintCount)
+            Func<DateTime, string, int> getPrintCount)
         {
             if (field == null)
             {

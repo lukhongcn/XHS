@@ -22,6 +22,8 @@ namespace XHS.IDAL
 
         int GetPrintCount(string printType, System.DateTime printTime);
 
+        int GetPrintCount(string printType, System.DateTime printTime, string partNo);
+
         int GetPrintCount(System.DateTime printTime);
 
         List<PrintRecordInfo> LockPendingPrintRecords(string machineId, int maxCount, int lockTimeoutMinutes);

@@ -136,6 +136,34 @@ namespace XHS.MSSQL
             return _getPrintCount(queryString, parameters);
         }
 
+        public int GetPrintCount(string printType, DateTime printTime, string partNo)
+        {
+            DateTime dateStart = printTime.Date;
+            DateTime dateEnd = dateStart.AddDays(1);
+            string queryString =
+                "select isnull(sum(PrintCount), 0) as PrintCount " +
+                "from tb_PrintRecord " +
+                "where PrintType=@PrintType " +
+                "and PartNo=@PartNo " +
+                "and PrintTime>=@DateStart " +
+                "and PrintTime<@DateEnd";
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@PrintType", SqlDbType.NVarChar, 20)
+                {
+                    Value = (object)(printType ?? string.Empty).Trim()
+                },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50)
+                {
+                    Value = (object)(partNo ?? string.Empty).Trim()
+                },
+                new SqlParameter("@DateStart", SqlDbType.DateTime) { Value = dateStart },
+                new SqlParameter("@DateEnd", SqlDbType.DateTime) { Value = dateEnd }
+            };
+
+            return _getPrintCount(queryString, parameters);
+        }
+
         public int GetPrintCount(DateTime printTime)
         {
             DateTime dateStart = printTime.Date;
