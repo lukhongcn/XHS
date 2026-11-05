@@ -35,6 +35,10 @@
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="BLL">
+      <HintPath>..\XHSWorkFlow\bin\BLL.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\lib\NPOI\ICSharpCode.SharpZipLib.dll</HintPath>
@@ -50,6 +54,21 @@
     <Reference Include="System.Xml" />
     <Reference Include="ModuleWorkFlow.Model">
       <HintPath>..\business\bin\Debug\ModuleWorkFlow.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.BLL.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.BLL.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.DALFactory.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.DALFactory.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.IDAL.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.IDAL.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.Model.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.Model.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.MsSQL.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.MsSQL.Standard.dll</HintPath>
     </Reference>
     <Reference Include="NPOI">
       <HintPath>..\lib\NPOI\NPOI.dll</HintPath>
@@ -75,6 +94,7 @@
     <Compile Include="PackingException.cs" />
     <Compile Include="PackingOperationResult.cs" />
     <Compile Include="PackingOperationService.cs" />
+    <Compile Include="PartProcessService.cs" />
     <Compile Include="PackingRecord.cs" />
     <Compile Include="DeliveryUploadRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />
