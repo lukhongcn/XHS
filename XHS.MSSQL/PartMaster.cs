@@ -15,7 +15,7 @@ namespace XHS.MSSQL
     public class PartMaster : IPartMaster
     {
         private const string SelectColumns =
-            "PartMasterId,JHSPartNo,CustomerMaterialNo,CustomerAbbr,CustomerMaterialNo as MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark";
+            "PartMasterId,JHSPartNo,CustomerMaterialNo,CustomerAbbr,CustomerMaterialNo as MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark,BatchNo";
 
         public List<PartMasterInfo> GetPartMasters()
         {
@@ -106,8 +106,8 @@ namespace XHS.MSSQL
         public ParamterInfo InsertPartMasters(List<PartMasterInfo> infos)
         {
             const string sql =
-                "insert into tb_PartMaster (JHSPartNo,CustomerMaterialNo,CustomerAbbr,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark) " +
-                "values (@JHSPartNo,@CustomerMaterialNo,@CustomerAbbr,@MaterialName,@ProcessType,@LabelInfo,@HasSteelStamp,@LabelFormat,@SortOrder,@Remark)";
+                "insert into tb_PartMaster (JHSPartNo,CustomerMaterialNo,CustomerAbbr,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark,BatchNo) " +
+                "values (@JHSPartNo,@CustomerMaterialNo,@CustomerAbbr,@MaterialName,@ProcessType,@LabelInfo,@HasSteelStamp,@LabelFormat,@SortOrder,@Remark,@BatchNo)";
             return BuildParamterInfo(infos, sql, BuildInsertParameters);
         }
 
@@ -116,7 +116,7 @@ namespace XHS.MSSQL
             const string sql =
                 "update tb_PartMaster set JHSPartNo=@JHSPartNo,CustomerMaterialNo=@CustomerMaterialNo,CustomerAbbr=@CustomerAbbr,MaterialName=@MaterialName," +
                 "ProcessType=@ProcessType,LabelInfo=@LabelInfo,HasSteelStamp=@HasSteelStamp,LabelFormat=@LabelFormat," +
-                "SortOrder=@SortOrder,Remark=@Remark where PartMasterId=@PartMasterId";
+                "SortOrder=@SortOrder,Remark=@Remark,BatchNo=@BatchNo where PartMasterId=@PartMasterId";
             return BuildParamterInfo(infos, sql, BuildUpdateParameters);
         }
 
@@ -160,7 +160,8 @@ namespace XHS.MSSQL
                     HasSteelStamp = row.IsNull("HasSteelStamp") ? null : Convert.ToString(row["HasSteelStamp"]),
                     LabelFormat = row.IsNull("LabelFormat") ? null : Convert.ToString(row["LabelFormat"]),
                     SortOrder = row.IsNull("SortOrder") ? (int?)null : Convert.ToInt32(row["SortOrder"]),
-                    Remark = row.IsNull("Remark") ? null : Convert.ToString(row["Remark"])
+                    Remark = row.IsNull("Remark") ? null : Convert.ToString(row["Remark"]),
+                    BatchNo = row.IsNull("BatchNo") ? null : Convert.ToString(row["BatchNo"])
                 });
             }
 
@@ -214,7 +215,8 @@ namespace XHS.MSSQL
                 new SqlParameter("@HasSteelStamp", SqlDbType.VarChar, 10) { Value = ToDbValue(info.HasSteelStamp) },
                 new SqlParameter("@LabelFormat", SqlDbType.NVarChar, 10) { Value = ToDbValue(info.LabelFormat) },
                 new SqlParameter("@SortOrder", SqlDbType.Int) { Value = ToDbValue(info.SortOrder) },
-                new SqlParameter("@Remark", SqlDbType.NVarChar, 200) { Value = ToDbValue(info.Remark) }
+                new SqlParameter("@Remark", SqlDbType.NVarChar, 200) { Value = ToDbValue(info.Remark) },
+                new SqlParameter("@BatchNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.BatchNo) }
             };
         }
 
@@ -232,7 +234,8 @@ namespace XHS.MSSQL
                 new SqlParameter("@HasSteelStamp", SqlDbType.VarChar, 10) { Value = ToDbValue(info.HasSteelStamp) },
                 new SqlParameter("@LabelFormat", SqlDbType.NVarChar, 10) { Value = ToDbValue(info.LabelFormat) },
                 new SqlParameter("@SortOrder", SqlDbType.Int) { Value = ToDbValue(info.SortOrder) },
-                new SqlParameter("@Remark", SqlDbType.NVarChar, 200) { Value = ToDbValue(info.Remark) }
+                new SqlParameter("@Remark", SqlDbType.NVarChar, 200) { Value = ToDbValue(info.Remark) },
+                new SqlParameter("@BatchNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.BatchNo) }
             };
         }
 

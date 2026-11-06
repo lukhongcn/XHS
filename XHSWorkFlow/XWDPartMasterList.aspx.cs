@@ -93,6 +93,7 @@ namespace ModuleWorkFlow
 
             int partMasterId = Convert.ToInt32(MainDataGrid.DataKeys[e.Item.ItemIndex]);
             TextBox remarkTextBox = (TextBox)e.Item.FindControl("TextBox_Remark");
+            TextBox batchNoTextBox = (TextBox)e.Item.FindControl("TextBox_BatchNo");
             PartMaster partMaster = new PartMaster();
             PartMasterInfo partMasterInfo = partMaster.GetPartMaster(partMasterId);
             if (partMasterInfo == null)
@@ -102,6 +103,7 @@ namespace ModuleWorkFlow
             }
 
             partMasterInfo.Remark = remarkTextBox == null ? string.Empty : remarkTextBox.Text.Trim();
+            partMasterInfo.BatchNo = batchNoTextBox == null ? string.Empty : batchNoTextBox.Text.Trim();
             string message = partMaster.UpdatePartMasters(new List<PartMasterInfo> { partMasterInfo });
             if (!string.IsNullOrWhiteSpace(message))
             {
@@ -111,7 +113,7 @@ namespace ModuleWorkFlow
 
             MainDataGrid.EditItemIndex = -1;
             BindData();
-            ShowMessage("版本号修改成功。");
+            ShowMessage("版本号和批次号修改成功。");
         }
 
         private void BindData()

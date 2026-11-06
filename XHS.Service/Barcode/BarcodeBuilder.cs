@@ -13,9 +13,14 @@ namespace XHS.service.Barcode
     {
         private readonly Func<DateTime, string, int> getPrintCount;
         private readonly BarcodeDesignerJsonRuleLoader ruleLoader = new BarcodeDesignerJsonRuleLoader();
-        private readonly FormatterFactory formatterFactory = new FormatterFactory();
+        private readonly FormatterFactory formatterFactory;
 
         public BarcodeBuilder(Func<DateTime, string, int> getPrintCount)
+            : this(getPrintCount, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config"))
+        {
+        }
+
+        public BarcodeBuilder(Func<DateTime, string, int> getPrintCount, string formatterConfigDirectory)
         {
             if (getPrintCount == null)
             {
@@ -23,6 +28,7 @@ namespace XHS.service.Barcode
             }
 
             this.getPrintCount = getPrintCount;
+            formatterFactory = new FormatterFactory(formatterConfigDirectory);
         }
 
         public DataTable Build(

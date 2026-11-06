@@ -1,4 +1,4 @@
-﻿<%@ Page Language="c#" CodeBehind="XWDPartMasterList.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.XWDPartMasterList" MasterPageFile="~/DefaultSub.Master" %>
+﻿<%@ Page Language="c#" CodePage="65001" CodeBehind="XWDPartMasterList.aspx.cs" AutoEventWireup="false" Inherits="ModuleWorkFlow.XWDPartMasterList" MasterPageFile="~/DefaultSub.Master" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="contentHolder" runat="server">
     <div id="Wrapper">
@@ -78,6 +78,14 @@
                                     </ItemTemplate>
                                     <EditItemTemplate>
                                         <asp:TextBox ID="TextBox_Remark" runat="server" Text='<%# Bind("Remark") %>' CssClass="form-control"></asp:TextBox>
+                                    </EditItemTemplate>
+                                </asp:TemplateColumn>
+                                <asp:TemplateColumn HeaderText="批次号">
+                                    <ItemTemplate>
+                                        <%# Eval("BatchNo") %>
+                                    </ItemTemplate>
+                                    <EditItemTemplate>
+                                        <asp:TextBox ID="TextBox_BatchNo" runat="server" Text='<%# Bind("BatchNo") %>' CssClass="form-control" MaxLength="50"></asp:TextBox>
                                     </EditItemTemplate>
                                 </asp:TemplateColumn>
                                 <asp:EditCommandColumn HeaderText="操作" EditText="编辑" UpdateText="保存" CancelText="取消"></asp:EditCommandColumn>

@@ -20,7 +20,6 @@ namespace BarcodeDesigner
 {
     public sealed class MainForm : Form
     {
-        private const string PrintTypeXwdLabel = "欣旺达标签";
         private readonly Dictionary<string, Control> fieldControls = new Dictionary<string, Control>(StringComparer.OrdinalIgnoreCase);
         private readonly TableLayoutPanel fieldLayout = new TableLayoutPanel();
         private readonly Label statusLabel = new Label();
@@ -30,13 +29,17 @@ namespace BarcodeDesigner
         private readonly BarcodeBuilder barcodeBuilder;
         private readonly UserFieldValuesStore userFieldValuesStore = new UserFieldValuesStore();
         private readonly string loginUserName;
+        private readonly BarcodeCustomerProfile customerProfile;
         private ICodeFormatter serialNumberFormatter;
         private BarcodeRule currentRule;
 
-        public MainForm(string loginUserName)
+        public MainForm(string loginUserName, BarcodeCustomerProfile customerProfile)
         {
             this.loginUserName = string.IsNullOrWhiteSpace(loginUserName) ? Environment.UserName : loginUserName;
-            barcodeBuilder = new BarcodeBuilder(GetXwdLabelPrintCount);
+            this.customerProfile = customerProfile ?? throw new ArgumentNullException(nameof(customerProfile));
+            barcodeBuilder = new BarcodeBuilder(
+                GetXwdLabelPrintCount,
+                ResolveConfigPath(customerProfile.FormatterConfigDirectory));
             InitializeForm();
             LoadRuleAndBuildUi();
             FormClosed += MainForm_FormClosed;
@@ -69,14 +72,14 @@ namespace BarcodeDesigner
         {
             try
             {
-                string schemaFile = ConfigurationManager.AppSettings["BarcodeRuleSchemaFile"];
+                string schemaFile = customerProfile.UiJsonName;
                 if (string.IsNullOrWhiteSpace(schemaFile))
                 {
                     throw new ConfigurationErrorsException(
-                        "App.config 缺少 BarcodeRuleSchemaFile 配置。" );
+                        "客户配置缺少 UI JSON 文件名。" );
                 }
 
-                string schemaPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, schemaFile);
+                string schemaPath = ResolveConfigPath(schemaFile);
                 BarcodeRule rule = new BarcodeDesignerJsonRuleLoader().LoadBarcodeRule(schemaPath);
                 BuildUi(rule);
             }
@@ -111,7 +114,8 @@ namespace BarcodeDesigner
                 throw new InvalidOperationException("界面配置缺少 SerialNo 字段。" );
             }
 
-            serialNumberFormatter = new FormatterFactory().Get(
+            serialNumberFormatter = new FormatterFactory(
+                    ResolveConfigPath(customerProfile.FormatterConfigDirectory)).Get(
                 serialField,
                 GetXwdLabelPrintCount);
 
@@ -206,7 +210,7 @@ namespace BarcodeDesigner
         {
             if (string.Equals(field.Name, "PartNo", StringComparison.OrdinalIgnoreCase))
             {
-                ComboBox comboBox = CreatePartNoComboBox(field);
+                ComboBox comboBox = CreatePartNoComboBox(field, customerProfile.CustomerAbbr);
                 comboBox.SelectedValueChanged += PartNoComboBox_SelectedValueChanged;
                 comboBox.SelectedIndexChanged += PartNoComboBox_SelectedValueChanged;
                 return comboBox;
@@ -249,10 +253,10 @@ namespace BarcodeDesigner
             };
         }
 
-        private static ComboBox CreatePartNoComboBox(BarcodeFieldRule field)
+        private static ComboBox CreatePartNoComboBox(BarcodeFieldRule field, string customerAbbr)
         {
             List<XHS.Model.PartMasterInfo> parts = new XHS.BLL.PartMaster()
-                .GetPartByCustomerAbbr("XWD");
+                .GetPartByCustomerAbbr(customerAbbr);
 
             ComboBox comboBox = new ComboBox
             {
@@ -280,11 +284,14 @@ namespace BarcodeDesigner
         {
             Control partNoControl;
             Control drawingVersionControl;
-            if (!fieldControls.TryGetValue("PartNo", out partNoControl)
-                || !fieldControls.TryGetValue("DrawingVersion", out drawingVersionControl))
+            Control batchNoControl;
+            if (!fieldControls.TryGetValue("PartNo", out partNoControl))
             {
                 return;
             }
+
+            fieldControls.TryGetValue("DrawingVersion", out drawingVersionControl);
+            fieldControls.TryGetValue("BatchNo", out batchNoControl);
 
             ComboBox partNoComboBox = partNoControl as ComboBox;
             string selectedPartNo = partNoComboBox == null
@@ -320,9 +327,19 @@ namespace BarcodeDesigner
                         StringComparison.OrdinalIgnoreCase));
             }
 
-            drawingVersionControl.Text = selectedPart == null
-                ? string.Empty
-                : (selectedPart.Remark ?? string.Empty).Trim();
+            if (drawingVersionControl != null)
+            {
+                drawingVersionControl.Text = selectedPart == null
+                    ? string.Empty
+                    : (selectedPart.Remark ?? string.Empty).Trim();
+            }
+
+            if (batchNoControl != null)
+            {
+                batchNoControl.Text = selectedPart == null
+                    ? string.Empty
+                    : (selectedPart.BatchNo ?? string.Empty).Trim();
+            }
         }
 
         private static string GetDefaultValue(BarcodeFieldRule field)
@@ -351,7 +368,7 @@ namespace BarcodeDesigner
             try
             {
                 int quantity = GetGenerateQuantity();
-                string schemaFile = ConfigurationManager.AppSettings["BarcodeRuleSchemaFile"];
+                string schemaFile = customerProfile.UiJsonName;
                 DataTable result = barcodeBuilder.Build(
                     schemaFile,
                     CollectFieldValues(),
@@ -379,48 +396,24 @@ namespace BarcodeDesigner
             }
         }
 
-        private static string GenerateZplFile(DataTable barcodeResult)
+        private string GenerateZplFile(DataTable barcodeResult)
         {
-            string templateFile = ConfigurationManager.AppSettings["ZplTemplateFile"];
             string outputFile = ConfigurationManager.AppSettings["ZplOutputFile"];
-            if (string.IsNullOrWhiteSpace(templateFile))
-            {
-                throw new ConfigurationErrorsException("App.config 缺少 ZplTemplateFile 配置。");
-            }
             if (string.IsNullOrWhiteSpace(outputFile))
             {
                 throw new ConfigurationErrorsException("App.config 缺少 ZplOutputFile 配置。");
             }
 
-            string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, templateFile);
+            string printRulePath = ResolveConfigPath(customerProfile.PrintRuleFile);
+            BarcodePrintRule printRule = BarcodePrintRuleLoader.Load(printRulePath);
+            string templatePath = ResolveConfigPath(printRule.TemplateFile);
             string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, outputFile);
             StringBuilder zpl = new StringBuilder();
             ZplGenerator generator = new ZplGenerator();
 
             foreach (DataRow row in barcodeResult.Rows)
             {
-                string barcode = Convert.ToString(row["Barcode"]);
-                string partNo = Convert.ToString(row["PartNo"]);
-                string supplierCode = Convert.ToString(row["SupplierCode"]);
-                if (supplierCode.Length < 2)
-                {
-                    throw new InvalidOperationException("供应商代号长度不能少于 2 位。");
-                }
-
-                // 按标签样式分成两行：第一行比 PartNo 多显示供应商代号前两位，
-                // 第二行显示供应商代号剩余部分以及日期、版本、批次和序列号。
-                string firstLine = partNo + supplierCode.Substring(0, 2);
-                string secondLine = supplierCode.Substring(2)
-                    + Convert.ToString(row["ProductionDate"])
-                    + Convert.ToString(row["DrawingVersion"])
-                    + Convert.ToString(row["BatchNo"])
-                    + Convert.ToString(row["SerialNo"]);
-                List<string> values = new List<string>
-                {
-                    barcode,
-                    firstLine,
-                    secondLine
-                };
+                List<string> values = BuildPrintValues(row, printRule);
 
                 ZplResult generated = generator.Generate(templatePath, values);
                 if (!generated.Success)
@@ -443,6 +436,55 @@ namespace BarcodeDesigner
 
             File.WriteAllText(outputPath, zpl.ToString(), Encoding.UTF8);
             return outputPath;
+        }
+
+        private static string ResolveConfigPath(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                throw new ConfigurationErrorsException("标签配置文件名不能为空。");
+            }
+
+            return Path.IsPathRooted(fileName)
+                ? fileName
+                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+        }
+
+        private static List<string> BuildPrintValues(DataRow row, BarcodePrintRule printRule)
+        {
+            var values = new List<string>();
+            foreach (BarcodePrintValueRule valueRule in printRule.Values)
+            {
+                var value = new StringBuilder();
+                foreach (BarcodePrintValuePart part in valueRule.Parts)
+                {
+                    if (!row.Table.Columns.Contains(part.Field))
+                    {
+                        throw new InvalidOperationException("打印规则字段不存在：" + part.Field);
+                    }
+
+                    string fieldValue = Convert.ToString(row[part.Field]) ?? string.Empty;
+                    int start = part.Start ?? 0;
+                    if (start > fieldValue.Length)
+                    {
+                        throw new InvalidOperationException(
+                            "打印规则字段截取位置超出范围：" + part.Field);
+                    }
+
+                    int length = part.Length ?? fieldValue.Length - start;
+                    if (start + length > fieldValue.Length)
+                    {
+                        throw new InvalidOperationException(
+                            "打印规则字段截取长度超出范围：" + part.Field);
+                    }
+
+                    value.Append(fieldValue.Substring(start, length));
+                }
+
+                values.Add(value.ToString());
+            }
+
+            return values;
         }
 
         private static void PrintZplFile(string zplFile)
@@ -491,7 +533,7 @@ namespace BarcodeDesigner
                 PartNo = partNo,
                 CartonNo = string.Empty,
                 MachineId = Environment.MachineName,
-                PrintType = PrintTypeXwdLabel,
+                PrintType = customerProfile.CustomerName + "标签",
                 LocalPath = zplFile,
                 Status = PrintRecordStatusInfo.Completed,
                 PrintCount = barcodeResult.Rows.Count,
@@ -529,7 +571,8 @@ namespace BarcodeDesigner
                 return;
             }
 
-            serialNumberFormatter = new FormatterFactory().Get(
+            serialNumberFormatter = new FormatterFactory(
+                    ResolveConfigPath(customerProfile.FormatterConfigDirectory)).Get(
                 serialField,
                 GetXwdLabelPrintCount);
             Control partNoControl;
@@ -543,7 +586,7 @@ namespace BarcodeDesigner
 
         private int GetXwdLabelPrintCount(DateTime printTime, string partNo)
         {
-            return printRecord.GetPrintCount(PrintTypeXwdLabel, printTime, partNo);
+            return printRecord.GetPrintCount(customerProfile.CustomerName + "标签", printTime, partNo);
         }
 
         private IDictionary<string, object> CollectFieldValues()

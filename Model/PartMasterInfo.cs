@@ -33,5 +33,7 @@ namespace XHS.Model
         public int? SortOrder { get; set; }
 
         public string Remark { get; set; }
+
+        public string BatchNo { get; set; }
     }
 }

@@ -42,14 +42,14 @@ namespace XHS.service.Formatter
 
             if (string.Equals(formatter, "XinWangDaDrawingRevision", StringComparison.OrdinalIgnoreCase))
             {
-                string configPath = Path.Combine(configDirectory, "XinWangDaDrawingRevision.json");
+                string configPath = GetConfigPath("DrawingRevision.json", "XinWangDaDrawingRevision.json");
                 return new DrawingRevisionCodeFormatter(configPath);
             }
 
             if (string.Equals(formatter, "XinWangDaDate", StringComparison.OrdinalIgnoreCase))
             {
                 return new XinWangDaDateCodeProvider(
-                    Path.Combine(configDirectory, "XinWangDaDate.json"));
+                    GetConfigPath("Date.json", "XinWangDaDate.json"));
             }
 
             if (string.Equals(formatter, "DailySerialNumber", StringComparison.OrdinalIgnoreCase))
@@ -72,6 +72,14 @@ namespace XHS.service.Formatter
             }
 
             throw new NotSupportedException("不支持的 Formatter：" + formatter);
+        }
+
+        private string GetConfigPath(string customerFileName, string legacyFileName)
+        {
+            string customerPath = Path.Combine(configDirectory, customerFileName);
+            return File.Exists(customerPath)
+                ? customerPath
+                : Path.Combine(configDirectory, legacyFileName);
         }
     }
 }

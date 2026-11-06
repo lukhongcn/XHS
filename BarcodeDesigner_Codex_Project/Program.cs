@@ -17,7 +17,7 @@ namespace BarcodeDesigner
                     return;
                 }
 
-                Application.Run(new MainForm(loginForm.LoginUserName));
+                Application.Run(new MainForm(loginForm.LoginUserName, loginForm.SelectedCustomer));
             }
         }
     }

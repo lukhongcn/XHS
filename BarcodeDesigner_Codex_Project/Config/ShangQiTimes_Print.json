@@ -1,0 +1,28 @@
+{
+  "TemplateFile": "Config\\SmallQRCode30x30.json",
+  "Values": [
+    {
+      "Name": "Barcode",
+      "Parts": [
+        { "Field": "Barcode" }
+      ]
+    },
+    {
+      "Name": "FirstLine",
+      "Parts": [
+        { "Field": "PartNo" },
+        { "Field": "SupplierCode", "Start": 0, "Length": 2 }
+      ]
+    },
+    {
+      "Name": "SecondLine",
+      "Parts": [
+        { "Field": "SupplierCode", "Start": 2 },
+        { "Field": "ProductionDate" },
+        { "Field": "DrawingVersion" },
+        { "Field": "BatchNo" },
+        { "Field": "SerialNo" }
+      ]
+    }
+  ]
+}
