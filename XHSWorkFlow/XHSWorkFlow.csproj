@@ -156,6 +156,13 @@
     <Compile Include="XWDPartMasterList.aspx.designer.cs">
       <DependentUpon>XWDPartMasterList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PartProcessList.aspx.cs">
+      <DependentUpon>PartProcessList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PartProcessList.aspx.designer.cs">
+      <DependentUpon>PartProcessList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -342,6 +349,7 @@
     <Content Include="GSPartMasterUpload.aspx" />
     <Content Include="GSPartMasterList.aspx" />
     <Content Include="XWDPartMasterList.aspx" />
+    <Content Include="PartProcessList.aspx" />
     <Content Include="Login.aspx" />
     <Content Include="middle.aspx" />
     <Content Include="api\print\pending.ashx" />
@@ -366,6 +374,11 @@
     <Content Include="ShippingGoodsUpload.aspx" />
     <Content Include="ShippingGoodsView.aspx" />
     <Content Include="Web.config" />
+    <Content Include="Config\BarcodeCustomers.json" />
+    <Content Include="Config\XWD\Date.json" />
+    <Content Include="Config\XWD\UI.json" />
+    <Content Include="Config\SAIC\Date.json" />
+    <Content Include="Config\SAIC\UI.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BLL\XHS.BLL.csproj">
@@ -391,6 +404,10 @@
     <ProjectReference Include="..\Utility\Utility.csproj">
       <Project>{421f17d9-9d55-4e8e-a292-3857605ae16d}</Project>
       <Name>Utility</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\XHS.Service\XHS.Service.csproj">
+      <Project>{A9CFB7A9-1D91-4D62-BD74-9D6D0E1C9D3A}</Project>
+      <Name>XHS.Service</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

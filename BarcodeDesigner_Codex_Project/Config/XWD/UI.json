@@ -1,7 +1,7 @@
 {
     "RuleName": "XinWangDaBattery",
     "Description": "欣旺达汽车电池标签",
-    "BarcodeLength": 28,
+    "BarcodeLength": 29,
     "Fields": [
         {
             "Name": "PartNo",
@@ -41,25 +41,12 @@
         {
             "Name": "DrawingVersion",
             "Description": "图纸版本",
-            "Length": 1,
+            "Length": 3,
             "Source": "Input",
-            "Formatter": "XinWangDaDrawingRevision",
             "RememberLastValue": true,
             "UI": {
                 "Order": 4,
                 "Width": 80
-            }
-        },
-        {
-            "Name": "BatchNo",
-            "Description": "批次号",
-            "Length": 1,
-            "Source": "Input",
-            "RememberLastValue": false,
-            "UI": {
-                "Order": 5,
-                "Width": 80,
-                "ReadOnly": true
             }
         },
         {
@@ -74,7 +61,7 @@
             "Format": "00000",
             "RememberLastValue": false,
             "UI": {
-                "Order": 6,
+                "Order": 5,
                 "Width": 100,
                 "DefaultValue": "00001",
                 "ReadOnly": true
@@ -88,7 +75,7 @@
             "IncludeInBarcode": false,
             "RememberLastValue": true,
             "UI": {
-                "Order": 7,
+                "Order": 6,
                 "Width": 100,
                 "DefaultValue": "1"
             }

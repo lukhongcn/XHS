@@ -20,6 +20,8 @@ namespace BarcodeDesigner
     public sealed class BarcodePrintValuePart
     {
         public string Field { get; set; }
+        public string Value { get; set; }
+        public string DateFormat { get; set; }
         public int? Start { get; set; }
         public int? Length { get; set; }
     }
@@ -57,9 +59,12 @@ namespace BarcodeDesigner
 
                 foreach (BarcodePrintValuePart part in valueRule.Parts)
                 {
-                    if (part == null || string.IsNullOrWhiteSpace(part.Field))
+                    if (part == null
+                        || (string.IsNullOrWhiteSpace(part.Field)
+                            && string.IsNullOrWhiteSpace(part.Value)
+                            && string.IsNullOrWhiteSpace(part.DateFormat)))
                     {
-                        throw new InvalidDataException("标签打印规则中存在无效字段：" + filePath);
+                        throw new InvalidDataException("标签打印规则中存在无效字段或固定值：" + filePath);
                     }
 
                     if (part.Start.HasValue && part.Start.Value < 0)

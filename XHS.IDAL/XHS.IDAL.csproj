@@ -48,6 +48,7 @@
     <Compile Include="IPackingScanRecord.cs" />
     <Compile Include="IPackingUnboundScanRecord.cs" />
     <Compile Include="IPartMaster.cs" />
+    <Compile Include="IXHSPartPartProcess.cs" />
     <Compile Include="IPrintRecord.cs" />
     <Compile Include="IReprintReason.cs" />
     <Compile Include="ILabelCodeRuleField.cs" />

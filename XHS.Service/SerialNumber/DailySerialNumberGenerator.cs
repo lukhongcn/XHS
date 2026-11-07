@@ -37,8 +37,8 @@ namespace XHS.service.SerialNumber
             }
 
             this.getPrintCount = getPrintCount;
-            this.initialValue = ParseInitialValue(initialValue);
             this.format = ValidateFormat(format);
+            this.initialValue = ParseInitialValue(initialValue, this.format.Length);
         }
 
         public string Name
@@ -72,9 +72,10 @@ namespace XHS.service.SerialNumber
                 currentPartNo = input.PartNo;
             }
 
-            if (nextNumber > 99999)
+            if (nextNumber > GetMaximumValue(format.Length))
             {
-                throw new InvalidOperationException("当天序列号已超过 5 位数字范围：" + nextNumber);
+                throw new InvalidOperationException(
+                    "当天序列号已超过 " + format.Length + " 位数字范围：" + nextNumber);
             }
 
             return (nextNumber++).ToString(format);
@@ -91,17 +92,18 @@ namespace XHS.service.SerialNumber
             return code.Trim();
         }
 
-        private static int ParseInitialValue(string value)
+        private static int ParseInitialValue(string value, int expectedLength)
         {
             int result;
             if (string.IsNullOrWhiteSpace(value)
-                || value.Trim().Length != 5
+                || value.Trim().Length != expectedLength
                 || !int.TryParse(value.Trim(), out result)
                 || result < 0
-                || result > 99999)
+                || result > GetMaximumValue(expectedLength))
             {
                 throw new FormatException(
-                    "序列号 InitialValue 必须是 5 位数字，例如 00001。当前值：" + value);
+                    "序列号 InitialValue 必须是 " + expectedLength
+                    + " 位数字。当前值：" + value);
             }
 
             return result;
@@ -111,12 +113,18 @@ namespace XHS.service.SerialNumber
         {
             if (string.IsNullOrWhiteSpace(value)
                 || value.Trim().Length == 0
+                || value.Trim().Length > 9
                 || value.Trim().Trim('0').Length != 0)
             {
                 throw new FormatException("序列号 Format 必须是全 0 格式，例如 00000。当前值：" + value);
             }
 
             return value.Trim();
+        }
+
+        private static int GetMaximumValue(int length)
+        {
+            return (int)Math.Pow(10, length) - 1;
         }
     }
 }

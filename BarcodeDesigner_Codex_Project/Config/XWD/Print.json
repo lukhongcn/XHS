@@ -1,5 +1,5 @@
 {
-  "TemplateFile": "Config\\SmallQRCode30x30.json",
+  "TemplateFile": "Config\\XWD\\SmallQRCode30x30.json",
   "Values": [
     {
       "Name": "Barcode",
@@ -20,11 +20,8 @@
         { "Field": "SupplierCode", "Start": 2 },
         { "Field": "ProductionDate" },
         { "Field": "DrawingVersion" },
-        { "Field": "BatchNo" },
         { "Field": "SerialNo" }
       ]
     }
   ]
 }
-
-

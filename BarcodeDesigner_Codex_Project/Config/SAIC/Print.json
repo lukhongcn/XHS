@@ -1,5 +1,5 @@
 {
-  "TemplateFile": "Config\\SmallQRCode30x30.json",
+  "TemplateFile": "Config\\SAIC\\SmallQRCode30x30.json",
   "Values": [
     {
       "Name": "Barcode",
@@ -8,23 +8,35 @@
       ]
     },
     {
-      "Name": "FirstLine",
+      "Name": "CompanyName",
       "Parts": [
-        { "Field": "PartNo" },
-        { "Field": "SupplierCode", "Start": 0, "Length": 2 }
+        { "Value": "苏州金鸿顺汽车部件股份有限公司" }
       ]
     },
     {
-      "Name": "SecondLine",
+      "Name": "ProjectName",
       "Parts": [
-        { "Field": "SupplierCode", "Start": 2 },
-        { "Field": "ProductionDate" },
-        { "Field": "DrawingVersion" },
-        { "Field": "BatchNo" },
+        { "Value": "IP5PM" }
+      ]
+    },
+    {
+      "Name": "ProductionDateText",
+      "Parts": [
+        { "DateFormat": "yyyy/MM/dd" }
+      ]
+    },
+    {
+      "Name": "SerialNoText",
+      "Parts": [
         { "Field": "SerialNo" }
+      ]
+    },
+    {
+      "Name": "PartAndVersion",
+      "Parts": [
+        { "Field": "PartNo" },
+        { "Field": "DrawingVersion" }
       ]
     }
   ]
 }
-
-

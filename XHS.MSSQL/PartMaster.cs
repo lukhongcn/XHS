@@ -15,7 +15,7 @@ namespace XHS.MSSQL
     public class PartMaster : IPartMaster
     {
         private const string SelectColumns =
-            "PartMasterId,JHSPartNo,CustomerMaterialNo,CustomerAbbr,CustomerMaterialNo as MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark,BatchNo";
+            "PartMasterId,JHSPartNo,CustomerMaterialNo,CustomerAbbr,CustomerMaterialNo as MaterialNo,MaterialName,ProcessType,LabelInfo,HasSteelStamp,LabelFormat,SortOrder,Remark,BatchNo,standardProcessName";
 
         public List<PartMasterInfo> GetPartMasters()
         {
@@ -161,7 +161,10 @@ namespace XHS.MSSQL
                     LabelFormat = row.IsNull("LabelFormat") ? null : Convert.ToString(row["LabelFormat"]),
                     SortOrder = row.IsNull("SortOrder") ? (int?)null : Convert.ToInt32(row["SortOrder"]),
                     Remark = row.IsNull("Remark") ? null : Convert.ToString(row["Remark"]),
-                    BatchNo = row.IsNull("BatchNo") ? null : Convert.ToString(row["BatchNo"])
+                    BatchNo = row.IsNull("BatchNo") ? null : Convert.ToString(row["BatchNo"]),
+                    StandardProcessName = row.IsNull("standardProcessName")
+                        ? null
+                        : Convert.ToString(row["standardProcessName"])
                 });
             }
 

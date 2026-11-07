@@ -3,15 +3,15 @@
     "CustomerName": "欣旺达",
     "CustomerAbbr": "XWD",
     "UiJsonName": "Config\\XWD\\UI.json",
-    "MenuId": "B08",
+    "MenuId": "B09",
     "PrintRuleFile": "Config\\XWD\\Print.json",
     "FormatterConfigDirectory": "Config\\XWD"
   },
   {
     "CustomerName": "上汽时代",
-    "CustomerAbbr": "SAIC",
+    "CustomerAbbr": "SQSD",
     "UiJsonName": "Config\\SAIC\\UI.json",
-    "MenuId": "B08",
+    "MenuId": "B10",
     "PrintRuleFile": "Config\\SAIC\\Print.json",
     "FormatterConfigDirectory": "Config\\SAIC"
   }

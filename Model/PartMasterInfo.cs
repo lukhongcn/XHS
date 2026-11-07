@@ -35,5 +35,7 @@ namespace XHS.Model
         public string Remark { get; set; }
 
         public string BatchNo { get; set; }
+
+        public string StandardProcessName { get; set; }
     }
 }

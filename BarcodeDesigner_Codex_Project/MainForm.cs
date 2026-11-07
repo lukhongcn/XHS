@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -99,9 +100,11 @@ namespace BarcodeDesigner
         private void BuildUi(BarcodeRule rule)
         {
             currentRule = rule;
-            Text = rule.Ui == null || string.IsNullOrWhiteSpace(rule.Ui.FormTitle)
-                ? rule.Description ?? rule.RuleName
-                : rule.Ui.FormTitle;
+            Text = string.IsNullOrWhiteSpace(customerProfile.CustomerName)
+                ? (rule.Ui == null || string.IsNullOrWhiteSpace(rule.Ui.FormTitle)
+                    ? rule.Description ?? rule.RuleName
+                    : rule.Ui.FormTitle)
+                : customerProfile.CustomerName + "汽车电池标签";
 
             List<BarcodeFieldRule> fields = rule.Fields
                 .OrderBy(field => field.Ui == null ? int.MaxValue : field.Ui.Order)
@@ -374,6 +377,8 @@ namespace BarcodeDesigner
                     CollectFieldValues(),
                     quantity);
 
+                CreatePartProcesses(result);
+
                 barcodeGrid.DataSource = result;
                 if (result.Rows.Count > 0)
                 {
@@ -394,6 +399,49 @@ namespace BarcodeDesigner
                 statusLabel.ForeColor = Color.DarkRed;
                 statusLabel.Text = ex.Message;
             }
+        }
+
+        private void CreatePartProcesses(DataTable barcodeResult)
+        {
+            XHS.Model.PartMasterInfo selectedPart = GetSelectedPartMaster();
+            if (selectedPart == null)
+            {
+                throw new InvalidOperationException("请选择零件后再产生条码。");
+            }
+
+            if (string.IsNullOrWhiteSpace(selectedPart.StandardProcessName))
+            {
+                throw new InvalidOperationException(
+                    "零件未配置标准工艺：" + selectedPart.JHSPartNo);
+            }
+
+            List<string> labels = new List<string>();
+            foreach (DataRow row in barcodeResult.Rows)
+            {
+                labels.Add(Convert.ToString(row["Barcode"]));
+            }
+            int createdCount = new XHS.BLL.PartProcessService()
+                .CreateByStandardForLabels(
+                    customerProfile.CustomerAbbr,
+                    selectedPart.JHSPartNo,
+                    labels,
+                    selectedPart.StandardProcessName);
+
+            statusLabel.Text = string.Format("已生成 {0} 条条码工序。", createdCount);
+        }
+
+        private XHS.Model.PartMasterInfo GetSelectedPartMaster()
+        {
+            Control partNoControl;
+            if (!fieldControls.TryGetValue("PartNo", out partNoControl))
+            {
+                return null;
+            }
+
+            ComboBox partNoComboBox = partNoControl as ComboBox;
+            return partNoComboBox == null
+                ? null
+                : partNoComboBox.SelectedItem as XHS.Model.PartMasterInfo;
         }
 
         private string GenerateZplFile(DataTable barcodeResult)
@@ -458,6 +506,20 @@ namespace BarcodeDesigner
                 var value = new StringBuilder();
                 foreach (BarcodePrintValuePart part in valueRule.Parts)
                 {
+                    if (!string.IsNullOrWhiteSpace(part.Value))
+                    {
+                        value.Append(part.Value);
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(part.DateFormat))
+                    {
+                        value.Append(DateTime.Today.ToString(
+                            part.DateFormat,
+                            CultureInfo.InvariantCulture));
+                        continue;
+                    }
+
                     if (!row.Table.Columns.Contains(part.Field))
                     {
                         throw new InvalidOperationException("打印规则字段不存在：" + part.Field);
@@ -526,7 +588,9 @@ namespace BarcodeDesigner
             DateTime now = DateTime.Now;
             string currentUser = loginUserName;
             string partNo = Convert.ToString(barcodeResult.Rows[0]["PartNo"]);
-            string batchNo = Convert.ToString(barcodeResult.Rows[0]["BatchNo"]);
+            string batchNo = barcodeResult.Columns.Contains("BatchNo")
+                ? Convert.ToString(barcodeResult.Rows[0]["BatchNo"])
+                : string.Empty;
             PrintRecordInfo printRecordInfo = new PrintRecordInfo
             {
                 SupplyBatchNo = batchNo,
