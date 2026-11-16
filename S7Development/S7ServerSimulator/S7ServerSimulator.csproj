@@ -6,6 +6,10 @@
     <LangVersion>latest</LangVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <OutputPath>bin\Release\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="..\ThirdParty\Snap7\Win64\snap7.dll" Link="snap7.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

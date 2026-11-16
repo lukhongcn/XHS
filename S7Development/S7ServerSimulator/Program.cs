@@ -6,8 +6,9 @@ internal static class Program
 {
     private const string Snap7Library = "snap7.dll";
     private const int ServerDbArea = 5;
-    private const int HeartbeatDb = 51;
-    private const int HeartbeatOffset = 0;
+    private const int HeartbeatDb = 50;
+    private const int HeartbeatByteOffset = 266;
+    private const byte HeartbeatBitMask = 0x01;
     private const int HeartbeatIntervalMs = 1000;
 
     [DllImport(Snap7Library, CallingConvention = CallingConvention.Cdecl)] private static extern IntPtr Srv_Create();
@@ -29,11 +30,13 @@ internal static class Program
     {
         int db = ReadInt(args, "--db", 1);
         int length = ReadInt(args, "--length", 256);
-        if (db < 1 || db > ushort.MaxValue || length < 1) throw new ArgumentException("DB and length must be positive.");
+        bool freezeHeartbeat = HasFlag(args, "--freeze-heartbeat");
+        int stopHeartbeatAfterSeconds = ReadInt(args, "--stop-heartbeat-after-seconds", 0);
+        if (db < 1 || db > ushort.MaxValue || length < 1 || stopHeartbeatAfterSeconds < 0) throw new ArgumentException("DB and length must be positive; stop-heartbeat-after-seconds cannot be negative.");
 
         byte[] buffer = new byte[length];
-        byte[] heartbeatBuffer = db == HeartbeatDb ? buffer : new byte[1];
-        if (db == HeartbeatDb && length <= HeartbeatOffset) throw new ArgumentException("DB51 length must include offset 0.");
+        byte[] heartbeatBuffer = db == HeartbeatDb ? buffer : new byte[HeartbeatByteOffset + 1];
+        if (db == HeartbeatDb && length <= HeartbeatByteOffset) throw new ArgumentException("DB50 length must include byte offset 266.");
         GCHandle pinned = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         GCHandle heartbeatPinned = default(GCHandle);
         IntPtr server = IntPtr.Zero;
@@ -49,12 +52,19 @@ internal static class Program
                 Check(Srv_RegisterArea(server, ServerDbArea, HeartbeatDb, heartbeatPinned.AddrOfPinnedObject(), heartbeatBuffer.Length), "Srv_RegisterArea DB51 heartbeat");
             }
             Check(Srv_Start(server), "Srv_Start (TCP 102 may be occupied or require a different service to stop)");
-            heartbeatTimer = new Timer(_ => heartbeatBuffer[HeartbeatOffset] = (byte)(heartbeatBuffer[HeartbeatOffset] == 0 ? 1 : 0), null, HeartbeatIntervalMs, HeartbeatIntervalMs);
-            Console.WriteLine("READY db={0} length={1} port=102 heartbeat=DB51.DBX0.0 intervalMs=1000", db, length);
+            DateTime heartbeatStartUtc = DateTime.UtcNow;
+            if (!freezeHeartbeat)
+                heartbeatTimer = new Timer(_ =>
+                {
+                    if (stopHeartbeatAfterSeconds == 0 || (DateTime.UtcNow - heartbeatStartUtc).TotalSeconds < stopHeartbeatAfterSeconds)
+                        ToggleHeartbeat(heartbeatBuffer);
+                }, null, HeartbeatIntervalMs, HeartbeatIntervalMs);
+            string mode = freezeHeartbeat ? "FROZEN" : (stopHeartbeatAfterSeconds == 0 ? "TOGGLE" : "TOGGLE_THEN_STOP");
+            Console.WriteLine("READY db={0} length={1} port=102 heartbeat=DB50.DBX266.0 intervalMs=1000 timeoutMs=5000 mode={2} stopHeartbeatAfterSeconds={3}", db, length, mode, stopHeartbeatAfterSeconds);
             Console.WriteLine("Press Enter to stop.");
             while (!Console.KeyAvailable) { PrintStatus(server); Thread.Sleep(1000); }
             Console.ReadKey(true);
-            heartbeatTimer.Dispose();
+            if (heartbeatTimer != null) heartbeatTimer.Dispose();
             Srv_Stop(server);
             Srv_UnregisterArea(server, ServerDbArea, (ushort)db);
             if (db != HeartbeatDb) Srv_UnregisterArea(server, ServerDbArea, HeartbeatDb);
@@ -66,6 +76,11 @@ internal static class Program
             if (heartbeatPinned.IsAllocated) heartbeatPinned.Free();
             if (pinned.IsAllocated) pinned.Free();
         }
+    }
+
+    private static void ToggleHeartbeat(byte[] buffer)
+    {
+        buffer[HeartbeatByteOffset] ^= HeartbeatBitMask;
     }
 
     private static void PrintStatus(IntPtr server)
@@ -86,5 +101,12 @@ internal static class Program
     {
         for (int i = 0; i + 1 < args.Length; i++) if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase)) return int.Parse(args[i + 1]);
         return fallback;
+    }
+
+    private static bool HasFlag(string[] args, string name)
+    {
+        for (int i = 0; i < args.Length; i++)
+            if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
     }
 }

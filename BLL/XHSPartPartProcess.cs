@@ -24,5 +24,18 @@ namespace XHS.BLL
         {
             return dal.GetPartProcesses(customerAbbr, partNo, barcode, qrDateCodes);
         }
+
+        public List<XHSPartPartProcessInfo> GetPartProcessesByPartNoId(string partNoId)
+        {
+            return dal.GetPartProcessesByPartNoId(partNoId);
+        }
+
+        public List<XHSPartPartProcessInfo> GetPartProcessesByPartNoIdAndProcessIdAndStatusId(
+            string partNoId,
+            string processId,
+            string statusId)
+        {
+            return dal.GetPartProcessesByPartNoIdAndProcessIdAndStatusId(partNoId, processId, statusId);
+        }
     }
 }

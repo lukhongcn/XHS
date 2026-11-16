@@ -101,6 +101,7 @@
     <Compile Include="PackingUnboundScanRecord.cs" />
     <Compile Include="PartMaster.cs" />
     <Compile Include="XHSPartPartProcess.cs" />
+    <Compile Include="PLCResult.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="ShippingGoodsLabelBuilder.cs" />

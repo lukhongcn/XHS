@@ -16,6 +16,15 @@ internal static class Program
             return;
         }
 
+        string configPath = ReadString(args, "--config", null);
+        if (!string.IsNullOrWhiteSpace(configPath))
+        {
+            RunConfigured(configPath,
+                args.Any(a => string.Equals(a, "--monitor", StringComparison.OrdinalIgnoreCase)),
+                args.Any(a => string.Equals(a, "--popup", StringComparison.OrdinalIgnoreCase)));
+            return;
+        }
+
         RunCli(args);
     }
 
@@ -31,12 +40,13 @@ internal static class Program
             using (var plc = new Plc(CpuType.S71200, ip, 0, 1))
             {
                 plc.Open();
+                var s7Help = new S7Help();
                 Console.WriteLine("CONNECT ip={0} status={1}", ip, plc.IsConnected ? "OK" : "FAILED");
-                byte[] actual = plc.ReadBytes(DataType.DataBlock, db, offset, length);
+                byte[] actual = s7Help.ReadBlock(plc, db, offset, length);
                 if (!readOnly)
                 {
-                    plc.WriteBytes(DataType.DataBlock, db, offset, expected);
-                    actual = plc.ReadBytes(DataType.DataBlock, db, offset, length);
+                    s7Help.WriteBlock(plc, db, offset, expected);
+                    actual = s7Help.ReadBlock(plc, db, offset, length);
                     Console.WriteLine("WRITE db={0} offset={1} length={2} hex={3}", db, offset, length, ToHex(expected));
                 }
                 Console.WriteLine("READ  db={0} offset={1} length={2} hex={3}", db, offset, length, ToHex(actual));
@@ -49,6 +59,36 @@ internal static class Program
         {
             Console.Error.WriteLine("VERIFY FAILED elapsedMs={0} error={1}", timer.ElapsedMilliseconds, ex);
             Environment.ExitCode = 1;
+        }
+    }
+
+    private static void RunConfigured(string configPath, bool monitor, bool popup)
+    {
+        var s7Help = new S7Help();
+        Action<string> output = message => Console.WriteLine(message);
+        Action<string> fault = message =>
+        {
+            Console.Error.WriteLine(message);
+            if (popup) MessageBox.Show(message, "MES 通讯报警", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        };
+
+        if (!monitor)
+        {
+            s7Help.CheckHeartbeats(configPath, output, fault);
+            return;
+        }
+
+        s7Help.StartHeartbeatMonitor(configPath, output, fault);
+        using (var stopEvent = new System.Threading.ManualResetEventSlim(false))
+        {
+            ConsoleCancelEventHandler cancelHandler = (sender, e) => { e.Cancel = true; stopEvent.Set(); };
+            Console.CancelKeyPress += cancelHandler;
+            try { stopEvent.Wait(); }
+            finally
+            {
+                Console.CancelKeyPress -= cancelHandler;
+                s7Help.StopHeartbeatMonitor();
+            }
         }
     }
 

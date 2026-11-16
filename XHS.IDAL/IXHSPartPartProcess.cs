@@ -13,5 +13,12 @@ namespace XHS.IDAL
             string partNo,
             string barcode,
             IList<string> qrDateCodes);
+
+        List<XHSPartPartProcessInfo> GetPartProcessesByPartNoId(string partNoId);
+
+        List<XHSPartPartProcessInfo> GetPartProcessesByPartNoIdAndProcessIdAndStatusId(
+            string partNoId,
+            string processId,
+            string statusId);
     }
 }

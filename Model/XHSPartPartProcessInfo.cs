@@ -11,6 +11,7 @@ namespace XHS.Model
         public string ModuleId { get; set; }
         public string PartNo { get; set; }
         public string PartNo_Id { get; set; }
+        public int? ProcessNo { get; set; }
         public string ProcessId { get; set; }
         public string ProcessName { get; set; }
         public int? ProcessOrder { get; set; }

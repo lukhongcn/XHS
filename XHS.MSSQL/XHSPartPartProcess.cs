@@ -21,7 +21,7 @@ namespace XHS.MSSQL
             IList<string> qrDateCodes)
         {
             string queryString =
-                "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id," +
+                "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
                 "partprocess.processid,process.processname,partprocess.processorder,partprocess.statusid," +
                 "status.StatusDescription statusname," +
                 "partprocess.processneedminutes,partprocess.startdate,partprocess.enddate," +
@@ -90,6 +90,70 @@ namespace XHS.MSSQL
             return _getXHSPartPartProcessInfo(queryString, parameters.ToArray());
         }
 
+        public List<XHSPartPartProcessInfo> GetPartProcessesByPartNoId(string partNoId)
+        {
+            string queryString =
+                "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
+                "partprocess.processid,process.processname,partprocess.processorder,partprocess.statusid," +
+                "status.StatusDescription statusname," +
+                "partprocess.processneedminutes,partprocess.startdate,partprocess.enddate," +
+                "partprocess.factstartdate,partprocess.factenddate " +
+                "from tb_partprocess partprocess " +
+                "inner join tb_process process on partprocess.processid=process.processid " +
+                "inner join tb_status status on partprocess.statusid=status.statusid " +
+                "where partprocess.partno_id=@PartNoId " +
+                "and partprocess.statusid in (N'Ready',N'Pending') " +
+                "order by partno_id,processorder,id";
+
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@PartNoId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(partNoId ?? string.Empty).Trim()
+                }
+            };
+
+            return _getXHSPartPartProcessInfo(queryString, parameters);
+        }
+
+        public List<XHSPartPartProcessInfo> GetPartProcessesByPartNoIdAndProcessIdAndStatusId(
+            string partNoId,
+            string processId,
+            string statusId)
+        {
+            string queryString =
+                "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
+                "partprocess.processid,process.processname,partprocess.processorder,partprocess.statusid," +
+                "status.StatusDescription statusname," +
+                "partprocess.processneedminutes,partprocess.startdate,partprocess.enddate," +
+                "partprocess.factstartdate,partprocess.factenddate " +
+                "from tb_partprocess partprocess " +
+                "inner join tb_process process on partprocess.processid=process.processid " +
+                "inner join tb_status status on partprocess.statusid=status.statusid " +
+                "where partprocess.partno_id=@PartNoId " +
+                "and partprocess.processid=@ProcessId " +
+                "and partprocess.statusid=@StatusId " +
+                "order by partno_id,processorder,id";
+
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@PartNoId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(partNoId ?? string.Empty).Trim()
+                },
+                new SqlParameter("@ProcessId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(processId ?? string.Empty).Trim()
+                },
+                new SqlParameter("@StatusId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(statusId ?? string.Empty).Trim()
+                }
+            };
+
+            return _getXHSPartPartProcessInfo(queryString, parameters);
+        }
+
         private List<XHSPartPartProcessInfo> _getXHSPartPartProcessInfo(
             string querystring,
             SqlParameter[] pars)
@@ -112,6 +176,7 @@ namespace XHS.MSSQL
                     ModuleId = row.IsNull("moduleid") ? null : Convert.ToString(row["moduleid"]),
                     PartNo = row.IsNull("partno") ? null : Convert.ToString(row["partno"]),
                     PartNo_Id = row.IsNull("partno_id") ? null : Convert.ToString(row["partno_id"]),
+                    ProcessNo = row.IsNull("processno") ? (int?)null : Convert.ToInt32(row["processno"]),
                     ProcessId = row.IsNull("processid") ? null : Convert.ToString(row["processid"]),
                     ProcessName = row.IsNull("processname") ? null : Convert.ToString(row["processname"]),
                     ProcessOrder = row.IsNull("processorder") ? (int?)null : Convert.ToInt32(row["processorder"]),

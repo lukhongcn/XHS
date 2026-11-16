@@ -40,6 +40,7 @@
     <Compile Include="CheryUploadInfo.cs" />
     <Compile Include="PartMasterInfo.cs" />
     <Compile Include="XHSPartPartProcessInfo.cs" />
+    <Compile Include="PLCResultInfo.cs" />
     <Compile Include="PrintRecordInfo.cs" />
     <Compile Include="PrintRecordStatusInfo.cs" />
     <Compile Include="ReprintReasonInfo.cs" />
