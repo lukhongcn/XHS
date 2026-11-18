@@ -49,6 +49,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\BLL.System.dll</HintPath>
     </Reference>
+    <Reference Include="ModuleWorkFlow.BLL.Interface">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\BLL\business\bin\Debug\ModuleWorkFlow.BLL.Interface.dll</HintPath>
+    </Reference>
     <Reference Include="DALFactory, Version=1.0.9637.27678, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\DALFactory.dll</HintPath>
@@ -148,6 +152,12 @@
     </Compile>
     <Compile Include="GSPartMasterList.aspx.designer.cs">
       <DependentUpon>GSPartMasterList.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PartModifyEdit.aspx.cs">
+      <DependentUpon>PartModifyEdit.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PartModifyList.aspx.cs">
+      <DependentUpon>PartModifyList.aspx</DependentUpon>
     </Compile>
     <Compile Include="XWDPartMasterList.aspx.cs">
       <DependentUpon>XWDPartMasterList.aspx</DependentUpon>
@@ -316,6 +326,13 @@
     <Compile Include="LabelBindingRecordList.aspx.designer.cs">
       <DependentUpon>LabelBindingRecordList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PLCResultList.aspx.cs">
+      <DependentUpon>PLCResultList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PLCResultList.aspx.designer.cs">
+      <DependentUpon>PLCResultList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="ScanFlowStep.aspx.cs">
       <DependentUpon>ScanFlowStep.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -345,6 +362,9 @@
     <Content Include="DefaultPDASub.Master" />
     <Content Include="LabelBindingPDA.aspx" />
     <Content Include="LabelBindingRecordList.aspx" />
+    <Content Include="PartModifyEdit.aspx" />
+    <Content Include="PartModifyList.aspx" />
+    <Content Include="PLCResultList.aspx" />
     <Content Include="ScanFlowStep.aspx" />
     <Content Include="GSPartMasterUpload.aspx" />
     <Content Include="GSPartMasterList.aspx" />
