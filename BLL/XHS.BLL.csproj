@@ -102,6 +102,7 @@
     <Compile Include="PartMaster.cs" />
     <Compile Include="XHSPartPartProcess.cs" />
     <Compile Include="PLCResult.cs" />
+    <Compile Include="PLCResultProcessService.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="ShippingGoodsLabelBuilder.cs" />
@@ -147,6 +148,10 @@
     <ProjectReference Include="..\XHS.IDAL\XHS.IDAL.csproj">
       <Project>{EE584718-8A95-4115-AE35-8458AEF4222F}</Project>
       <Name>XHS.IDAL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\XHS.MSSQL\XHS.MSSQL.csproj">
+      <Project>{5D0D1F1B-3C50-4D37-A40F-6A6A9E2A7B11}</Project>
+      <Name>XHS.MSSQL</Name>
     </ProjectReference>
     <ProjectReference Include="..\Utility\Utility.csproj">
       <Project>{421F17D9-9D55-4E8E-A292-3857605AE16D}</Project>

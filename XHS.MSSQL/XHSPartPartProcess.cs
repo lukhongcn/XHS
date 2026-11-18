@@ -22,9 +22,13 @@ namespace XHS.MSSQL
         {
             string queryString =
                 "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
-                "partprocess.processid,process.processname,partprocess.processorder,partprocess.statusid," +
+                "partprocess.processid,process.processname,partprocess.processorder listorder,partprocess.processorder," +
+                "partprocess.customerProcessid,partprocess.statusid," +
                 "status.StatusDescription statusname," +
-                "partprocess.processneedminutes,partprocess.startdate,partprocess.enddate," +
+                "partprocess.processneedminutes,partprocess.totalminutes,partprocess.needproduct," +
+                "partprocess.unnormalreasonsid,partprocess.departmentid,partprocess.isunnormal," +
+                "partprocess.processcomment,partprocess.processmachineid,process.pricetype,partprocess.supplyid," +
+                "partprocess.relationpartno,partprocess.relationpartnoid,partprocess.startdate,partprocess.enddate," +
                 "partprocess.factstartdate,partprocess.factenddate " +
                 "from tb_partprocess partprocess " +
                 "inner join tb_process process on partprocess.processid=process.processid " +
@@ -32,8 +36,6 @@ namespace XHS.MSSQL
                 "where partprocess.moduleid=@CustomerAbbr " +
                 "and (@PartNo=N'' or partprocess.partno=@PartNo) " +
                 "and (@Barcode=N'' or partprocess.partno_id like @Barcode) ";
-
-            queryString += "and partprocess.statusid in (N'Ready',N'Pending') ";
 
             List<SqlParameter> parameters = new List<SqlParameter>
             {
@@ -94,15 +96,18 @@ namespace XHS.MSSQL
         {
             string queryString =
                 "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
-                "partprocess.processid,process.processname,partprocess.processorder,partprocess.statusid," +
+                "partprocess.processid,process.processname,partprocess.processorder listorder,partprocess.processorder," +
+                "partprocess.customerProcessid,partprocess.statusid," +
                 "status.StatusDescription statusname," +
-                "partprocess.processneedminutes,partprocess.startdate,partprocess.enddate," +
+                "partprocess.processneedminutes,partprocess.totalminutes,partprocess.needproduct," +
+                "partprocess.unnormalreasonsid,partprocess.departmentid,partprocess.isunnormal," +
+                "partprocess.processcomment,partprocess.processmachineid,process.pricetype,partprocess.supplyid," +
+                "partprocess.relationpartno,partprocess.relationpartnoid,partprocess.startdate,partprocess.enddate," +
                 "partprocess.factstartdate,partprocess.factenddate " +
                 "from tb_partprocess partprocess " +
-                "inner join tb_process process on partprocess.processid=process.processid " +
-                "inner join tb_status status on partprocess.statusid=status.statusid " +
+                "left join tb_process process on partprocess.processid=process.processid " +
+                "left join tb_status status on partprocess.statusid=status.statusid " +
                 "where partprocess.partno_id=@PartNoId " +
-                "and partprocess.statusid in (N'Ready',N'Pending') " +
                 "order by partno_id,processorder,id";
 
             SqlParameter[] parameters =
@@ -180,9 +185,23 @@ namespace XHS.MSSQL
                     ProcessId = row.IsNull("processid") ? null : Convert.ToString(row["processid"]),
                     ProcessName = row.IsNull("processname") ? null : Convert.ToString(row["processname"]),
                     ProcessOrder = row.IsNull("processorder") ? (int?)null : Convert.ToInt32(row["processorder"]),
+                    ListOrder = row.IsNull("listorder") ? (int?)null : Convert.ToInt32(row["listorder"]),
+                    CustomerProcessId = row.IsNull("customerProcessid") ? null : Convert.ToString(row["customerProcessid"]),
+                    CustomerProcessName = row.IsNull("processname") ? null : Convert.ToString(row["processname"]),
                     StatusId = row.IsNull("statusid") ? null : Convert.ToString(row["statusid"]),
                     StatusName = row.IsNull("statusname") ? null : Convert.ToString(row["statusname"]),
                     ProcessNeedMinutes = row.IsNull("processneedminutes") ? (int?)null : Convert.ToInt32(row["processneedminutes"]),
+                    TotalMinutes = row.IsNull("totalminutes") ? (int?)null : Convert.ToInt32(row["totalminutes"]),
+                    NeedProduct = row.IsNull("needproduct") ? (int?)null : Convert.ToInt32(row["needproduct"]),
+                    UnNormalReasonsId = row.IsNull("unnormalreasonsid") ? (int?)null : Convert.ToInt32(row["unnormalreasonsid"]),
+                    DepartmentId = row.IsNull("departmentid") ? (int?)null : Convert.ToInt32(row["departmentid"]),
+                    IsUnnormal = row.IsNull("isunnormal") ? (int?)null : Convert.ToInt32(row["isunnormal"]),
+                    ProcessComment = row.IsNull("processcomment") ? null : Convert.ToString(row["processcomment"]),
+                    ProcessMachineId = row.IsNull("processmachineid") ? null : Convert.ToString(row["processmachineid"]),
+                    PriceType = row.IsNull("pricetype") ? null : Convert.ToString(row["pricetype"]),
+                    SupplyId = row.IsNull("supplyid") ? (int?)null : Convert.ToInt32(row["supplyid"]),
+                    RelationPartNo = row.IsNull("relationpartno") ? null : Convert.ToString(row["relationpartno"]),
+                    RelationPartNoId = row.IsNull("relationpartnoid") ? null : Convert.ToString(row["relationpartnoid"]),
                     StartDate = row.IsNull("startdate") ? (DateTime?)null : Convert.ToDateTime(row["startdate"]),
                     EndDate = row.IsNull("enddate") ? (DateTime?)null : Convert.ToDateTime(row["enddate"]),
                     FactStartDate = row.IsNull("factstartdate") ? (DateTime?)null : Convert.ToDateTime(row["factstartdate"]),

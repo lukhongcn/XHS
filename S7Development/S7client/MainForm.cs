@@ -21,6 +21,8 @@ internal sealed class MainForm : Form
     private readonly Label plcHeartbeatValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label interactionValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label readPermissionValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
+    private readonly Label saveStatusValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
+    private readonly Label saveFailureValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label barcodeValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label mesHeartbeatValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label barcodeCheckValue = new Label { Text = "检测 --", AutoSize = true, Anchor = AnchorStyles.Left };
@@ -28,9 +30,11 @@ internal sealed class MainForm : Form
     private readonly S7Help s7Help = new S7Help();
     private readonly MESHelp mesHelp = new MESHelp();
     private readonly TextBox log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both };
+    private readonly TextBox plcResultLog = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both };
     private Process serverProcess;
     private StreamWriter heartbeatLogWriter;
     private readonly object heartbeatLogSync = new object();
+    private ToolStripMenuItem readTestMenu;
     private bool heartbeatWarningShown;
     private int plcValueReading;
 
@@ -66,12 +70,12 @@ internal sealed class MainForm : Form
         barcodeRequest.Click += RunBarcodeRequestTest;
         var allowReadTest = new ToolStripMenuItem("允许读取测试");
         allowReadTest.Click += RunAllowReadTest;
-        var readTest = new ToolStripMenuItem("读取");
-        readTest.Click += RunReadTest;
+        readTestMenu = new ToolStripMenuItem("读取") { Enabled = false };
+        readTestMenu.Click += RunReadTest;
         testMenu.DropDownItems.Add(stopPlcHeartbeat);
         testMenu.DropDownItems.Add(barcodeRequest);
         testMenu.DropDownItems.Add(allowReadTest);
-        testMenu.DropDownItems.Add(readTest);
+        testMenu.DropDownItems.Add(readTestMenu);
         menu.Items.Add(testMenu);
         MainMenuStrip = menu;
         Controls.Add(menu);
@@ -91,10 +95,23 @@ internal sealed class MainForm : Form
         columns.Controls.Add(BuildPlcPanel(), 1, 0);
         root.Controls.Add(columns, 0, 0);
 
-        var logGroup = new GroupBox { Text = "心跳监控 / 通信日志", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        var logSplit = new SplitContainer
+        {
+            Dock = DockStyle.Fill,
+            Orientation = Orientation.Horizontal,
+            SplitterDistance = 150,
+            FixedPanel = FixedPanel.Panel1
+        };
+        var communicationLogGroup = new GroupBox { Text = "心跳监控 / 通信日志", Dock = DockStyle.Fill, Padding = new Padding(8) };
         log.Dock = DockStyle.Fill;
-        logGroup.Controls.Add(log);
-        root.Controls.Add(logGroup, 0, 1);
+        communicationLogGroup.Controls.Add(log);
+        logSplit.Panel1.Controls.Add(communicationLogGroup);
+
+        var plcResultLogGroup = new GroupBox { Text = "PLCResult 处理日志", Dock = DockStyle.Fill, Padding = new Padding(8) };
+        plcResultLog.Dock = DockStyle.Fill;
+        plcResultLogGroup.Controls.Add(plcResultLog);
+        logSplit.Panel2.Controls.Add(plcResultLogGroup);
+        root.Controls.Add(logSplit, 0, 1);
         Controls.Add(root);
     }
 
@@ -135,11 +152,11 @@ internal sealed class MainForm : Form
     private Control BuildPlcPanel()
     {
         var group = new GroupBox { Text = "PLC", Dock = DockStyle.Fill, Padding = new Padding(8) };
-        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 10 };
+        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 12 };
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-        for (int i = 0; i < 10; i++) panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        for (int i = 0; i < 12; i++) panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
 
         panel.Controls.Add(new Label { Text = "PLC 地址", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
         ip.Dock = DockStyle.Fill;
@@ -158,35 +175,43 @@ internal sealed class MainForm : Form
         panel.Controls.Add(new Label { Text = "MES允许取数据", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 3);
         panel.Controls.Add(readPermissionValue, 2, 3);
 
-        panel.Controls.Add(new Label { Text = "条码", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 4);
-        panel.Controls.Add(new Label { Text = "DB50.2.0", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 4);
-        panel.Controls.Add(barcodeValue, 2, 4);
+        panel.Controls.Add(new Label { Text = "保存成功 DB50.266.5", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 4);
+        panel.Controls.Add(new Label { Text = "PLCResult 已保存", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 4);
+        panel.Controls.Add(saveStatusValue, 2, 4);
 
-        panel.Controls.Add(new Label { Text = "PLC 地址块", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 5);
+        panel.Controls.Add(new Label { Text = "保存失败 DB50.266.6", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 5);
+        panel.Controls.Add(new Label { Text = "PLCResult 保存失败", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 5);
+        panel.Controls.Add(saveFailureValue, 2, 5);
+
+        panel.Controls.Add(new Label { Text = "条码", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 6);
+        panel.Controls.Add(new Label { Text = "DB50.2.0", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 6);
+        panel.Controls.Add(barcodeValue, 2, 6);
+
+        panel.Controls.Add(new Label { Text = "PLC 地址块", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 7);
         db.Dock = DockStyle.Left;
-        panel.Controls.Add(db, 1, 5);
-        panel.Controls.Add(new Label { Text = "Rack 0 / Slot 1", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 5);
+        panel.Controls.Add(db, 1, 7);
+        panel.Controls.Add(new Label { Text = "Rack 0 / Slot 1", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 7);
 
-        panel.Controls.Add(new Label { Text = "起始偏移", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 6);
+        panel.Controls.Add(new Label { Text = "起始偏移", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 8);
         offset.Dock = DockStyle.Left;
-        panel.Controls.Add(offset, 1, 6);
-        panel.Controls.Add(new Label { Text = "字节", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 6);
+        panel.Controls.Add(offset, 1, 8);
+        panel.Controls.Add(new Label { Text = "字节", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 8);
 
-        panel.Controls.Add(new Label { Text = "读写长度", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 7);
+        panel.Controls.Add(new Label { Text = "读写长度", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 9);
         readLength.Dock = DockStyle.Left;
-        panel.Controls.Add(readLength, 1, 7);
+        panel.Controls.Add(readLength, 1, 9);
         var test = new Button { Text = "连接并读写验证", Dock = DockStyle.Fill };
         test.Click += RunTest;
-        panel.Controls.Add(test, 2, 7);
+        panel.Controls.Add(test, 2, 9);
         panel.SetRowSpan(test, 2);
 
-        panel.Controls.Add(new Label { Text = "停止 PLC 心跳（秒）", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 8);
+        panel.Controls.Add(new Label { Text = "停止 PLC 心跳（秒）", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 10);
         stopHeartbeatAfterSeconds.Dock = DockStyle.Left;
-        panel.Controls.Add(stopHeartbeatAfterSeconds, 1, 8);
-        panel.Controls.Add(new Label { Text = "0 = 不停止", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 8);
+        panel.Controls.Add(stopHeartbeatAfterSeconds, 1, 10);
+        panel.Controls.Add(new Label { Text = "0 = 不停止", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 10);
 
         var heartbeatStatus = new Label { Text = "心跳监控：自动运行", AutoSize = true, Anchor = AnchorStyles.Left };
-        panel.Controls.Add(heartbeatStatus, 0, 9);
+        panel.Controls.Add(heartbeatStatus, 0, 11);
         panel.SetColumnSpan(heartbeatStatus, 3);
         group.Controls.Add(panel);
         return group;
@@ -271,8 +296,13 @@ internal sealed class MainForm : Form
                 byte[] bytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
                 bytes[0] = (byte)(bytes[0] | (1 << target.ReadPermission.Bit));
                 s7Help.WriteBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, bytes);
+                byte[] verifyBytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
+                bool enabled = (verifyBytes[0] & (1 << target.ReadPermission.Bit)) != 0;
+                if (!enabled)
+                    throw new InvalidOperationException("PLC 未确认允许保存请求（DB50.266.4=1）。");
+                if (readTestMenu != null) readTestMenu.Enabled = true;
             }
-            WriteLog("允许读取测试已执行：DB50.266.4=1");
+            WriteLog("允许保存测试已执行并读回确认：DB50.266.4=1，读取菜单已启用。");
         }
         catch (Exception ex)
         {
@@ -296,22 +326,22 @@ internal sealed class MainForm : Form
 
             HeartbeatConfig config = s7Help.ReadHeartbeatConfig(FindHeartbeatConfig());
             PlcConfig target = config.Plc.FirstOrDefault(item => string.Equals(item.Ip, ip.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ?? config.Plc[0];
-            string barcode = input.Barcode;
-            if (string.IsNullOrWhiteSpace(barcode))
+            if (target.ReadPermission == null)
+                throw new InvalidOperationException("配置中没有允许读取地址块。");
+
+            string barcode;
+            using (var plc = new Plc(CpuType.S71200, target.Ip, (short)target.Rack, (short)target.Slot))
             {
-                using (var plc = new Plc(CpuType.S71200, target.Ip, (short)target.Rack, (short)target.Slot))
-                {
-                    plc.Open();
-                    byte[] barcodeBytes = s7Help.ReadBlock(plc, target.Barcode.Db, target.Barcode.ByteOffset, target.Barcode.MaxLength);
-                    barcode = mesHelp.DecodeBarcode(barcodeBytes, target.Barcode);
-                }
+                plc.Open();
+                byte[] permissionBytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
+                if ((permissionBytes[0] & (1 << target.ReadPermission.Bit)) == 0)
+                    throw new InvalidOperationException("PLC 尚未发出允许读取（DB50.266.4=0）。");
+
+                byte[] barcodeBytes = s7Help.ReadBlock(plc, target.Barcode.Db, target.Barcode.ByteOffset, target.Barcode.MaxLength);
+                barcode = mesHelp.DecodeBarcode(barcodeBytes, target.Barcode);
             }
             if (string.IsNullOrWhiteSpace(barcode))
-            {
-                barcode = PromptBarcode();
-                if (string.IsNullOrWhiteSpace(barcode))
-                    throw new InvalidOperationException("没有读取到二维码，请输入二维码后再进行读取测试。");
-            }
+                throw new InvalidOperationException("PLC 的 DB50.2.0 没有读取到二维码。");
 
             byte[] valueBytes = Encoding.ASCII.GetBytes(barcode);
             if (target.Barcode == null || valueBytes.Length > target.Barcode.MaxLength)
@@ -350,7 +380,7 @@ internal sealed class MainForm : Form
                     : (byte)(saveStatusBytes[0] | saveFailureMask);
                 s7Help.WriteBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, saveStatusBytes);
             }
-            WriteLog(string.Format("读取测试已执行：值已写入 DB50.2.0，REAL 测试值已写入 DB50.258，判定结果已写入并读回 DB50.262={0}，保存成功位266.5={1}，保存失败位266.6={2}", detectionResult, saved ? 1 : 0, saved ? 0 : 1));
+            WriteLog(string.Format("读取测试已执行：PLC二维码={0}，检测结果={1}，REAL测试值={2}，tb_PLCResult保存={3}，DB50.266.5={4}，DB50.266.6={5}", barcode, detectionResult, testValue, saved ? "成功" : "失败", saved ? 1 : 0, saved ? 0 : 1));
         }
         catch (Exception ex)
         {
@@ -378,19 +408,17 @@ internal sealed class MainForm : Form
     {
         using (var dialog = new Form { Text = "读取测试", StartPosition = FormStartPosition.CenterParent, ClientSize = new Size(440, 215), FormBorderStyle = FormBorderStyle.FixedDialog, MinimizeBox = false, MaximizeBox = false })
         {
-            var barcodeLabel = new Label { Text = "请输入条码：", AutoSize = true, Location = new Point(15, 15) };
-            var barcodeInput = new TextBox { Location = new Point(115, 12), Width = 305 };
+            var resultLabel = new Label { Text = "检测结果(0/1/2)：", AutoSize = true, Location = new Point(15, 15) };
+            var resultInput = new TextBox { Location = new Point(145, 12), Width = 275, Text = "1" };
             var realLabel = new Label { Text = "请输入测试值(REAL)：", AutoSize = true, Location = new Point(15, 50) };
             var realInput = new TextBox { Location = new Point(145, 47), Width = 275 };
-            var resultLabel = new Label { Text = "检测结果(0/1/2)：", AutoSize = true, Location = new Point(15, 85) };
-            var resultInput = new TextBox { Location = new Point(145, 82), Width = 275, Text = "1" };
             var ok = new Button { Text = "确定", DialogResult = DialogResult.OK, Location = new Point(250, 155), Width = 80 };
             var cancel = new Button { Text = "取消", DialogResult = DialogResult.Cancel, Location = new Point(340, 155), Width = 80 };
-            dialog.Controls.AddRange(new Control[] { barcodeLabel, barcodeInput, realLabel, realInput, resultLabel, resultInput, ok, cancel });
+            dialog.Controls.AddRange(new Control[] { resultLabel, resultInput, realLabel, realInput, ok, cancel });
             dialog.AcceptButton = ok;
             dialog.CancelButton = cancel;
             if (dialog.ShowDialog(this) != DialogResult.OK) return null;
-            return new TestInput { Barcode = barcodeInput.Text.Trim(), RealValue = realInput.Text.Trim(), DetectionResult = resultInput.Text.Trim() };
+            return new TestInput { RealValue = realInput.Text.Trim(), DetectionResult = resultInput.Text.Trim() };
         }
     }
 
@@ -429,8 +457,11 @@ internal sealed class MainForm : Form
             string plcValue = "PLC寄存器中的值：--";
             string interaction = "PLC寄存器中的值：--";
             string readPermission = "PLC寄存器中的值：--";
+            string saveStatus = "PLC寄存器中的值：--";
+            string saveFailure = "PLC寄存器中的值：--";
             string barcode = "PLC寄存器中的值：--";
             string mesValue = "PLC寄存器中的值：--";
+            bool readAllowed = false;
             try
             {
                 using (var plc = new Plc(CpuType.S71200, plcIp, 0, 1))
@@ -441,7 +472,10 @@ internal sealed class MainForm : Form
                     HeartbeatConfig config = s7Help.ReadHeartbeatConfig(FindHeartbeatConfig());
                     PlcConfig target = config.Plc.FirstOrDefault(item => string.Equals(item.Ip, plcIp, StringComparison.OrdinalIgnoreCase)) ?? config.Plc[0];
                     interaction = "PLC寄存器中的值：" + (target.Interaction != null && mesHelp.IsBarcodeRequest(bytes[0], target.Interaction) ? "1" : "0");
-                    readPermission = "PLC寄存器中的值：" + (target.ReadPermission != null && (bytes[0] & (1 << target.ReadPermission.Bit)) != 0 ? "1" : "0");
+                    readAllowed = target.ReadPermission != null && (bytes[0] & (1 << target.ReadPermission.Bit)) != 0;
+                    readPermission = "PLC寄存器中的值：" + (readAllowed ? "1" : "0");
+                    saveStatus = "PLC寄存器中的值：" + (target.SaveStatus != null && (bytes[0] & (1 << target.SaveStatus.Bit)) != 0 ? "1" : "0");
+                    saveFailure = "PLC寄存器中的值：" + (target.SaveFailure != null && (bytes[0] & (1 << target.SaveFailure.Bit)) != 0 ? "1" : "0");
                     if (target.Barcode != null)
                     {
                         byte[] barcodeBytes = s7Help.ReadBlock(plc, target.Barcode.Db, target.Barcode.ByteOffset, target.Barcode.MaxLength);
@@ -470,20 +504,23 @@ internal sealed class MainForm : Form
 
             if (!IsDisposed && IsHandleCreated)
             {
-                try { BeginInvoke(new Action<string, string, string, string, string>(UpdateHeartbeatValues), plcValue, interaction, readPermission, barcode, mesValue); }
+                try { BeginInvoke(new Action<string, string, string, string, string, string, string, bool>(UpdateHeartbeatValues), plcValue, interaction, readPermission, saveStatus, saveFailure, barcode, mesValue, readAllowed); }
                 catch (InvalidOperationException) { }
             }
         });
     }
 
-    private void UpdateHeartbeatValues(string plcValue, string interaction, string readPermission, string barcode, string mesValue)
+    private void UpdateHeartbeatValues(string plcValue, string interaction, string readPermission, string saveStatus, string saveFailure, string barcode, string mesValue, bool readAllowed)
     {
         if (IsDisposed) return;
         plcHeartbeatValue.Text = plcValue;
         interactionValue.Text = interaction;
         readPermissionValue.Text = readPermission;
+        saveStatusValue.Text = saveStatus;
+        saveFailureValue.Text = saveFailure;
         barcodeValue.Text = barcode;
         mesHeartbeatValue.Text = mesValue;
+        if (readTestMenu != null) readTestMenu.Enabled = readAllowed;
     }
 
     private void StartHeartbeatMonitor(object sender, EventArgs args)
@@ -663,7 +700,10 @@ internal sealed class MainForm : Form
             catch (InvalidOperationException) { }
             return;
         }
-        log.AppendText(DateTime.Now.ToString("HH:mm:ss") + " " + message + Environment.NewLine);
+        TextBox targetLog = message.StartsWith("PLC_RESULT_PROCESS", StringComparison.OrdinalIgnoreCase)
+            ? plcResultLog
+            : log;
+        targetLog.AppendText(DateTime.Now.ToString("HH:mm:ss") + " " + message + Environment.NewLine);
     }
 
     private string FindHeartbeatConfig()
@@ -692,7 +732,6 @@ internal sealed class MainForm : Form
 
 internal sealed class TestInput
 {
-    public string Barcode { get; set; }
     public string RealValue { get; set; }
     public string DetectionResult { get; set; }
 }
