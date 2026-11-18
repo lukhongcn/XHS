@@ -1,0 +1,40 @@
+   .border_line   {
+	background-color: #CCC;
+	font-size: 16px;
+}
+.border_line2   {
+	border: thin solid #E8E8E8;
+	}
+	.border_line3   {
+	border: thin solid #84a0c3;
+	}
+      .hdr           {
+	border-right-color: #CCC;
+	border-left-color: #CCC;
+	border-right-width: thin;
+	border-left-width: thin;
+	border-right-style: solid;
+	border-left-style: solid;
+}
+      .tic_done      {
+	overflow: hidden;
+	background:lightgreen;
+	border-top-color: #0F0;
+	border-right-color: #0F0;
+	border-bottom-color: #0F0;
+	border-left-color: #0F0;
+}
+      .tic_late      {overflow: hidden; background:pink;}
+       .tic_Working      {overflow: hidden; background:#99FF00;}
+       .tic_free	  {overflow: hidden; background:blue;}
+	  .tic_invalid	 {overflow: hidden; background:grey;}
+	   .tic_broken {overflow: hidden; background:red;}
+	    .tic_done {overflow: hidden; background:green;}
+      .tic_todo      {
+	overflow: hidden;
+	background-color: #9CF;
+}
+   .tic_todob      {
+	overflow: hidden;
+	background-color: #DEF;
+}

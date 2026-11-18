@@ -94,7 +94,6 @@
     <Compile Include="PackingException.cs" />
     <Compile Include="PackingOperationResult.cs" />
     <Compile Include="PackingOperationService.cs" />
-    <Compile Include="PartProcessService.cs" />
     <Compile Include="PackingRecord.cs" />
     <Compile Include="DeliveryUploadRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />

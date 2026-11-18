@@ -1,0 +1,828 @@
+a:link 
+{
+	color: #6F2D91;
+	font-weight: normal;
+	text-decoration: none;
+}
+
+a:visited
+{
+	color: #6F2D91;
+	font-weight: normal;
+	text-decoration: none;
+}
+a:hover
+{
+	text-decoration: underline;
+	color:#233e55;
+}
+
+body
+{
+	background: white;
+	font: 0.8em/1.5 Geneva, Arial, Helvetica, sans-serif;
+	color: black;
+	margin: 0px;
+}
+
+div.SidePanelLoc
+{
+	width: 243px;
+	margin:	0 0 0 5px;
+	padding: 0;
+	float:	left;
+}
+
+div.ContentPanelLoc
+{
+	margin:	0;
+	padding: 0;
+	float:	left;
+	WIDTH: 600px;
+}
+
+div.ContentPanelLocFixed
+{
+	width: 100%;
+	/*min-width: 500px;
+	max-width: 780px;*/
+	margin:	0;
+	padding: 0;
+}
+
+div.GreyFrame
+{
+	text-align: left;
+	margin: 0 20px 0 0;
+	padding: 0;
+	background-color: white;
+}
+
+
+div.GreyFrame h1
+{
+	text-align: left;
+	font:  bold 1.0em Arial, Geneva, Helvetica, sans-serif;	
+	color: #000000;
+	margin: 0 0 3px 16px;
+	padding: 0;
+}
+
+div.GreyFrame div.ExportIcons
+{
+	float: right;
+	padding-right: 16px;
+}
+
+div.GreyFrameContainer
+{
+		background: url(../img/grey_frame/corner_left_top.gif) top left no-repeat;
+} 
+
+div.GreyFrameContainerSquared
+{
+		background: url(../img/grey_frame/pixel_grey.gif);
+		width: 400px;
+		font:  1.0em Geneva, Arial, Helvetica, sans-serif;	
+		color: #000000;
+		
+}
+
+div.GreyFrameContainerSquared h3
+{
+		background: 	url(../img/grey_frame/corner_right_top.gif) top right no-repeat;
+		line-height:	16px;
+		padding:		0;
+		margin:			0 0 0px 16px;
+		font:  			bold 1.0em Geneva, Arial, Helvetica, sans-serif;	
+		color: 			#536e87;
+} 
+
+div.GreyFrameContainer h3
+{
+		background: 	url(../img/grey_frame/corner_right_top.gif) top right no-repeat;
+		line-height:	16px;
+		padding:		0;
+		margin:			0 0 0px 16px;
+		font:  			bold 1.0em Geneva, Arial, Helvetica, sans-serif;	
+		color: 			#536e87;
+}
+
+div.GreyFrameBody
+{
+		background: url(../img/grey_frame/pixel_grey.gif);
+		margin:0px;
+		padding:0;
+		clear: both;
+}
+
+div.GreyFrameBody p
+{
+		margin: 0 0 0 16px;
+		padding: 0;
+		font:  1.0em/0.9 Geneva, Arial, Helvetica, sans-serif;	
+		color: #000000;
+}
+
+div.GreyFrameFooter
+{
+		background: url(../img/grey_frame/corner_left_bottom.gif) bottom left no-repeat;
+}
+
+div.GreyFrameFooter p
+{
+		background: url(../img/grey_frame/corner_right_bottom.gif) bottom right no-repeat;
+		padding:	0px;
+		display:	block;
+		margin: 	0;
+		height: 16px;
+}
+
+
+div.GreyBlueFrame
+{
+	background: url(../img/bg_blue_grey/gradient_blue.gif) top left repeat-x;
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+div.GreyBlueFrameHorizontal
+{
+	background: url(../img/bg_blue_grey/gradient_blue_hor.gif) top left repeat-y;
+	margin-left: 20px;
+	margin-right: 20px;
+}
+
+div.GreyBlueLeftTop
+{
+	background: url(../img/bg_blue_grey/left_top.gif) top left no-repeat;
+}
+
+div.GreyBlueRightTop
+{
+  	background: url(../img/bg_blue_grey/right_top.gif) top right no-repeat;
+	font:  bold 1.0em/1.5em Geneva, Arial, Helvetica, sans-serif;	
+ 	color: #536e87;
+}
+
+div.GreyBlueRightBottom
+{
+	background: url(../img/bg_blue_grey/right_bottom.gif) bottom right no-repeat;
+}
+
+div.GreyBlueLeftBottom
+{
+	background: url(../img/bg_blue_grey/left_bottom.gif) bottom left no-repeat;
+}
+
+div.GreyNavFrame
+{
+	background: url(../img/grey_frame/corner_left_top.gif) top left no-repeat;
+	
+  	width:220px;
+	border:1px solid #A1A5A2; 
+} 
+div.GreyNavFrameHead
+{
+background-color:#E3E3E4; text-align: center; vertical-align: middle; border-bottom: 1px solid #A1A5A2; padding:2px;
+}
+div.GreyNavFrame h2
+{
+  background: 	url(../img/grey_frame/corner_right_top.gif) top right no-repeat;
+  line-height:	20px;
+  padding:0;
+  margin:0;
+  font: bold 16 Arial-BoldMT, Arial, sans-serif, sans-serif;
+  color:#6F2D91;
+  text-align: center;  
+}
+
+div.GreyNavBody
+{
+	background: url(../img/grey_frame/pixel_grey.gif);
+  	margin-top: 0em;
+  	padding:0;
+	/*max-height: 300px;*/
+	overflow: auto;
+	margin-left: 5px;
+	margin-right: 5px;
+	color: #000000;
+	font:15 Geneva, Arial, Helvetica, sans-serif;
+}
+
+div.GreyNavBody a:link
+{
+	color: #000000;
+	font-weight: normal;
+	text-decoration: none;
+}
+
+div.GreyNavBody a:visited
+{
+	color: #000000;
+	font-weight: normal;	
+	text-decoration: none;
+}
+
+div.GreyNavBody a:hover
+{
+	color: #233e55;
+	text-decoration: underline;
+}
+
+div.GreyNavBody a:active
+{
+	text-decoration: none
+}
+
+
+div.GreyNavFrameFooter
+{
+  background: url(../img/grey_frame/corner_left_bottom.gif) bottom left no-repeat;
+}
+
+div.GreyNavFrameFooter p
+{
+  background: url(../img/grey_frame/corner_right_bottom.gif) bottom right no-repeat;
+  padding:20px;
+  display:block;
+  margin:-2em 0 0 0;
+}
+
+div.ajaxposition
+{
+   position:relative;
+}
+
+.submitButton
+{
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	font: bold 1em Geneva, Arial, Helvetica, sans-serif;
+	color: white;
+	border: 0;
+}
+
+.submitButton:hover
+{
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	font: bold 1em Geneva, Arial, Helvetica, sans-serif;
+	color: #576d83;
+}
+
+.submitButtonBlue
+{
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	font: bold 1em Geneva, Arial, Helvetica, sans-serif;
+	color: #283e52;
+	border: 0;
+}
+
+
+.submitButtonBlue img
+{
+	vertical-align: top;
+	margin-top: 2px;
+}
+
+.submitButtonBlue:hover
+{
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	font: bold 1em Geneva, Arial, Helvetica, sans-serif;
+	color: #8aa0b8;
+}
+
+.submitButtonLightBackground
+{
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	font: bold 1em Geneva, Arial, Helvetica, sans-serif;
+	color: #576d83;
+	bordeR: 0;
+}
+
+.submitButtonLightBackground:hover
+{
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	font: bold 1em Geneva, Arial, Helvetica, sans-serif;
+	color: #a5bcd4;
+}
+
+
+div.Help
+{
+	padding: 20px 1px 0 9px;
+	margin: 0;	
+}
+
+div.Help a:link
+{
+	font-weight: normal;
+	text-decoration: underline;
+}
+
+div.Help a:visited
+{
+	font-weight: normal;	
+	text-decoration: underline;
+}
+
+div.Help a:hover
+{
+	color: red;
+	text-decoration: underline;
+}
+
+div.Help a:active
+{
+	color: red;
+	text-decoration: underline;
+}
+
+.textInputSmall
+{
+	border-style: solid;
+	border-width: 1px;
+	border-color: #cfdbe6;
+	margin: 0;
+	font: 0.9em Geneva, Arial, Helvetica, sans-serif;
+	color: #000000;
+	background-color: white;
+}
+
+li a:link
+{
+	text-decoration: none;
+	font: 0.9em/1em Verdana, Geneva, Arial, Helvetica;
+}
+
+li a:visited
+{
+	text-decoration: none;
+	font: 0.9em/1em Verdana, Geneva, Arial, Helvetica;
+}
+
+li a:hover
+{
+	text-decoration: underline;
+	font: 0.9em/1em Verdana, Geneva, Arial, Helvetica;
+	color: #233e55;
+}
+
+li a:active
+{
+	text-decoration: underline;
+	font: 1em Verdana, Geneva, Arial, Helvetica;
+}
+
+div.listScroll
+{
+	height:	200px;
+	margin: 0 5px 0 5px;
+	overflow: auto;
+	padding: 0px;
+	width: 210px;
+	font:  1em Geneva, Arial, Helvetica, sans-serif;
+}
+
+.contentTable
+{
+	padding: 0px;
+	margin: 0 0 0 10px;
+	letter-spacing: 0px;
+}
+
+.contentTable TR
+{
+	border: 0px;
+	padding: 0px;
+	margin: 0px;
+}
+
+.contentTable TH
+{
+	padding: 0px;
+	margin: 0px;
+	font:  bold 0.9em/1em Geneva, Arial, Helvetica, sans-serif;
+	text-align: left;
+	color: #233e55;
+}
+
+.contentTable TD
+{
+	padding: 0px;
+	margin: 0px;
+	font:  1em Verdana  Tahoma,Geneva, Arial, Helvetica, sans-serif;
+	border: 0px;
+	text-align: left;
+	color: #000000;
+}
+
+.contentTable td.main
+{
+	color: #000000;
+	font-size:13px;
+}
+
+.contentTable td.extra
+{
+	padding: 0 0 0 5px;
+	margin: 0px;
+	font:  1em Verdana Geneva, Arial, Helvetica, sans-serif;
+	border: 0px;
+	text-align: left;
+	color: #86a1bc;
+	border-bottom: 1px solid #6c87a1;
+}
+
+input
+{
+	border-style: solid;
+	border-width: 1px;
+	border-color: #b3c0cb;
+	margin: 0;
+	font: 1em Geneva, Arial, Helvetica, sans-serif;
+	color: #6F2D91;
+}
+
+
+input[type="checkbox"], input[type="radio"]
+{
+	background: transparent;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	color: #233e55;
+}
+
+.formValidationError
+{
+	font: 0.8em Geneva, Arial, Helvetica, sans-serif;
+	color: red;
+}
+
+.whiteText
+{
+	font: 0.8em Geneva, Arial, Helvetica, sans-serif;
+	color:white;
+}
+
+
+
+div.UserReportCriteria
+{
+	margin: 0 10px 0 10px;
+	color: #536e87;
+	font: 1em Arial, Geneva, Helvetica, sans-serif;	
+}
+
+.reportCriteriaTableTable 
+{
+	margin: -0.5em 1em 0 0.5em;
+	width: 100%;
+}
+
+
+.reportCriteriaTable th
+{
+	padding: 5px 0 5px 0;
+	font:  bold 0.9em/1em Geneva, Arial, Helvetica, sans-serif;	
+	color: #233e55;
+	border: 0;
+	width: 20%;
+	text-align: left;
+}
+
+.reportCriteriaTable th.firstCell
+{
+	width: 40%;
+}
+
+.reportCriteriaTable td
+{
+	font:  1.0em Geneva, Arial, Helvetica, sans-serif;	
+	color: #233e55;
+	vertical-align: top;
+}
+
+.reportCriteriaTable td.result
+{
+	border-top-width: 1px;
+	border-top-color: #233e55;
+	border-top-style: solid;
+	font-weight: bold;
+}
+
+div.NavHeader
+{
+	position: relative;
+	background: url(../img/headerBackground.gif) top left repeat-x;
+	margin:	0px;
+	padding: 0;
+	height: 52px;
+}
+
+div.NavHeader div.Logo
+{
+	float: left;
+	position: absolute;
+	left:	8px;
+	top: 0px;
+	padding: 0;
+	margin-top:5px;
+	width: 1px;
+	height: 36px;
+	
+	
+}
+
+div.NavHeader div.Navigation
+{
+	position: absolute;
+	bottom: 2px;
+	left: 220px;
+	font:bold 16 Geneva, Arial, Helvetica, sans-serif;
+	color: #6F2D91;
+}
+
+div.NavHeader div.Navigation a:link
+{
+	color: #6F2D91;
+	font-weight: normal;
+	text-decoration: none;
+	font:bold 16 Geneva, Arial, Helvetica, sans-serif;
+}
+
+div.NavHeader div.Navigation a:visited
+{
+	color: #6F2D91;
+	font-weight: normal;
+	text-decoration: none;
+	font:bold 16 Geneva, Arial, Helvetica, sans-serif;
+}
+
+div.NavHeader div.Navigation a:hover
+{
+	color: #ffb100;
+	text-decoration: none;
+	font:bold 16 Geneva, Arial, Helvetica, sans-serif;
+}
+
+div.NavHeader div.Navigation a:active
+{
+	color: #ef842d;
+	text-decoration: none;
+	font:bold 16 Geneva, Arial, Helvetica, sans-serif;
+}
+
+div.NavHeader div.LoadingSpinner
+{
+	float: right;
+	position: absolute;
+	right: 5px;
+	bottom: 5px;
+	visibility: hidden;
+}
+
+div.LoggedInAs
+{
+	text-align: right;
+	padding-right: 7px;
+	font: 0.8em Geneva, Arial, Helvetica, sans-serif;
+	color: #536e87;
+}
+
+.navColumn
+{
+	float: left;
+	width: 250px;
+	margin-left: 5px;
+}
+
+.mainColumn
+{
+	float: left;
+}
+
+/* from http://www.oscaralexander.com/tutorials/how-to-make-sexy-buttons-with-css.html */
+.clear
+{
+    overflow: hidden;
+    width: 100%;
+}
+
+a.button
+{
+    background: transparent url('../img/grey_button_a.gif') no-repeat scroll top right;
+    color: #536e87;
+    display: block;
+    float: left;
+    font: bold 11px geneva, sans-serif;
+    height: 20px;
+    margin-right: 6px;
+    padding-right: 10px; /* sliding doors padding */
+    text-decoration: none;
+}
+
+a.button span {
+    background: transparent url('../img/grey_button_span.gif') no-repeat;
+    display: block;
+    line-height: 10px;
+    padding: 4px 0 6px 10px;
+    cursor: hand;
+    letter-spacing: +1.5px;
+    
+}
+
+a.button:active {
+    background-position: bottom right;
+    color: #536e87;
+    outline: none; /* hide dotted outline in Firefox */
+}
+
+a.button:active span {
+    background-position: bottom left;
+    padding: 5px 0 5px 10px; /* push text down 1px */
+    cursor: hand;
+    letter-spacing: +1.5px;
+}
+
+a.bluebutton
+{
+    background: transparent url('../img/blue_button_a.gif') no-repeat scroll top right;
+    color: #6F2D91;
+    display: block;
+    float: left;
+    font: bold 11px geneva, sans-serif;
+    height: 20px;
+    margin-right: 6px;
+    padding-right: 10px; /* sliding doors padding */
+    text-decoration: none;
+}
+
+a.bluebutton span {
+    background: transparent url('../img/blue_button_span.gif') no-repeat;
+    display: block;
+    line-height: 10px;
+    padding: 4px 0 6px 10px;
+    cursor: hand;
+    letter-spacing: +1.5px;
+    
+}
+
+a.bluebutton:active {
+    background-position: bottom right;
+    color: #536e87;
+    outline: none; /* hide dotted outline in Firefox */
+}
+
+a.bluebutton:active span {
+    background-position: bottom left;
+    padding: 5px 0 5px 10px; /* push text down 1px */
+    cursor: hand;
+    letter-spacing: +1.5px;
+}
+
+/* shouldn't be here but quite convenient */
+a.timesheetEntryComment { background: url(../img/comment/comment_blue_on.gif); }
+a.timesheetEntryComment:link,
+a.timesheetEntryComment:visited  { background: url(../img/comment/comment_blue_off.gif); }
+a.timesheetEntryComment:hover,
+a.timesheetEntryComment:focus { background: url(../img/comment/comment_blue_on.gif); }
+
+a.timesheetEntryCommented { background: url(../img/comment/comment_blue_on.gif); }
+a.timesheetEntryCommented:link,
+a.timesheetEntryCommented:visited  { background: url(../img/comment/comment_blue_on.gif); }
+a.timesheetEntryCommented:hover,
+a.timesheetEntryCommented:focus { background: url(../img/comment/comment_blue_on.gif); }
+
+a.timesheetFoldImg { background: url(../img/icon_up_on.gif); }
+a.timesheetFoldImg:link,
+a.timesheetFoldImg:visited  { background: url(../img/icon_up_off.gif); }
+a.timesheetFoldImg:hover,
+a.timesheetFoldImg:focus { background: url(../img/icon_up_on.gif); }
+
+a.timesheetFoldedImg { background: url(../img/icon_down_on.gif); }
+a.timesheetFoldedImg:link,
+a.timesheetFoldedImg:visited  { background: url(../img/icon_down_off.gif); }
+a.timesheetFoldedImg:hover,
+a.timesheetFoldedImg:focus { background: url(../img/icon_down_on.gif); }
+
+div .header a:link 
+{
+	 color:	#536e87;
+	 font: bold 11px geneva, sans-serif;
+}
+div .header a:hover
+{
+	 color:	#536e87;
+	 font: bold 11px geneva, sans-serif;
+}
+
+.asaxheader 
+{
+	color: #6F2D91;
+	font-weight:  bold;
+	align :left;
+	background-color: #E3E3E4;
+}
+/*20081013whd*/
+table .Grid 
+{
+	padding: 1px;
+	margin: 0 0 0 0px;
+	letter-spacing: 0px;
+	background-color:#A1BCD7;
+}
+
+.dg_header
+{
+	color:#6F2D91;
+	background-color :#E3E3E4;
+	line-height:20px;
+	padding:3px;
+	
+}
+.tbPager
+{
+	background-color:#ffffff;
+	color:#6F2D91;
+}
+
+.tbPager a:visited 
+{
+	background-color:#ffffff;
+	/*background-color:#E3E3E4;*/
+	/*font: bold 13px geneva, sans-serif;*/
+}
+
+table .Grid TR
+{
+	border: 0px;
+	padding: 0px;
+	margin: 0px;
+}
+
+table .Grid td
+{
+	
+	text-align: left;
+}
+
+.TD
+{
+	border: 0px;
+	padding: 0px;
+	margin: 0px;
+	text-align: left;
+}
+
+.tbmain td
+{
+	border-top: 1px solid #A1BCD7;    
+    border-left: 1px solid #A1BCD7;    
+    border-right: 1px solid #A1BCD7;    
+    border-bottom: 1px solid #A1BCD7;    
+	background-color:#F0F0F0;	
+}
+
+.tbclient td
+{
+	border-top: 1px solid #A1BCD7;    
+    border-left: 1px solid #A1BCD7;    
+    border-right: 1px solid #A1BCD7;    
+    border-bottom: 1px solid #A1BCD7; 
+    background-color:#DBD9FC;
+}
+
+table.tbMessage{   
+    border-top: 1px solid #A1BCD7;    
+    border-left: 1px solid #A1BCD7;    
+    border-right: 1px solid #A1BCD7;    
+    border-bottom: 1px solid #A1BCD7;    
+}   
+table.tbMessage td{   
+    border-top: 1px solid #A1BCD7;    
+    border-left: 1px solid #A1BCD7;    
+    border-right: 1px solid #A1BCD7;    
+    border-bottom: 1px solid #A1BCD7;   
+}
+
+table.tbone
+{
+	
+    border-top: 1px solid #A1BCD7;    
+    border-left: 1px solid #A1BCD7;    
+    border-right: 1px solid #A1BCD7;    
+    border-bottom: 1px solid #A1BCD7;   
+}

@@ -1,0 +1,34 @@
+/*20071218 */
+
+ body{background-color:#F2F2F2;}
+ #midd 
+    {
+	 background-image: url(../images/body_midd_Bg.gif);
+	 background-repeat: repeat-y;
+	 width:9px; 
+	 height: 92%; 
+	 overflow: hidden; 
+	 float: left;
+	 margin: 0; 
+	 padding: 0; 
+	 }
+ #midd .navPoint 
+    {
+	 color: #132651;
+	 cursor: hand; 
+	 font-family: Webdings; 
+	 font-size: 9pt; 
+	 background-image: url(../images/body_midd_buttonBg.gif); 
+	 background-repeat: no-repeat; 
+	 text-align: center; 
+	 width: 9px; 
+	 height: 140px; 
+	 margin-top: 140px; 
+	 margin-right: 0; 
+	 margin-left: 0; 
+	 padding-top: 80px; 
+	 padding-right: 0; 
+	 padding-left: 0; 
+	 display: block; 
+	 }
+	 /*20071218 end */

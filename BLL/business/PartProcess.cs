@@ -712,12 +712,12 @@ namespace ModuleWorkFlow.business
         {
              
 
-            string queryString = "select tb_partprocess.moduleid,tb_partprocess.Priority,partno_id,priorityname,LeastCount=0,ProcessOrder=0 from tb_partprocess inner join tb_priority on (tb_priority.priorityid=tb_partprocess.priority) "
-                    + "inner join tb_part on (tb_partprocess.moduleId=tb_part.moduleId and tb_partprocess.partno=tb_part.partno)  where tb_partprocess.ModuleId like '%" + moduleId + "%' and DesignProcess is null and tb_partprocess.eachBatchCount>0  and process is not null ";
+            string queryString = "select tb_partprocess.moduleid,tb_partprocess.partno,tb_partprocess.Priority,partno_id,priorityname,LeastCount=0,ProcessOrder=0 from tb_partprocess inner join tb_priority on (tb_priority.priorityid=tb_partprocess.priority) "
+                    + "where tb_partprocess.ModuleId like '%" + moduleId + "%' and tb_partprocess.eachBatchCount>0 ";
                 if (partnoid != null && !partnoid.Equals(""))
                     queryString = queryString + " and tb_partprocess.partno_id like '%" + partnoid + "%'";
 
-                queryString = queryString + " group by tb_partprocess.moduleid,partno_id,tb_partprocess.Priority,priorityname order by partno_id";
+                    queryString = queryString + " group by tb_partprocess.moduleid,tb_partprocess.partno,partno_id,tb_partprocess.Priority,priorityname order by partno_id";
             
             SqlParameter[] pars = new SqlParameter[2];
             pars[0] = new SqlParameter("@moduleId", SqlDbType.NVarChar, 50);
@@ -732,8 +732,8 @@ namespace ModuleWorkFlow.business
 
         public static DataSet getPartsDesign(string moduleId, string partnoid)
         {
-            string queryString = "select tb_partprocess.moduleid,partno_id,tb_partprocess.Priority,priorityname from tb_partprocess inner join tb_priority on (tb_priority.priorityid=tb_partprocess.priority) "
-                    + "inner join tb_part on (tb_partprocess.moduleId=tb_part.moduleId and tb_partprocess.partno=tb_part.partno)  where tb_partprocess.ModuleId like '%" + moduleId + "%' and DesignProcess is not null";
+            string queryString = "select tb_partprocess.moduleid,tb_partprocess.partno,partno_id,tb_partprocess.Priority,priorityname from tb_partprocess inner join tb_priority on (tb_priority.priorityid=tb_partprocess.priority) "
+                    + "where tb_partprocess.ModuleId like '%" + moduleId + "%'";
             if (partnoid != null && !partnoid.Equals(""))
                 queryString = queryString + " and tb_partprocess.partno_id like '%" + partnoid + "%'";
 
@@ -831,7 +831,9 @@ namespace ModuleWorkFlow.business
         public int Create()
         {
             string querystr = " Insert into tb_partprocess (ModuleId,PartNo,ProcessId,PartNo_Id,StatusId,ProcessNeedMinutes,ProcessOrder,priority,startdate,enddate, middlestartdate,middleenddate,importantid,totalminutes,selfStartDate,selfEndDate,DesignFinish,isConfirm,processComment,processMachineid) " +
-                            " values (@ModuleId,@PartNo,@ProcessId,@PartNo_Id,@StatusId,@ProcessNeedMinutes,@ProcessOrder,@priority,@startdate,@enddate,@middlestartdate,@middleenddate,@importantid,@totalminutes,@selfStartDate,@selfEndDate,@DesignFinish,@isConfirm,@processComment,@processMachineid)" +
+                            " values (@ModuleId,@PartNo,@ProcessId,@PartNo_Id,@StatusId,@ProcessNeedMinutes,@ProcessOrder,@priority,@startdate,@enddate,@middlestartdate,@middleenddate,@importantid,@totalminutes,@selfStartDate,@selfEndDate,@DesignFinish,@isConfirm,@processComment,@processMachineid);" +
+                            " declare @newPartProcessId int; set @newPartProcessId=convert(int,scope_identity());" +
+                            " update tb_partprocess set processno=@newPartProcessId where id=@newPartProcessId" +
                             " select @@ROWCOUNT as AffectedRows";
             SqlParameter[] pars = new SqlParameter[20];
             pars[0] = new SqlParameter("@moduleid", SqlDbType.NVarChar, 50);
@@ -1025,7 +1027,9 @@ namespace ModuleWorkFlow.business
         public int CreateElectrode()
         {
             string strsql = " Insert into tb_partprocess (ModuleId,PartNo,ProcessId,PartNo_Id,StatusId,StartDate,ProcessNeedMinutes,ProcessOrder,priority,isElectrode,selfStartDate,selfEndDate,RelationPartNo,RelationProcessNo) " +
-                          " values (@ModuleId,@PartNo,@ProcessId,@PartNo_Id,@StatusId,@StartDate,@ProcessNeedMinutes,@ProcessOrder,@priority,1,@selfStartDate,@selfEndDate,@RelationPartNo,@RelationProcessNo)" +
+                          " values (@ModuleId,@PartNo,@ProcessId,@PartNo_Id,@StatusId,@StartDate,@ProcessNeedMinutes,@ProcessOrder,@priority,1,@selfStartDate,@selfEndDate,@RelationPartNo,@RelationProcessNo);" +
+                          " declare @newPartProcessId int; set @newPartProcessId=convert(int,scope_identity());" +
+                          " update tb_partprocess set processno=@newPartProcessId where id=@newPartProcessId" +
                           " select @@ROWCOUNT as AffectedRows";
             SqlParameter[] pars = new SqlParameter[13];
             pars[0] = new SqlParameter("@moduleid", SqlDbType.NVarChar, 50);
@@ -1134,6 +1138,83 @@ namespace ModuleWorkFlow.business
             pars[0] = new SqlParameter("@moduleid", SqlDbType.NVarChar, 50);
             pars[0].Value = this.ModuleId;
             Data.ExecuteNonQuery(procedureString, pars);
+        }
+
+        /// <summary>
+        /// 保存 PartModifyEdit 页面编辑的工序数据。
+        /// 该页面使用 XHSPartPartProcess 读取数据，因此这里直接按工序号更新 tb_partprocess，
+        /// 不再调用依赖旧工序关系对象的批量更新方法。
+        /// </summary>
+        public static int UpdatePartProcessFromModifyEdit(List<PartPartProcessInfo> source)
+        {
+            if (source == null || source.Count == 0)
+            {
+                return 0;
+            }
+
+            const string queryString = @"
+if @ProcessNo = 0
+begin
+    insert into tb_partprocess
+    (ModuleId, PartNo, ProcessId, PartNo_Id, StatusId, ProcessNeedMinutes,
+     ProcessOrder, priority, StartDate, SelfStartDate, SelfEndDate, isConfirm,
+     processComment, processMachineid, isUnnormal, unNormalReasonsId, departMentId)
+    values
+    (@ModuleId, @PartNo, @ProcessId, @PartNo_Id, @StatusId, @ProcessNeedMinutes,
+     @ProcessOrder, @priority, @StartDate, @SelfStartDate, @SelfEndDate, @isConfirm,
+     @processComment, @processMachineid, @isUnnormal, @unNormalReasonsId, @departMentId);
+
+    declare @NewPartProcessId int;
+    set @NewPartProcessId = convert(int, scope_identity());
+    update tb_partprocess set ProcessNo = @NewPartProcessId where id = @NewPartProcessId;
+end
+else
+begin
+    update tb_partprocess set
+        ProcessId = @ProcessId,
+        StatusId = @StatusId,
+        ProcessNeedMinutes = @ProcessNeedMinutes,
+        ProcessOrder = @ProcessOrder,
+        priority = @priority,
+        StartDate = @StartDate,
+        SelfStartDate = @SelfStartDate,
+        SelfEndDate = @SelfEndDate,
+        isConfirm = @isConfirm,
+        processComment = @processComment,
+        processMachineid = @processMachineid,
+        isUnnormal = @isUnnormal,
+        unNormalReasonsId = @unNormalReasonsId,
+        departMentId = @departMentId
+    where ModuleId = @ModuleId and PartNo_Id = @PartNo_Id and ProcessNo = @ProcessNo;
+end";
+
+            int affectedRows = 0;
+            foreach (PartPartProcessInfo ppi in source)
+            {
+                SqlParameter[] pars = new SqlParameter[18];
+                pars[0] = new SqlParameter("@ProcessId", SqlDbType.NVarChar, 50) { Value = (object)ppi.ProcessId ?? DBNull.Value };
+                pars[1] = new SqlParameter("@StatusId", SqlDbType.NVarChar, 50) { Value = (object)ppi.StatusId ?? DBNull.Value };
+                pars[2] = new SqlParameter("@ProcessNeedMinutes", SqlDbType.Int) { Value = ppi.ProcessNeedMinutes };
+                pars[3] = new SqlParameter("@ProcessOrder", SqlDbType.Int) { Value = ppi.ProcessOrder };
+                pars[4] = new SqlParameter("@priority", SqlDbType.Int) { Value = ppi.Priority };
+                pars[5] = new SqlParameter("@StartDate", SqlDbType.DateTime) { Value = ppi.StartDate == DateTime.MinValue ? (object)DBNull.Value : ppi.StartDate };
+                pars[6] = new SqlParameter("@SelfStartDate", SqlDbType.DateTime) { Value = ppi.isConfirm == 1 ? (object)ppi.SelfStartDate : DBNull.Value };
+                pars[7] = new SqlParameter("@SelfEndDate", SqlDbType.DateTime) { Value = ppi.isConfirm == 1 ? (object)ppi.SelfEndDate : DBNull.Value };
+                pars[8] = new SqlParameter("@isConfirm", SqlDbType.Int) { Value = ppi.isConfirm };
+                pars[9] = new SqlParameter("@processComment", SqlDbType.NVarChar) { Value = (object)ppi.ProcessComment ?? DBNull.Value };
+                pars[10] = new SqlParameter("@processMachineid", SqlDbType.NVarChar) { Value = (object)ppi.ProcessMachineId ?? DBNull.Value };
+                pars[11] = new SqlParameter("@isUnnormal", SqlDbType.Int) { Value = ppi.IsUnnormal };
+                pars[12] = new SqlParameter("@unNormalReasonsId", SqlDbType.Int) { Value = ppi.UnNormalReasonsId };
+                pars[13] = new SqlParameter("@departMentId", SqlDbType.Int) { Value = ppi.DepartMentId };
+                pars[14] = new SqlParameter("@ModuleId", SqlDbType.NVarChar, 50) { Value = (object)ppi.ModuleId ?? DBNull.Value };
+                pars[15] = new SqlParameter("@PartNo_Id", SqlDbType.NVarChar, 50) { Value = (object)ppi.PartNo_Id ?? DBNull.Value };
+                pars[16] = new SqlParameter("@ProcessNo", SqlDbType.Int) { Value = ppi.ProcessNo };
+                pars[17] = new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = (object)ppi.PartNo ?? DBNull.Value };
+
+                affectedRows += Data.ExecuteNonQuery(queryString, pars);
+            }
+
+            return affectedRows;
         }
 
         public int updateProcessMins()
@@ -2192,7 +2273,9 @@ namespace ModuleWorkFlow.business
                     //�����ݿ�
                     string querystr = "insert into tb_partprocess " +
                         " (moduleid,partno,processid,partno_id,statusid,processneedminutes,processorder,priority,startdate,enddate,iselectrode,middlestartdate,middleenddate) " +
-                        " values (@moduleid,@partno,@processid,@partno_id,@statusid,@processneedminutes,@processorder,@priority,@startdate,@enddate,@iselectrode,@middlestartdate,@middleenddate)" +
+                        " values (@moduleid,@partno,@processid,@partno_id,@statusid,@processneedminutes,@processorder,@priority,@startdate,@enddate,@iselectrode,@middlestartdate,@middleenddate);" +
+                        " declare @newPartProcessId int; set @newPartProcessId=convert(int,scope_identity());" +
+                        " update tb_partprocess set processno=@newPartProcessId where id=@newPartProcessId" +
                         " select @@ROWCOUNT as AffectedRows";
 
                     SqlParameter[] pars = new SqlParameter[13];
@@ -2573,72 +2656,7 @@ namespace ModuleWorkFlow.business
 
         public IList _OutSourcePartProcess(IList source, string moduleid, string partno)//�����\��^���Ƥu��
         {
-            bool flag = false;
-            IList ilist = new ArrayList();
-            Model.System.ApproveSystemInfo asi = new BLL.System.ApproveSystem().getApproveSystemByApproveAbbr("OutSource");
-            DataTable dt = null;
-            if (!asi.ApproveText.Equals("N"))
-            {
-                dt = new BLL.Outsource.OutSourceApplyPartDetail().GetOutSource_PartDetail_ByApproveToWork(moduleid, partno, "CHECK_PASS");
-            }
-            Hashtable ht = new Hashtable();
-            foreach (PartProcessInfo ppi in source)
-            {
-                BLL.Process process = new BLL.Process();
-                //if(process.GetProcessInfoById(ppi.ProcessId).PriceType.Equals("OUTSOURCE"))
-                if (!asi.ApproveText.Equals("N"))
-                {
-                    string selectsearch = "processno=" + ppi.ProcessNo;
-                    if (ppi.NeedProduct == 0 && dt != null && dt.Select(selectsearch).Length > 0)
-                    {
-                        if (!ht.ContainsKey(ppi.ProcessId))
-                        {
-                            ppi.ProcessName = process.GetProcessInfoById(ppi.ProcessId).ProcessName;
-                            ilist.Add(ppi);
-                            ht.Add(ppi.ProcessId, ppi);
-                            flag = true;
-                        }
-
-                    }
-                    else
-                    {
-                        //throw new Exception(lang.TXT_SCANBARCODE2_OutSourceContentError1) ;
-                    }
-                }
-                else
-                {
-                    if (ppi.NeedProduct == 0)
-                    {
-                        if (!ht.ContainsKey(ppi.ProcessId))
-                        {
-                            ppi.ProcessName = process.GetProcessInfoById(ppi.ProcessId).ProcessName;
-                            ilist.Add(ppi);
-                            ht.Add(ppi.ProcessId, ppi);
-                            flag = true;
-                        }
-
-                    }
-                    else
-                    {
-                        //throw new Exception(lang.NOOUTSOURCE);
-                    }
-                }
-            }
-            if (!asi.ApproveText.Equals("N"))
-            {
-                if (!flag)
-                {
-                    throw new Exception(Lang.TXT_SCANBARCODE2_OutSourceContentError1);
-                }
-            }
-            else
-            {
-                if (!flag)
-                {
-                    throw new Exception(Lang.NOOUTSOURCE);
-                }
-            }
-            return ilist;
+            return source;
         }
 
         public static DataSet getPartIDProcessByProcessViewNew(string moduleid, string partnoid)

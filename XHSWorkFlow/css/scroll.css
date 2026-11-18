@@ -1,0 +1,24 @@
+﻿body { font:"宋体"
+}
+#main{margin:auto;
+    }
+#title{margin:auto;}
+ td{font-size:12px;}
+.titletd td{color:#209CEF;
+	background-color :#E3E3E4;
+	line-height:20px;
+	padding:2px;}
+.datatd td{background-color:#FFFFFF;height:18px;padding-left:2px;padding-right:2px;}
+.td1{width:120px;}
+.td2{width:240px;}
+.td3{width:140px;}
+.td4{width:180px;}
+.td5{width:120px;}
+#floor
+{
+     border:2px;
+     border-color:Red;
+     height:20px;
+     width:800px;
+    
+ }

@@ -88,6 +88,8 @@
     <Compile Include="lang.cs" />
     <Compile Include="Menu.cs" />
     <Compile Include="PartData.cs" />
+    <Compile Include="..\BLL\business\Part.cs" Link="Part.cs" />
+    <Compile Include="..\BLL\business\PartProcess.cs" Link="PartProcess.cs" />
     <Compile Include="Priority.cs" />
     <Compile Include="Process.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

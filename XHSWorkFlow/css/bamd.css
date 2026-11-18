@@ -1,0 +1,143 @@
+@charset "utf-8";
+/* CSS Document */
+
+@import url("reset.css");
+
+#Wrapper {width:auto; height:auto; margin:0px; padding:0px; background-color:#b298d2;font-family:Arial, "新細明體";}
+
+#Header {width:auto; height:41px; margin:0px ; padding:0px; border-bottom:5px solid #ccc}
+
+.headbox {width:1000px; height:41px; margin:0px auto; padding:0px;background:url(../images/bg-top.jpg) no-repeat;}
+
+.bheadbox {width:1000px; height:20px; margin:0px auto; padding:0px;background:url(../images/bg-top.jpg) no-repeat;}
+
+#Menu {width:1000px; height:60px; margin:0px ; padding:0px; background-color:#fff;border-bottom:2px solid #88abda}
+
+.menubox {width:930px; height:60px; margin:0px auto; padding:0px;  }
+
+#Container {width:auto; height:auto; margin:0px ; padding:0px; background-color:#fff }
+
+#Content {width:1000px; height:auto; margin:0px auto; padding:0px; }
+
+
+
+
+.clearbox { clear:both; }
+
+/*---------------------------------------------------上方區-----------------------------------------------------*/
+
+/*================位置================*/
+
+.linebox{ width:300px; margin:8px 0px 0px 45px; padding:0px;float:left; font-size:15px;}
+
+.linebox a{ color:#000; text-decoration:none;}
+.linebox a:hover{ color:#FFF; }
+
+.linebox img{ width:9px; height:7px; margin:0px 12px;}
+
+.logout {width:50px; margin:8px 20px 0px 0px; padding:0px;float:right; font-size:15px;}
+.logout a{ color:#000; text-decoration:none;}
+.logout a:hover{ color:#FFF; }
+
+/*================選單================*/
+.mod1{ margin:0px; padding-top:5px;float:left;}
+.mod1 li{ margin:0px; padding:0px;float:left;margin-right:10px;}
+
+.mod2{ margin:0px; padding-top:5px;float:right;}
+.mod2 li{ margin:0px; padding:0px;float:left;margin-left:10px;}
+
+.btn1 {width:48px; height:53px;padding:0px;}
+.btn1 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/1-add.jpg) no-repeat  }
+.btn1 a:hover{background:url(../images/1-add-a.jpg) no-repeat }
+
+.btn2 {width:48px; height:53px;padding:0px;}
+.btn2 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/2-edit.jpg) no-repeat  }
+.btn2 a:hover{background:url(../images/2-edit-a.jpg) no-repeat }
+
+.btn3 {width:48px; height:53px;padding:0px;}
+.btn3 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/3-save.jpg) no-repeat  }
+.btn3 a:hover{background:url(../images/3-save-a.jpg) no-repeat }
+
+.btn4 {width:48px; height:53px;padding:0px;}
+.btn4 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/4-copy.jpg) no-repeat  }
+.btn4 a:hover{background:url(../images/4-copy-a.jpg) no-repeat }
+
+.btn5 {width:48px; height:53px;padding:0px;}
+.btn5 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/5-text.jpg) no-repeat  }
+.btn5 a:hover{background:url(../images/5-text-a.jpg) no-repeat }
+
+.btn6 {width:48px; height:53px;padding:0px;}
+.btn6 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/6-del.jpg) no-repeat  }
+.btn6 a:hover{background:url(../images/6-del-a.jpg) no-repeat }
+
+.btn7 {width:48px; height:53px;padding:0px;}
+.btn7 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/7-ok.jpg) no-repeat  }
+.btn7 a:hover{background:url(../images/7-ok-a.jpg) no-repeat }
+
+.btn8 {width:48px; height:53px;padding:0px;}
+.btn8 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/8-search.jpg) no-repeat  }
+.btn8 a:hover{background:url(../images/8-search-a.jpg) no-repeat }
+
+.btn9 {width:48px; height:53px;padding:0px;}
+.btn9 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/9-printer.jpg) no-repeat  }
+.btn9 a:hover{background:url(../images/9-printer-a.jpg) no-repeat }
+
+.btn10 {width:48px; height:53px;padding:0px; }
+.btn10 a{width:48px; height:53px;margin:0px;padding:0px; display: block;text-decoration: none; text-indent: -9999px;background:url(../images/10-des.jpg) no-repeat  }
+.btn10 a:hover{background:url(../images/10-des-a.jpg) no-repeat }
+
+
+
+/*================內文================*/
+.space1{ height:40px;}
+.Textbox { width:1000px; margin:0px auto;font-size:13px; padding:15px; border:2px solid #84a0c3}
+.bTextbox { width:1000px; margin:0px auto;font-size:13px; padding:15px; border:2px solid #84a0c3}
+.sp1 { color:#8551a1}
+.sp2 { font-size:13px;}
+
+.box { width:1000px; height:40px;margin:20px auto;font-size:13px; padding:15px; border:2px solid #84a0c3}
+.Grid {
+	width:1000px;
+	padding:4px;
+	border:1px solid #84a0c3;
+	margin: 1px;
+}
+.dg_header {
+	color:#8551a1;
+	background-color: #e3e3e3;
+	text-align: left;
+}
+.tbPager {
+	color:#8551a1;
+	background-color: #e3e3e3;
+	text-align: left;
+}
+
+Font.fontTop5Style{
+ font-family: Verdana,Arial,Helvetica,sans-serif;
+ font-size: 10px;
+ color: #464646;
+}
+
+Font.fontSearchStyle{
+ font-family: Verdana,Arial,Helvetica,sans-serif;
+ font-size: 10px;
+ color: #464646;
+}
+body {
+ font-family: Verdana,Arial,Helvetica,sans-serif;
+ font-size: 11px;
+ color: #000000;
+}
+
+table, tbody, p {
+ font-family: Verdana,Arial,Helvetica,sans-serif;
+ font-size: 36px;
+ color: #464646;
+}
+TEXTAREA,SELECT,INPUT {
+    font-size: 11px;
+    font-family: Verdana,Arial,Helvetica,sans-serif;
+    /*color: #000000;*/
+    /*background-color: #FFFFFF*/
+}
