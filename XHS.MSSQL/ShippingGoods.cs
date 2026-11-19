@@ -14,7 +14,7 @@ namespace XHS.MSSQL
     /// </summary>
     public class ShippingGoods : IShippingGoods
     {
-        private const string ShippingGoodsSelectColumns = "Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,PackageName,PackingStage";
+        private const string ShippingGoodsSelectColumns = "Id,SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,DeliveryNo,PackageName,PackingStage";
         private const string ShippingGoodsOrderBy = " order by SupplyBatchNo, PartNo, case when charindex('-', CartonNo) > 0 and substring(CartonNo, charindex('-', CartonNo) + 1, len(CartonNo)) not like '%[^0-9]%' then cast(substring(CartonNo, charindex('-', CartonNo) + 1, len(CartonNo)) as int) when CartonNo not like '%[^0-9]%' then cast(CartonNo as int) else 2147483647 end, CartonNo";
 
         public List<ShippingGoodsInfo> GetShippingGoods()
@@ -30,35 +30,58 @@ namespace XHS.MSSQL
 
         public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus)
         {
+            return GetShippingGoods(partNo, partName, supplyBatchNo, closeStatus, string.Empty);
+        }
+
+        public List<ShippingGoodsInfo> GetShippingGoods(string partNo, string partName, string supplyBatchNo, string closeStatus, string packingStatus)
+        {
             string queryString = "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods where 1=1";
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             if (!string.IsNullOrWhiteSpace(partNo))
             {
-                queryString += string.Format(" and PartNo like '%{0}%'", SafeSqlValue(partNo));
+                queryString += " and PartNo like @PartNo";
+                parameters.Add(new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = "%" + partNo.Trim() + "%" });
             }
 
             if (!string.IsNullOrWhiteSpace(partName))
             {
-                string safePartName = SafeSqlValue(partName);
-                queryString += string.Format(" and (PartChineseName like '%{0}%' or PartEnglishName like '%{0}%')", safePartName);
+                queryString += " and (PartChineseName like @PartName or PartEnglishName like @PartName)";
+                parameters.Add(new SqlParameter("@PartName", SqlDbType.NVarChar, 200) { Value = "%" + partName.Trim() + "%" });
             }
 
             if (!string.IsNullOrWhiteSpace(supplyBatchNo))
             {
-                queryString += string.Format(" and SupplyBatchNo like '%{0}%'", SafeSqlValue(supplyBatchNo));
+                queryString += " and SupplyBatchNo like @SupplyBatchNo";
+                parameters.Add(new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = "%" + supplyBatchNo.Trim() + "%" });
             }
 
             if (string.Equals(closeStatus, ShippingGoodsStatusInfo.Closed, StringComparison.OrdinalIgnoreCase))
             {
-                queryString += string.Format(" and Status='{0}'", SafeSqlValue(ShippingGoodsStatusInfo.Closed));
+                queryString += " and Status=@ClosedStatus";
+                parameters.Add(new SqlParameter("@ClosedStatus", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Closed });
             }
             else if (!string.IsNullOrWhiteSpace(closeStatus))
             {
-                queryString += string.Format(" and (Status is null or Status='' or Status<>'{0}')", SafeSqlValue(ShippingGoodsStatusInfo.Closed));
+                queryString += " and (Status is null or Status='' or Status<>@ClosedStatus)";
+                parameters.Add(new SqlParameter("@ClosedStatus", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Closed });
+            }
+
+            if (string.Equals(packingStatus, "Unpacked", StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += " and not exists (select 1 from tb_PackingRecord pr where pr.SupplyBatchNo=tb_ShippingGoods.SupplyBatchNo and pr.PartNo=tb_ShippingGoods.PartNo and pr.CartonNo=tb_ShippingGoods.CartonNo and ISNULL(pr.PackingStage,'') in ('Completed','Uploaded'))";
+            }
+            else if (string.Equals(packingStatus, "Packed", StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += " and exists (select 1 from tb_PackingRecord pr where pr.SupplyBatchNo=tb_ShippingGoods.SupplyBatchNo and pr.PartNo=tb_ShippingGoods.PartNo and pr.CartonNo=tb_ShippingGoods.CartonNo and pr.PackingStage='Completed')";
+            }
+            else if (string.Equals(packingStatus, "Uploaded", StringComparison.OrdinalIgnoreCase))
+            {
+                queryString += " and exists (select 1 from tb_PackingRecord pr where pr.SupplyBatchNo=tb_ShippingGoods.SupplyBatchNo and pr.PartNo=tb_ShippingGoods.PartNo and pr.CartonNo=tb_ShippingGoods.CartonNo and pr.PackingStage='Uploaded')";
             }
 
             queryString += ShippingGoodsOrderBy;
-            return GetShippingGoodsBySql(queryString);
+            return GetShippingGoodsBySql(queryString, parameters.ToArray());
         }
 
         public List<ShippingGoodsInfo> GetShippingGoodsBySupplyBatchNo(string supplyBatchNo, string cartonNo)
@@ -88,22 +111,101 @@ namespace XHS.MSSQL
             return GetShippingGoodsBySql(queryString);
         }
 
+        public List<ShippingGoodsInfo> GetShippingGoodsByBusinessKey(string supplyBatchNo, string partNo, string cartonNo, string deliveryNo)
+        {
+            string queryString = string.Format(
+                "select " + ShippingGoodsSelectColumns + " from tb_ShippingGoods where SupplyBatchNo='{0}' and PartNo='{1}' and CartonNo='{2}' and DeliveryNo='{3}'",
+                SafeSqlValue(supplyBatchNo),
+                SafeSqlValue(partNo),
+                SafeSqlValue(cartonNo),
+                SafeSqlValue(deliveryNo));
+
+            queryString += ShippingGoodsOrderBy;
+            return GetShippingGoodsBySql(queryString);
+        }
+
+        public string GetNextAutoDeliveryNo(DateTime date)
+        {
+            string datePrefix = date.ToString("yyyyMMdd");
+            const string queryString = "select isnull(max(try_convert(int, right(DeliveryNo, 3))), 0) as SequenceNo from tb_ShippingGoods where DeliveryNo like @DeliveryNoPrefix + '[0-9][0-9][0-9]'";
+            DataSet dataSet = Data.getDataSet(queryString, new[]
+            {
+                new SqlParameter("@DeliveryNoPrefix", SqlDbType.NVarChar, 8) { Value = datePrefix }
+            });
+
+            int sequenceNo = 0;
+            if (dataSet.Tables.Count > 0 && dataSet.Tables[0].Rows.Count > 0 && dataSet.Tables[0].Rows[0]["SequenceNo"] != DBNull.Value)
+            {
+                int.TryParse(dataSet.Tables[0].Rows[0]["SequenceNo"].ToString(), out sequenceNo);
+            }
+
+            if (sequenceNo >= 999)
+            {
+                throw new ApplicationException("当天自动配送单号流水号已超过 999，无法继续生成。");
+            }
+
+            return datePrefix + (sequenceNo + 1).ToString("D3");
+        }
+
         public ParamterInfo InsertShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,PackageName,PackingStage) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@OutBoxQRCode,@Status,@PrintCount,@Creater,@CreatDate,@Closer,@CloseDate,@ExSupplyBatchNo,@PackageName,@PackingStage)";
+            const string sql = "insert into tb_ShippingGoods (SupplierCode,PartNo,PartChineseName,PartEnglishName,Quantity,SupplyBatchNo,StackLayerCount,ProductionDate,InspectionConfirmDate,CartonNo,SingleBoxGrossWeight,QrCode,OutBoxQRCode,Status,PrintCount,Creater,CreatDate,Closer,CloseDate,ExSupplyBatchNo,DeliveryNo,PackageName,PackingStage) values (@SupplierCode,@PartNo,@PartChineseName,@PartEnglishName,@Quantity,@SupplyBatchNo,@StackLayerCount,@ProductionDate,@InspectionConfirmDate,@CartonNo,@SingleBoxGrossWeight,@QrCode,@OutBoxQRCode,@Status,@PrintCount,@Creater,@CreatDate,@Closer,@CloseDate,@ExSupplyBatchNo,@DeliveryNo,@PackageName,@PackingStage)";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
         public ParamterInfo UpdateShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
         {
-            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate,Closer=@Closer,CloseDate=@CloseDate,ExSupplyBatchNo=@ExSupplyBatchNo,PackageName=@PackageName,PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
+            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate,Closer=@Closer,CloseDate=@CloseDate,ExSupplyBatchNo=@ExSupplyBatchNo,DeliveryNo=@DeliveryNo,PackageName=@PackageName,PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
             return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
         }
 
-        public ParamterInfo UpdateShippingGoodsClose(List<ShippingGoodsInfo> shippingGoodsInfos)
+        public ParamterInfo UpdateShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos, string deliveryNo)
         {
-            const string sql = "update tb_ShippingGoods set Status=@Status,Closer=@Closer,CloseDate=@CloseDate where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo";
-            return BuildParamterInfo(shippingGoodsInfos, sql, BuildCloseParameters);
+            const string sql = "update tb_ShippingGoods set SupplierCode=@SupplierCode,PartNo=@PartNo,PartChineseName=@PartChineseName,PartEnglishName=@PartEnglishName,Quantity=@Quantity,StackLayerCount=@StackLayerCount,ProductionDate=@ProductionDate,InspectionConfirmDate=@InspectionConfirmDate,CartonNo=@CartonNo,SingleBoxGrossWeight=@SingleBoxGrossWeight,QrCode=@QrCode,OutBoxQRCode=@OutBoxQRCode,Status=@Status,PrintCount=@PrintCount,Creater=@Creater,CreatDate=@CreatDate,Closer=@Closer,CloseDate=@CloseDate,ExSupplyBatchNo=@ExSupplyBatchNo,DeliveryNo=@DeliveryNo,PackageName=@PackageName,PackingStage=@PackingStage where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and DeliveryNo=@DeliveryNo";
+            return BuildParamterInfo(shippingGoodsInfos, sql, BuildInsertOrUpdateParameters);
+        }
+
+        public ParamterInfo UpdatePrintedDeliveryNo(string supplyBatchNo, string partNo, string cartonNo, string oldDeliveryNo, string newDeliveryNo)
+        {
+            ParamterInfo paramterInfo = new ParamterInfo
+            {
+                AlSQL = new ArrayList(),
+                AlPAR = new ArrayList(),
+                AlCOM = new ArrayList()
+            };
+            paramterInfo.AlSQL.Add("update tb_ShippingGoods set DeliveryNo=@NewDeliveryNo where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and DeliveryNo=@OldDeliveryNo and (PrintCount > 0 or Status=@PrintedStatus)");
+            paramterInfo.AlPAR.Add(new[]
+            {
+                new SqlParameter("@NewDeliveryNo", SqlDbType.NVarChar, 100) { Value = newDeliveryNo ?? string.Empty },
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? string.Empty },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? string.Empty },
+                new SqlParameter("@OldDeliveryNo", SqlDbType.NVarChar, 100) { Value = oldDeliveryNo ?? string.Empty },
+                new SqlParameter("@PrintedStatus", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Printed }
+            });
+            paramterInfo.AlCOM.Add(CommandType.Text);
+            return paramterInfo;
+        }
+
+        public ParamterInfo UpdateShippingGoodsClose(string supplyBatchNo, string partNo, string deliveryNo, string closer, DateTime closeDate)
+        {
+            ParamterInfo paramterInfo = new ParamterInfo
+            {
+                AlSQL = new ArrayList(),
+                AlPAR = new ArrayList(),
+                AlCOM = new ArrayList()
+            };
+            paramterInfo.AlSQL.Add("update tb_ShippingGoods set Status=@Status,Closer=@Closer,CloseDate=@CloseDate where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and DeliveryNo=@DeliveryNo");
+            paramterInfo.AlPAR.Add(new[]
+            {
+                new SqlParameter("@Status", SqlDbType.NVarChar, 20) { Value = ShippingGoodsStatusInfo.Closed },
+                new SqlParameter("@Closer", SqlDbType.NVarChar, 50) { Value = closer ?? string.Empty },
+                new SqlParameter("@CloseDate", SqlDbType.DateTime) { Value = closeDate },
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = supplyBatchNo ?? string.Empty },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? string.Empty },
+                new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = deliveryNo ?? string.Empty }
+            });
+            paramterInfo.AlCOM.Add(CommandType.Text);
+            return paramterInfo;
         }
 
         public ParamterInfo DeleteShippingGoods(List<ShippingGoodsInfo> shippingGoodsInfos)
@@ -113,6 +215,18 @@ namespace XHS.MSSQL
             {
                 new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.SupplyBatchNo) },
                 new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) }
+            });
+        }
+
+        public ParamterInfo DeleteShippingGoodsByBusinessKey(List<ShippingGoodsInfo> shippingGoodsInfos, string deliveryNo)
+        {
+            const string sql = "delete from tb_ShippingGoods where SupplyBatchNo=@SupplyBatchNo and PartNo=@PartNo and CartonNo=@CartonNo and DeliveryNo=@DeliveryNo";
+            return BuildParamterInfo(shippingGoodsInfos, sql, info => new[]
+            {
+                new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.SupplyBatchNo) },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PartNo) },
+                new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) },
+                new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = deliveryNo ?? string.Empty }
             });
         }
 
@@ -129,8 +243,15 @@ namespace XHS.MSSQL
 
         private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string queryString)
         {
+            return GetShippingGoodsBySql(queryString, null);
+        }
+
+        private static List<ShippingGoodsInfo> GetShippingGoodsBySql(string queryString, SqlParameter[] parameters)
+        {
             List<ShippingGoodsInfo> result = new List<ShippingGoodsInfo>();
-            DataSet dataSet = Data.getDataSet(queryString);
+            DataSet dataSet = parameters == null
+                ? Data.getDataSet(queryString)
+                : Data.getDataSet(queryString, parameters);
             if (dataSet.Tables.Count == 0)
             {
                 return result;
@@ -161,6 +282,7 @@ namespace XHS.MSSQL
                     Closer = ReadString(row, "Closer"),
                     CloseDate = ReadNullableDateTime(row, "CloseDate"),
                     ExSupplyBatchNo = ReadString(row, "ExSupplyBatchNo"),
+                    DeliveryNo = ReadString(row, "DeliveryNo"),
                     PackageName = ReadString(row, "PackageName"),
                     PackingStage = ReadString(row, "PackingStage")
                 });
@@ -219,6 +341,7 @@ namespace XHS.MSSQL
                 new SqlParameter("@Closer", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.Closer) },
                 new SqlParameter("@CloseDate", SqlDbType.DateTime) { Value = ToDbValue(info.CloseDate) },
                 new SqlParameter("@ExSupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.ExSupplyBatchNo) },
+                new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.DeliveryNo) },
                 new SqlParameter("@PackageName", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PackageName) },
                 new SqlParameter("@PackingStage", SqlDbType.NVarChar, 30) { Value = ToDbValue(info.PackingStage) }
             };
@@ -231,6 +354,7 @@ namespace XHS.MSSQL
                 new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.SupplyBatchNo) },
                 new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.PartNo) },
                 new SqlParameter("@CartonNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.CartonNo) },
+                new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = ToDbValue(info.DeliveryNo) },
                 new SqlParameter("@Status", SqlDbType.NVarChar, 20) { Value = ToDbValue(info.Status) },
                 new SqlParameter("@Closer", SqlDbType.NVarChar, 50) { Value = ToDbValue(info.Closer) },
                 new SqlParameter("@CloseDate", SqlDbType.DateTime) { Value = ToDbValue(info.CloseDate) }

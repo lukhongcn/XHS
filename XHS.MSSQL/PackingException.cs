@@ -51,6 +51,47 @@ namespace XHS.MSSQL
             return GetPackingExceptionsJoinBySql(queryString);
         }
 
+        public List<PackingExceptionInfo> SearchPackingExceptions(
+            string kdCode,
+            string partNo,
+            DateTime? dateFrom,
+            DateTime? dateTo,
+            int? status)
+        {
+            string queryString = "select " + PackingExceptionJoinSelectColumns
+                + " from tb_PackingException e inner join tb_PackingRecord p on e.PackingId=p.Id where 1=1";
+            if (!string.IsNullOrWhiteSpace(kdCode))
+            {
+                queryString += string.Format(
+                    " and p.KDQRCode like '%{0}%'",
+                    (kdCode ?? string.Empty).Replace("'", "''"));
+            }
+            if (!string.IsNullOrWhiteSpace(partNo))
+            {
+                queryString += string.Format(
+                    " and p.PartNo like '%{0}%'",
+                    (partNo ?? string.Empty).Replace("'", "''"));
+            }
+            if (dateFrom.HasValue)
+            {
+                queryString += string.Format(
+                    " and e.CreateTime >= '{0:yyyy-MM-dd HH:mm:ss}'",
+                    dateFrom.Value);
+            }
+            if (dateTo.HasValue)
+            {
+                queryString += string.Format(
+                    " and e.CreateTime < '{0:yyyy-MM-dd HH:mm:ss}'",
+                    dateTo.Value.AddDays(1));
+            }
+            if (status.HasValue)
+            {
+                queryString += string.Format(" and e.Status={0}", status.Value);
+            }
+            queryString += " order by e.CreateTime desc, e.Id desc";
+            return GetPackingExceptionsJoinBySql(queryString);
+        }
+
         public List<PackingExceptionInfo> GetPackingExceptionByLockToken(string lockToken)
         {
             string queryString = "select " + PackingExceptionSelectColumns + " from tb_PackingException where 1=1";
@@ -180,6 +221,17 @@ namespace XHS.MSSQL
             SqlParameter[] parameters = BuildInsertParameters(info);
             int rows = SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters);
             return rows > 0;
+        }
+
+        /// <summary>在事务内插入异常记录并返回主键。</summary>
+        public long InsertExceptionAndReturnId(PackingExceptionInfo info, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "insert into tb_PackingException (PackingId,BoxCode,CartonNo,ExceptionCode,ExceptionMessage,TriggerQRCode,LockToken,Status,CreateUser,CreateTime,AuditRemark) values (@PackingId,@BoxCode,@CartonNo,@ExceptionCode,@ExceptionMessage,@TriggerQRCode,@LockToken,@Status,@CreateUser,@CreateTime,@AuditRemark); select cast(scope_identity() as bigint);";
+            SqlParameter[] parameters = BuildInsertParameters(info);
+            Array.Resize(ref parameters, parameters.Length + 1);
+            parameters[parameters.Length - 1] = new SqlParameter("@AuditRemark", SqlDbType.NVarChar, 500) { Value = info.AuditRemark ?? (object)DBNull.Value };
+            object result = SqlHelper.ExecuteScalar(transaction, CommandType.Text, sql, parameters);
+            return result == null || result == DBNull.Value ? 0L : Convert.ToInt64(result);
         }
 
         /// <summary>在事务内更新异常审核信息。</summary>

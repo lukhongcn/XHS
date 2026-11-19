@@ -13,6 +13,8 @@ namespace XHS.Model
 
         public string PartNo { get; set; }
 
+        public string DeliveryNo { get; set; }
+
         public string CartonNo { get; set; }
 
         public Guid? TaskId { get; set; }

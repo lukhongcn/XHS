@@ -20,7 +20,7 @@ namespace CheryPortHelp
         public static int PackageType => GetInt("Chery.PackageType", 2);
 
         public static string ContentType => Get("Chery.ContentType", "application/json;charset=UTF8");
-        public static int TimeoutSeconds => GetInt("Chery.TimeoutSeconds", 10);
+        public static int TimeoutSeconds => GetInt("Chery.TimeoutSeconds", 60);
 
         /// <summary>
         /// 可选配置：是否把 baseNo 也放到 Header。

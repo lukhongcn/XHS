@@ -90,6 +90,19 @@ namespace XHS.MSSQL
             return GetPackingScanRecordsBySql(queryString);
         }
 
+        public List<PackingScanRecordInfo> GetPackingScanRecordsByMaterialQRCode(string qrCode)
+        {
+            const string queryString = "select " + PackingScanRecordSelectColumns +
+                " from tb_PackingScanRecord psr where psr.QRCodeType=@QRCodeType and psr.QRCode=@QRCode" +
+                " order by psr.ScanTime desc,psr.Id desc";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel },
+                new SqlParameter("@QRCode", SqlDbType.NVarChar, 200) { Value = qrCode }
+            };
+            return GetPackingScanRecordsBySql(queryString, parameters);
+        }
+
         public ParamterInfo InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos)
         {
             const string sql = "insert into tb_PackingScanRecord (PackingId,QRCodeType,QRCode,MaterialNo,Qty,ScanUser,ScanTime) values (@PackingId,@QRCodeType,@QRCode,@MaterialNo,@Qty,@ScanUser,@ScanTime)";
@@ -154,9 +167,42 @@ namespace XHS.MSSQL
             return paramterInfo;
         }
 
+        public ParamterInfo DeletePackingScanRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            const string sql = "delete psr from tb_PackingScanRecord psr inner join tb_PackingRecord pr on psr.PackingId=pr.Id where exists (select 1 from tb_ShippingGoods sg where sg.SupplyBatchNo=pr.SupplyBatchNo and sg.PartNo=pr.PartNo and sg.CartonNo=pr.CartonNo and sg.SupplyBatchNo=@SupplyBatchNo and sg.PartNo=@PartNo and sg.DeliveryNo=@DeliveryNo)";
+            return BuildBusinessKeyDeleteParameterInfo(sql, supplyBatchNo, partNo, deliveryNo);
+        }
+
+        private ParamterInfo BuildBusinessKeyDeleteParameterInfo(string sql, string supplyBatchNo, string partNo, string deliveryNo)
+        {
+            return new ParamterInfo
+            {
+                Sql = sql,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList { sql },
+                AlPAR = new ArrayList
+                {
+                    new SqlParameter[]
+                    {
+                        new SqlParameter("@SupplyBatchNo", SqlDbType.NVarChar, 50) { Value = supplyBatchNo ?? string.Empty },
+                        new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = partNo ?? string.Empty },
+                        new SqlParameter("@DeliveryNo", SqlDbType.NVarChar, 100) { Value = deliveryNo ?? string.Empty }
+                    }
+                },
+                AlCOM = new ArrayList { CommandType.Text }
+            };
+        }
+
         private List<PackingScanRecordInfo> GetPackingScanRecordsBySql(string queryString)
         {
-            DataSet dataSet = Data.getDataSet(queryString);
+            return GetPackingScanRecordsBySql(queryString, null);
+        }
+
+        private List<PackingScanRecordInfo> GetPackingScanRecordsBySql(string queryString, SqlParameter[] parameters)
+        {
+            DataSet dataSet = parameters == null
+                ? Data.getDataSet(queryString)
+                : Data.getDataSet(queryString, parameters);
             List<PackingScanRecordInfo> result = new List<PackingScanRecordInfo>();
             if (dataSet == null || dataSet.Tables.Count == 0)
             {
@@ -214,10 +260,10 @@ namespace XHS.MSSQL
         /// <summary>事务内检查二维码是否重复。</summary>
         public bool CheckDuplicateQRCode(long packingId, string qrCode, SqlConnection connection, SqlTransaction transaction)
         {
-            const string sql = "select COUNT(1) from tb_PackingScanRecord where PackingId=@PackingId and QRCode=@QRCode";
+            const string sql = "select COUNT(1) from tb_PackingScanRecord where QRCodeType=@QRCodeType and QRCode=@QRCode";
             SqlParameter[] parameters = new[]
             {
-                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel },
                 new SqlParameter("@QRCode", SqlDbType.NVarChar, 200) { Value = qrCode ?? (object)DBNull.Value }
             };
             object result = SqlHelper.ExecuteScalar(transaction, CommandType.Text, sql, parameters);
@@ -339,6 +385,34 @@ namespace XHS.MSSQL
                 new SqlParameter("@MaterialNo", SqlDbType.NVarChar, 50) { Value = materialNo ?? (object)DBNull.Value },
                 new SqlParameter("@Qty", SqlDbType.Int) { Value = qty },
                 new SqlParameter("@ScanUser", SqlDbType.NVarChar, 50) { Value = scanUser ?? (object)DBNull.Value },
+                new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel }
+            };
+            return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;
+        }
+
+        /// <summary>事务内更新 KD 扫描明细，不改变数量及零件明细。</summary>
+        public bool UpdateKdScanRecord(long scanRecordId, long packingId, string qrCode, string scanUser, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "update tb_PackingScanRecord set QRCode=@QRCode,ScanUser=@ScanUser,ScanTime=GETDATE() where Id=@ScanRecordId and PackingId=@PackingId and QRCodeType=@QRCodeType";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@ScanRecordId", SqlDbType.BigInt) { Value = scanRecordId },
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
+                new SqlParameter("@QRCode", SqlDbType.NVarChar, 200) { Value = qrCode ?? (object)DBNull.Value },
+                new SqlParameter("@ScanUser", SqlDbType.NVarChar, 50) { Value = scanUser ?? (object)DBNull.Value },
+                new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.KD }
+            };
+            return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;
+        }
+
+        /// <summary>事务内删除指定零件扫描明细。</summary>
+        public bool DeleteScanRecord(long scanRecordId, long packingId, SqlConnection connection, SqlTransaction transaction)
+        {
+            const string sql = "delete from tb_PackingScanRecord where Id=@ScanRecordId and PackingId=@PackingId and QRCodeType=@QRCodeType";
+            SqlParameter[] parameters = new[]
+            {
+                new SqlParameter("@ScanRecordId", SqlDbType.BigInt) { Value = scanRecordId },
+                new SqlParameter("@PackingId", SqlDbType.BigInt) { Value = packingId },
                 new SqlParameter("@QRCodeType", SqlDbType.NVarChar, 20) { Value = PackingScanRecordQRCodeTypeInfo.MaterialLabel }
             };
             return SqlHelper.ExecuteNonQuery(transaction, CommandType.Text, sql, parameters) == 1;

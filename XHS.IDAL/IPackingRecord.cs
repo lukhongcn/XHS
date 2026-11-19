@@ -18,6 +18,7 @@ namespace XHS.IDAL
         ParamterInfo InsertPackingRecord(List<PackingRecordInfo> packingRecordInfos);
 
         ParamterInfo UpdatePackingRecord(List<PackingRecordInfo> packingRecordInfos);
+        ParamterInfo DeletePackingRecordsByBusinessKey(string supplyBatchNo, string partNo, string deliveryNo);
 
         /// <summary>在事务内以 UPDLOCK 读取装箱记录。</summary>
         PackingRecordInfo GetPackingRecordForUpdate(long packingId, SqlConnection connection, SqlTransaction transaction);
@@ -30,6 +31,9 @@ namespace XHS.IDAL
 
         /// <summary>按 KD 二维码查询装箱记录。</summary>
         PackingRecordInfo GetPackingRecordByKdQRCode(string kdQRCode, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>查询最新创建的装箱记录。</summary>
+        PackingRecordInfo GetLatestPackingRecord(SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>事务内插入装箱记录，返回新 Id。</summary>
         long InsertPackingRecord(PackingRecordInfo info, SqlConnection connection, SqlTransaction transaction);
@@ -54,6 +58,15 @@ namespace XHS.IDAL
 
         /// <summary>事务内更新装箱随箱码。</summary>
         bool UpdatePackingQRCode(long packingId, string pageToken, string packingQRCode, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内替换 KD 标签。</summary>
+        bool UpdatePackingKd(long packingId, string pageToken, string kdQRCode, string supplyBatchNo, string cartonNo, int planQty, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内解除装箱绑定并清空当前任务的 KD/随箱卡。</summary>
+        bool UnbindPackingRecord(long packingId, string pageToken, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);
+
+        /// <summary>事务内检查当前业务货品是否存在已上传记录。</summary>
+        bool HasUploadedShippingGoods(string supplyBatchNo, string partNo, string cartonNo, SqlConnection connection, SqlTransaction transaction);
 
         /// <summary>事务内更新装箱阶段。</summary>
         bool UpdatePackingStage(long packingId, string pageToken, string packingStage, string newToken, string userName, SqlConnection connection, SqlTransaction transaction);

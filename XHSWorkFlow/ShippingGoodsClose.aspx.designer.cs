@@ -96,6 +96,24 @@ namespace ModuleWorkFlow
         protected global::AjaxControlToolkit.AutoCompleteExtender AutoCompleteExtender_PartNo;
 
         /// <summary>
+        /// Label_DeliveryNo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label Label_DeliveryNo;
+
+        /// <summary>
+        /// TextBox_DeliveryNo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox TextBox_DeliveryNo;
+
+        /// <summary>
         /// MainDataGrid control.
         /// </summary>
         /// <remarks>

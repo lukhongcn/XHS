@@ -478,11 +478,11 @@ namespace ModuleWorkFlow.admin
             //init roleprocess
             ModuleWorkFlow.BLL.Process process = new ModuleWorkFlow.BLL.Process();
             List<ModuleWorkFlow.Model.ProcessInfo> processes
-                = process.getProcessInfoExceptDesignWithoutCustomer().Cast<ModuleWorkFlow.Model.ProcessInfo>().ToList();
-           
+                = process.getProcessInfoExceptDesign().Cast<ModuleWorkFlow.Model.ProcessInfo>().ToList();
 
 
-         
+
+
 
             if (!string.IsNullOrEmpty(dpl_processGroup.SelectedValue))
             {
