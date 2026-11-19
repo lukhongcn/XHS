@@ -25,7 +25,10 @@ internal sealed class MainForm : Form
     private readonly Label saveFailureValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label barcodeValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label mesHeartbeatValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
+    private readonly Label partProcessResultValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
+    private readonly Label partProcessFailureValue = new Label { Text = "PLC寄存器中的值：--", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Label barcodeCheckValue = new Label { Text = "检测 --", AutoSize = true, Anchor = AnchorStyles.Left };
+    private readonly Label plcResultStatus = new Label { Text = "PLCResult：等待处理", AutoSize = true, Anchor = AnchorStyles.Left };
     private readonly Timer plcValueTimer = new Timer { Interval = 500 };
     private readonly S7Help s7Help = new S7Help();
     private readonly MESHelp mesHelp = new MESHelp();
@@ -36,6 +39,7 @@ internal sealed class MainForm : Form
     private readonly object heartbeatLogSync = new object();
     private ToolStripMenuItem readTestMenu;
     private bool heartbeatWarningShown;
+    private string lastPlcResultWarning;
     private int plcValueReading;
 
     public MainForm()
@@ -70,7 +74,7 @@ internal sealed class MainForm : Form
         barcodeRequest.Click += RunBarcodeRequestTest;
         var allowReadTest = new ToolStripMenuItem("允许读取测试");
         allowReadTest.Click += RunAllowReadTest;
-        readTestMenu = new ToolStripMenuItem("读取") { Enabled = false };
+        readTestMenu = new ToolStripMenuItem("读取");
         readTestMenu.Click += RunReadTest;
         testMenu.DropDownItems.Add(stopPlcHeartbeat);
         testMenu.DropDownItems.Add(barcodeRequest);
@@ -152,11 +156,11 @@ internal sealed class MainForm : Form
     private Control BuildPlcPanel()
     {
         var group = new GroupBox { Text = "PLC", Dock = DockStyle.Fill, Padding = new Padding(8) };
-        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 12 };
+        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 13 };
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-        for (int i = 0; i < 12; i++) panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        for (int i = 0; i < 13; i++) panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
 
         panel.Controls.Add(new Label { Text = "PLC 地址", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
         ip.Dock = DockStyle.Fill;
@@ -175,13 +179,13 @@ internal sealed class MainForm : Form
         panel.Controls.Add(new Label { Text = "MES允许取数据", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 3);
         panel.Controls.Add(readPermissionValue, 2, 3);
 
-        panel.Controls.Add(new Label { Text = "保存成功 DB50.266.5", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 4);
-        panel.Controls.Add(new Label { Text = "PLCResult 已保存", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 4);
-        panel.Controls.Add(saveStatusValue, 2, 4);
+        panel.Controls.Add(new Label { Text = "MES反馈条码OK DB50.266.2", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 4);
+        panel.Controls.Add(new Label { Text = "条码检测通过", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 4);
+        panel.Controls.Add(partProcessResultValue, 2, 4);
 
-        panel.Controls.Add(new Label { Text = "保存失败 DB50.266.6", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 5);
-        panel.Controls.Add(new Label { Text = "PLCResult 保存失败", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 5);
-        panel.Controls.Add(saveFailureValue, 2, 5);
+        panel.Controls.Add(new Label { Text = "MES反馈条码NG DB50.266.3", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 5);
+        panel.Controls.Add(new Label { Text = "条码检测失败", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 5);
+        panel.Controls.Add(partProcessFailureValue, 2, 5);
 
         panel.Controls.Add(new Label { Text = "条码", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 6);
         panel.Controls.Add(new Label { Text = "DB50.2.0", AutoSize = true, Anchor = AnchorStyles.Left }, 1, 6);
@@ -210,9 +214,14 @@ internal sealed class MainForm : Form
         panel.Controls.Add(stopHeartbeatAfterSeconds, 1, 10);
         panel.Controls.Add(new Label { Text = "0 = 不停止", AutoSize = true, Anchor = AnchorStyles.Left }, 2, 10);
 
+        panel.Controls.Add(new Label { Text = "MES写入心跳 DB50.266.7", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 11);
+        panel.Controls.Add(mesHeartbeatValue, 1, 11);
+        panel.SetColumnSpan(mesHeartbeatValue, 2);
+
         var heartbeatStatus = new Label { Text = "心跳监控：自动运行", AutoSize = true, Anchor = AnchorStyles.Left };
-        panel.Controls.Add(heartbeatStatus, 0, 11);
-        panel.SetColumnSpan(heartbeatStatus, 3);
+        panel.Controls.Add(heartbeatStatus, 0, 12);
+        panel.Controls.Add(plcResultStatus, 1, 12);
+        panel.SetColumnSpan(plcResultStatus, 2);
         group.Controls.Add(panel);
         return group;
     }
@@ -286,28 +295,7 @@ internal sealed class MainForm : Form
 
     private void RunAllowReadTest(object sender, EventArgs args)
     {
-        try
-        {
-            HeartbeatConfig config = s7Help.ReadHeartbeatConfig(FindHeartbeatConfig());
-            PlcConfig target = config.Plc.FirstOrDefault(item => string.Equals(item.Ip, ip.Text.Trim(), StringComparison.OrdinalIgnoreCase)) ?? config.Plc[0];
-            using (var plc = new Plc(CpuType.S71200, target.Ip, (short)target.Rack, (short)target.Slot))
-            {
-                plc.Open();
-                byte[] bytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
-                bytes[0] = (byte)(bytes[0] | (1 << target.ReadPermission.Bit));
-                s7Help.WriteBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, bytes);
-                byte[] verifyBytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
-                bool enabled = (verifyBytes[0] & (1 << target.ReadPermission.Bit)) != 0;
-                if (!enabled)
-                    throw new InvalidOperationException("PLC 未确认允许保存请求（DB50.266.4=1）。");
-                if (readTestMenu != null) readTestMenu.Enabled = true;
-            }
-            WriteLog("允许保存测试已执行并读回确认：DB50.266.4=1，读取菜单已启用。");
-        }
-        catch (Exception ex)
-        {
-            WriteLog("允许读取测试失败：" + ex.Message);
-        }
+        WriteLog("读取测试可直接使用；输入检测数据后才会置 DB50.266.4=1 发出保存请求。");
     }
 
     private void RunReadTest(object sender, EventArgs args)
@@ -333,10 +321,9 @@ internal sealed class MainForm : Form
             using (var plc = new Plc(CpuType.S71200, target.Ip, (short)target.Rack, (short)target.Slot))
             {
                 plc.Open();
-                byte[] permissionBytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
-                if ((permissionBytes[0] & (1 << target.ReadPermission.Bit)) == 0)
-                    throw new InvalidOperationException("PLC 尚未发出允许读取（DB50.266.4=0）。");
-
+                byte[] requestBytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
+                if ((requestBytes[0] & (1 << target.ReadPermission.Bit)) != 0)
+                    throw new InvalidOperationException("上一次 DB50.266.4 保存请求仍为 1，请先由 PLC 清零后再测试。");
                 byte[] barcodeBytes = s7Help.ReadBlock(plc, target.Barcode.Db, target.Barcode.ByteOffset, target.Barcode.MaxLength);
                 barcode = mesHelp.DecodeBarcode(barcodeBytes, target.Barcode);
             }
@@ -349,7 +336,6 @@ internal sealed class MainForm : Form
             if (target.TestValue == null || target.TestValue.Length != 4)
                 throw new InvalidOperationException("testValue 必须配置为 4 字节 REAL。");
 
-            bool saved;
             using (var plc = new Plc(CpuType.S71200, target.Ip, (short)target.Rack, (short)target.Slot))
             {
                 plc.Open();
@@ -365,22 +351,11 @@ internal sealed class MainForm : Form
                 judgementBytes[0] = (byte)((detectionResult >> 8) & 0xFF);
                 judgementBytes[1] = (byte)(detectionResult & 0xFF);
                 s7Help.WriteBlock(plc, target.Judgement.Db, target.Judgement.ByteOffset, judgementBytes);
-                byte[] readJudgementBytes = s7Help.ReadBlock(plc, target.Judgement.Db, target.Judgement.ByteOffset, target.Judgement.Length);
-                int plcDetectionResult = (readJudgementBytes[0] << 8) | readJudgementBytes[1];
-
-                saved = s7Help.SaveReadTestResult(barcode, testValue, plcDetectionResult, WriteLog);
-                byte[] saveStatusBytes = s7Help.ReadBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, 1);
-                int saveStatusMask = 1 << target.SaveStatus.Bit;
-                saveStatusBytes[0] = saved
-                    ? (byte)(saveStatusBytes[0] | saveStatusMask)
-                    : (byte)(saveStatusBytes[0] & ~saveStatusMask);
-                int saveFailureMask = 1 << target.SaveFailure.Bit;
-                saveStatusBytes[0] = saved
-                    ? (byte)(saveStatusBytes[0] & ~saveFailureMask)
-                    : (byte)(saveStatusBytes[0] | saveFailureMask);
-                s7Help.WriteBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, saveStatusBytes);
+                byte[] permissionBytes = s7Help.ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
+                permissionBytes[0] = (byte)(permissionBytes[0] | (1 << target.ReadPermission.Bit));
+                s7Help.WriteBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, permissionBytes);
             }
-            WriteLog(string.Format("读取测试已执行：PLC二维码={0}，检测结果={1}，REAL测试值={2}，tb_PLCResult保存={3}，DB50.266.5={4}，DB50.266.6={5}", barcode, detectionResult, testValue, saved ? "成功" : "失败", saved ? 1 : 0, saved ? 0 : 1));
+            WriteLog(string.Format("读取测试数据已写入：PLC二维码={0}，检测结果={1}，REAL测试值={2}，DB50.266.4=1；等待后台保存并反馈 266.5/266.6", barcode, detectionResult, testValue));
         }
         catch (Exception ex)
         {
@@ -461,6 +436,8 @@ internal sealed class MainForm : Form
             string saveFailure = "PLC寄存器中的值：--";
             string barcode = "PLC寄存器中的值：--";
             string mesValue = "PLC寄存器中的值：--";
+            string partProcessResult = "PLC寄存器中的值：--";
+            string partProcessFailure = "PLC寄存器中的值：--";
             bool readAllowed = false;
             try
             {
@@ -474,6 +451,8 @@ internal sealed class MainForm : Form
                     interaction = "PLC寄存器中的值：" + (target.Interaction != null && mesHelp.IsBarcodeRequest(bytes[0], target.Interaction) ? "1" : "0");
                     readAllowed = target.ReadPermission != null && (bytes[0] & (1 << target.ReadPermission.Bit)) != 0;
                     readPermission = "PLC寄存器中的值：" + (readAllowed ? "1" : "0");
+                    partProcessResult = "PLC寄存器中的值：" + (target.PartProcessResult != null && (bytes[0] & (1 << target.PartProcessResult.Bit)) != 0 ? "1" : "0");
+                    partProcessFailure = "PLC寄存器中的值：" + (target.PartProcessFailure != null && (bytes[0] & (1 << target.PartProcessFailure.Bit)) != 0 ? "1" : "0");
                     saveStatus = "PLC寄存器中的值：" + (target.SaveStatus != null && (bytes[0] & (1 << target.SaveStatus.Bit)) != 0 ? "1" : "0");
                     saveFailure = "PLC寄存器中的值：" + (target.SaveFailure != null && (bytes[0] & (1 << target.SaveFailure.Bit)) != 0 ? "1" : "0");
                     if (target.Barcode != null)
@@ -504,13 +483,13 @@ internal sealed class MainForm : Form
 
             if (!IsDisposed && IsHandleCreated)
             {
-                try { BeginInvoke(new Action<string, string, string, string, string, string, string, bool>(UpdateHeartbeatValues), plcValue, interaction, readPermission, saveStatus, saveFailure, barcode, mesValue, readAllowed); }
+                try { BeginInvoke(new Action<string, string, string, string, string, string, string, string, string, bool>(UpdateHeartbeatValues), plcValue, interaction, readPermission, saveStatus, saveFailure, barcode, mesValue, partProcessResult, partProcessFailure, readAllowed); }
                 catch (InvalidOperationException) { }
             }
         });
     }
 
-    private void UpdateHeartbeatValues(string plcValue, string interaction, string readPermission, string saveStatus, string saveFailure, string barcode, string mesValue, bool readAllowed)
+    private void UpdateHeartbeatValues(string plcValue, string interaction, string readPermission, string saveStatus, string saveFailure, string barcode, string mesValue, string partProcessResult, string partProcessFailure, bool readAllowed)
     {
         if (IsDisposed) return;
         plcHeartbeatValue.Text = plcValue;
@@ -518,9 +497,14 @@ internal sealed class MainForm : Form
         readPermissionValue.Text = readPermission;
         saveStatusValue.Text = saveStatus;
         saveFailureValue.Text = saveFailure;
-        barcodeValue.Text = barcode;
+        string barcodeResult = partProcessResult.EndsWith("1", StringComparison.Ordinal)
+            ? "成功"
+            : partProcessFailure.EndsWith("1", StringComparison.Ordinal) ? "失败" : "未反馈";
+        barcodeValue.Text = barcode + "；条码检测：" + barcodeResult;
         mesHeartbeatValue.Text = mesValue;
-        if (readTestMenu != null) readTestMenu.Enabled = readAllowed;
+        partProcessResultValue.Text = partProcessResult;
+        partProcessFailureValue.Text = partProcessFailure;
+        if (readTestMenu != null) readTestMenu.Enabled = true;
     }
 
     private void StartHeartbeatMonitor(object sender, EventArgs args)
@@ -603,10 +587,50 @@ internal sealed class MainForm : Form
         }
         WriteLog(message);
         UpdateBarcodeCheckResult(message);
+        if (message.StartsWith("PLC_RESULT_PROCESS", StringComparison.OrdinalIgnoreCase))
+            UpdatePLCResultStatus(message);
+        if (message.StartsWith("PLC_RESULT_PROCESS", StringComparison.OrdinalIgnoreCase))
+            ShowPLCResultWarning(message);
         if (message.IndexOf("STATUS=OK", StringComparison.OrdinalIgnoreCase) >= 0)
             ResetHeartbeatWarning();
         if (message.IndexOf("COMMUNICATION_FAULT", StringComparison.OrdinalIgnoreCase) >= 0)
             ShowHeartbeatWarning(message);
+    }
+
+    private void ShowPLCResultWarning(string message)
+    {
+        if (InvokeRequired)
+        {
+            try { BeginInvoke(new Action<string>(ShowPLCResultWarning), message); }
+            catch (InvalidOperationException) { }
+            return;
+        }
+        if (IsDisposed || !IsPLCResultFailure(message) || string.Equals(lastPlcResultWarning, message, StringComparison.Ordinal)) return;
+        lastPlcResultWarning = message;
+        MessageBox.Show(this, message, "PLCResult 处理失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    }
+
+    private void UpdatePLCResultStatus(string message)
+    {
+        if (InvokeRequired)
+        {
+            try { BeginInvoke(new Action<string>(UpdatePLCResultStatus), message); }
+            catch (InvalidOperationException) { }
+            return;
+        }
+        if (IsDisposed) return;
+        plcResultStatus.Text = message.IndexOf("成功", StringComparison.OrdinalIgnoreCase) >= 0
+            ? "PLCResult：更新成功"
+            : "PLCResult：" + message.Substring("PLC_RESULT_PROCESS".Length).Trim();
+        plcResultStatus.ForeColor = IsPLCResultFailure(message) ? Color.Firebrick : Color.DarkGreen;
+    }
+
+    private static bool IsPLCResultFailure(string message)
+    {
+        return message.IndexOf("失败", StringComparison.OrdinalIgnoreCase) >= 0
+            || message.IndexOf("error=", StringComparison.OrdinalIgnoreCase) >= 0
+            || message.IndexOf("未找到", StringComparison.OrdinalIgnoreCase) >= 0
+            || message.IndexOf("缺少", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private void UpdateBarcodeCheckResult(string message)

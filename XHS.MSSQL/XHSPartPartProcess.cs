@@ -22,7 +22,7 @@ namespace XHS.MSSQL
         {
             string queryString =
                 "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
-                "partprocess.processid,process.processname,partprocess.processorder listorder,partprocess.processorder," +
+                "partprocess.processid,process.processname,partprocess.processorder," +
                 "partprocess.customerProcessid,partprocess.statusid," +
                 "status.StatusDescription statusname," +
                 "partprocess.processneedminutes,partprocess.totalminutes,partprocess.needproduct," +
@@ -96,7 +96,7 @@ namespace XHS.MSSQL
         {
             string queryString =
                 "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
-                "partprocess.processid,process.processname,partprocess.processorder listorder,partprocess.processorder," +
+                "partprocess.processid,process.processname,partprocess.processorder," +
                 "partprocess.customerProcessid,partprocess.statusid," +
                 "status.StatusDescription statusname," +
                 "partprocess.processneedminutes,partprocess.totalminutes,partprocess.needproduct," +
@@ -130,7 +130,11 @@ namespace XHS.MSSQL
                 "select partprocess.id,partprocess.moduleid,partprocess.partno,partprocess.partno_id,partprocess.processno," +
                 "partprocess.processid,process.processname,partprocess.processorder,partprocess.statusid," +
                 "status.StatusDescription statusname," +
-                "partprocess.processneedminutes,partprocess.startdate,partprocess.enddate," +
+                "partprocess.customerProcessid,partprocess.processneedminutes,partprocess.totalminutes," +
+                "partprocess.needproduct,partprocess.unnormalreasonsid,partprocess.departmentid," +
+                "partprocess.isunnormal,partprocess.processcomment,partprocess.processmachineid," +
+                "process.pricetype,partprocess.supplyid,partprocess.relationpartno,partprocess.relationpartnoid," +
+                "partprocess.startdate,partprocess.enddate," +
                 "partprocess.factstartdate,partprocess.factenddate " +
                 "from tb_partprocess partprocess " +
                 "inner join tb_process process on partprocess.processid=process.processid " +
@@ -159,6 +163,66 @@ namespace XHS.MSSQL
             return _getXHSPartPartProcessInfo(queryString, parameters);
         }
 
+        public XHSPartPartProcessInfo GetBarcodePartProcess(
+            string partNoId,
+            string processId,
+            string statusId)
+        {
+            string queryString =
+                "select top 1 partprocess.id,partprocess.partno_id,partprocess.processno,partprocess.statusid " +
+                "from tb_partprocess partprocess " +
+                "where partprocess.partno_id=@PartNoId " +
+                "and partprocess.processid=@ProcessId " +
+                "and partprocess.statusid=@StatusId " +
+                "order by partprocess.processorder,partprocess.processno";
+
+            SqlParameter[] parameters =
+            {
+                new SqlParameter("@PartNoId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(partNoId ?? string.Empty).Trim()
+                },
+                new SqlParameter("@ProcessId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(processId ?? string.Empty).Trim()
+                },
+                new SqlParameter("@StatusId", SqlDbType.NVarChar, 100)
+                {
+                    Value = (object)(statusId ?? string.Empty).Trim()
+                }
+            };
+
+            return _getBarcodePartProcessInfo(queryString, parameters);
+        }
+
+        private XHSPartPartProcessInfo _getBarcodePartProcessInfo(
+            string querystring,
+            SqlParameter[] pars)
+        {
+            DataSet dataSet = pars == null
+                ? Data.getDataSet(querystring)
+                : Data.getDataSet(querystring, pars);
+
+            if (dataSet == null || dataSet.Tables.Count == 0)
+            {
+                return null;
+            }
+
+            if (dataSet.Tables[0].Rows.Count == 0)
+            {
+                return null;
+            }
+
+            DataRow row = dataSet.Tables[0].Rows[0];
+            return new XHSPartPartProcessInfo
+            {
+                Id = row.IsNull("id") ? (int?)null : Convert.ToInt32(row["id"]),
+                PartNo_Id = row.IsNull("partno_id") ? null : Convert.ToString(row["partno_id"]),
+                ProcessNo = row.IsNull("processno") ? (int?)null : Convert.ToInt32(row["processno"]),
+                StatusId = row.IsNull("statusid") ? null : Convert.ToString(row["statusid"])
+            };
+        }
+
         private List<XHSPartPartProcessInfo> _getXHSPartPartProcessInfo(
             string querystring,
             SqlParameter[] pars)
@@ -184,8 +248,8 @@ namespace XHS.MSSQL
                     ProcessNo = row.IsNull("processno") ? (int?)null : Convert.ToInt32(row["processno"]),
                     ProcessId = row.IsNull("processid") ? null : Convert.ToString(row["processid"]),
                     ProcessName = row.IsNull("processname") ? null : Convert.ToString(row["processname"]),
-                    ProcessOrder = row.IsNull("processorder") ? (int?)null : Convert.ToInt32(row["processorder"]),
-                    ListOrder = row.IsNull("listorder") ? (int?)null : Convert.ToInt32(row["listorder"]),
+                    ProcessOrder = GetNullableInt(row, "processorder"),
+                    ListOrder = GetNullableInt(row, "processorder"),
                     CustomerProcessId = row.IsNull("customerProcessid") ? null : Convert.ToString(row["customerProcessid"]),
                     CustomerProcessName = row.IsNull("processname") ? null : Convert.ToString(row["processname"]),
                     StatusId = row.IsNull("statusid") ? null : Convert.ToString(row["statusid"]),
@@ -210,6 +274,16 @@ namespace XHS.MSSQL
             }
 
             return result;
+        }
+
+        private static int? GetNullableInt(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row.IsNull(columnName))
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(row[columnName]);
         }
     }
 }

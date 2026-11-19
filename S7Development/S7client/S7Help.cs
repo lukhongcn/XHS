@@ -37,6 +37,7 @@ public sealed class S7Help
     private ManualResetEventSlim plcResultStopEvent;
     private readonly HashSet<string> barcodeFaultNotifications = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> handledBarcodeRequests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> handledSaveRequests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     private readonly object localResultFileSync = new object();
 
     public bool IsHeartbeatMonitoring
@@ -199,6 +200,7 @@ public sealed class S7Help
             foreach (PlcConfig target in config.Plc)
             {
                 CheckBarcodeRequest(target, messageReceived, faultReceived);
+                CheckSaveRequest(target, messageReceived, faultReceived);
             }
             stopEvent.Wait(Math.Max(100, config.PollIntervalMs));
         }
@@ -236,98 +238,36 @@ public sealed class S7Help
                 {
                     string requestPrefix = target.Ip + "|";
                     handledBarcodeRequests.RemoveWhere(key => key.StartsWith(requestPrefix, StringComparison.OrdinalIgnoreCase));
+                    SetFeedbackBits(plc, target.PartProcessResult, target.PartProcessFailure, false, false);
                     barcodeFaultNotifications.Remove(target.Ip);
                     return;
                 }
 
                 byte[] barcodeBytes = ReadBlock(plc, target.Barcode.Db, target.Barcode.ByteOffset, target.Barcode.MaxLength);
                 string barcode = mesHelp.DecodeBarcode(barcodeBytes, target.Barcode);
-                byte[] realBytes = ReadBlock(plc, target.TestValue.Db, target.TestValue.ByteOffset, target.TestValue.Length);
-                double testValue = ReadS7Real(realBytes);
                 string requestKey = target.Ip + "|" + barcode;
                 if (handledBarcodeRequests.Contains(requestKey)) return;
                 Publish(messageReceived, string.Format("PLC={0} BARCODE_REQUEST value={1}", target.Ip, barcode));
 
-                List<XHSPartPartProcessInfo> processes =
-                    partPartProcess.GetPartProcessesByPartNoIdAndProcessIdAndStatusId(
-                        barcode,
-                        GetScanFlowCode(),
-                        "Ready");
-                bool isReady = processes != null
-                    && processes.Count > 0;
-                SaveScanHistory(barcode, target.Ip, isReady, messageReceived);
-                byte[] judgementBytes = ReadBlock(plc, target.Judgement.Db, target.Judgement.ByteOffset, target.Judgement.Length);
-                int plcResultCode = (judgementBytes[0] << 8) | judgementBytes[1];
-                if (!IsValidPlcResultCode(plcResultCode)) plcResultCode = int.Parse(PlcResultAbnormalCode, CultureInfo.InvariantCulture);
-                XHSPartPartProcessInfo partProcessInfo = isReady ? processes[0] : null;
-                PLCResultInfo plcResultInfo = new PLCResultInfo
+                XHSPartPartProcessInfo partProcessInfo = null;
+                try
                 {
-                    ProcessNo = partProcessInfo == null || !partProcessInfo.ProcessNo.HasValue ? 0 : partProcessInfo.ProcessNo.Value,
-                    PartProcessId = partProcessInfo == null || !partProcessInfo.Id.HasValue ? 0 : partProcessInfo.Id.Value,
-                    CreateDate = DateTime.Now,
-                    ResultValue = testValue,
-                    Result = plcResultCode
-                };
-                bool databaseSaved = plcResult.InsertPLCResult(plcResultInfo);
-                bool localSaved = false;
-                if (!databaseSaved) localSaved = SavePLCResultLocally(barcode, plcResultInfo);
-                bool saved = databaseSaved;
-                Publish(messageReceived, string.Format(
-                    "PLC={0} BARCODE_REQUEST barcode={1}, testValue={2}, result={3}, tb_PLCResult insert={4}, local PLCResult.csv={5}",
-                    target.Ip,
-                    barcode,
-                    testValue,
-                    plcResultCode,
-                    databaseSaved ? "OK" : "FAILED",
-                    localSaved ? "OK" : "NOT_USED"));
-                WriteSaveFeedback(plc, target, saved, messageReceived);
-                if (!isReady)
-                {
-                    Publish(messageReceived, string.Format(
-                        "PLC={0} BARCODE_REQUEST rejected, partno_id={1}, statusid={2}",
-                        target.Ip,
-                        barcode,
-                        processes == null || processes.Count == 0 ? "空" : processes[0].StatusId));
+                    if (!string.IsNullOrWhiteSpace(barcode))
+                        partProcessInfo = partPartProcess.GetBarcodePartProcess(barcode, GetScanFlowCode(), "Ready");
+                    SaveScanHistory(barcode, target.Ip, partProcessInfo != null, messageReceived);
                 }
-                else
+                catch (Exception ex)
                 {
-                    Publish(messageReceived, string.Format(
-                        "PLC={0} BARCODE_REQUEST accepted, partno_id={1}, statusid=Ready",
-                        target.Ip, barcode));
+                    Publish(faultReceived, string.Format("PLC={0} BARCODE_QUERY_FAULT error={1}", target.Ip, ex.Message));
                 }
-
-                byte[] resultBytes = ReadBlock(plc, target.PartProcessResult.Db, target.PartProcessResult.ByteOffset, 1);
-                int resultMask = 1 << target.PartProcessResult.Bit;
-                int failureMask = 1 << target.PartProcessFailure.Bit;
-                resultBytes[0] = IsPlcResultCode(plcResultCode, PlcResultQualifiedCode)
-                    ? (byte)(resultBytes[0] | resultMask)
-                    : (byte)(resultBytes[0] & ~resultMask);
-                resultBytes[0] = IsPlcResultCode(plcResultCode, PlcResultUnqualifiedCode)
-                    ? (byte)(resultBytes[0] | failureMask)
-                    : (byte)(resultBytes[0] & ~failureMask);
-                WriteBlock(plc, target.PartProcessResult.Db, target.PartProcessResult.ByteOffset, resultBytes);
-
-                interactionBytes[0] = isReady
-                    ? mesHelp.SetBarcodeRequest(interactionBytes[0], target.Interaction)
-                    : mesHelp.ClearBarcodeRequest(interactionBytes[0], target.Interaction);
-                WriteBlock(plc, target.Interaction.Db, target.Interaction.ByteOffset, interactionBytes);
-                if (isReady) handledBarcodeRequests.Add(requestKey);
-
+                bool accepted = partProcessInfo != null && partProcessInfo.ProcessNo.HasValue;
+                SetFeedbackBits(plc, target.PartProcessResult, target.PartProcessFailure, accepted, !accepted);
+                handledBarcodeRequests.Add(requestKey);
                 Publish(messageReceived, string.Format(
-                    "PLC={0} BARCODE_REQUEST handled, DB{1}.{2}.{3}={4}, DB{5}.{6}.{7}={8}, DB{9}.{10}.{11}={12}",
-                    target.Ip,
-                    target.PartProcessResult.Db,
-                    target.PartProcessResult.ByteOffset,
-                    target.PartProcessResult.Bit,
-                    isReady ? 1 : 0,
-                    target.Interaction.Db,
-                    target.Interaction.ByteOffset,
-                    target.Interaction.Bit,
-                    isReady ? 1 : 0,
-                    target.PartProcessFailure.Db,
-                    target.PartProcessFailure.ByteOffset,
-                    target.PartProcessFailure.Bit,
-                    isReady ? 0 : 1));
+                    "PLC={0} BARCODE_REQUEST barcode={1}, processno={2}, DB{3}.{4}.{5}={6}, DB{7}.{8}.{9}={10}",
+                    target.Ip, barcode, accepted ? partProcessInfo.ProcessNo.Value.ToString() : "未找到",
+                    target.PartProcessResult.Db, target.PartProcessResult.ByteOffset, target.PartProcessResult.Bit, accepted ? 1 : 0,
+                    target.PartProcessFailure.Db, target.PartProcessFailure.ByteOffset, target.PartProcessFailure.Bit, accepted ? 0 : 1));
                 barcodeFaultNotifications.Remove(target.Ip);
             }
         }
@@ -429,33 +369,20 @@ public sealed class S7Help
         return string.Equals(result.ToString(CultureInfo.InvariantCulture), code, StringComparison.Ordinal);
     }
 
-    private void WriteSaveFeedback(Plc plc, PlcConfig target, bool saved, Action<string> messageReceived)
+    private void SetFeedbackBits(Plc plc, PlcBitConfig ok, PlcBitConfig ng, bool okValue, bool ngValue)
     {
-        if (target.SaveStatus == null || target.SaveFailure == null) return;
-
-        byte[] statusBytes = ReadBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, 1);
-        int saveStatusMask = 1 << target.SaveStatus.Bit;
-        statusBytes[0] = saved
-            ? (byte)(statusBytes[0] | saveStatusMask)
-            : (byte)(statusBytes[0] & ~saveStatusMask);
-        int saveFailureMask = 1 << target.SaveFailure.Bit;
-        statusBytes[0] = saved
-            ? (byte)(statusBytes[0] & ~saveFailureMask)
-            : (byte)(statusBytes[0] | saveFailureMask);
-        WriteBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, statusBytes);
-
-        if (target.ReadPermission != null)
+        byte[] bytes = ReadBlock(plc, ok.Db, ok.ByteOffset, 1);
+        byte value = (byte)(okValue ? bytes[0] | (1 << ok.Bit) : bytes[0] & ~(1 << ok.Bit));
+        if (ok.Db == ng.Db && ok.ByteOffset == ng.ByteOffset)
         {
-            byte[] permissionBytes = ReadBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, 1);
-            int requestMask = 1 << target.ReadPermission.Bit;
-            permissionBytes[0] = (byte)(permissionBytes[0] & ~requestMask);
-            WriteBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, permissionBytes);
+            value = (byte)(ngValue ? value | (1 << ng.Bit) : value & ~(1 << ng.Bit));
+            if (value != bytes[0]) WriteBlock(plc, ok.Db, ok.ByteOffset, new[] { value });
+            return;
         }
-
-        Publish(messageReceived, string.Format(
-            "PLC={0} BARCODE_REQUEST result feedback, save={1}",
-            target.Ip,
-            saved ? 1 : 0));
+        if (value != bytes[0]) WriteBlock(plc, ok.Db, ok.ByteOffset, new[] { value });
+        bytes = ReadBlock(plc, ng.Db, ng.ByteOffset, 1);
+        value = (byte)(ngValue ? bytes[0] | (1 << ng.Bit) : bytes[0] & ~(1 << ng.Bit));
+        if (value != bytes[0]) WriteBlock(plc, ng.Db, ng.ByteOffset, new[] { value });
     }
 
     private void CheckSaveRequest(PlcConfig target, Action<string> messageReceived, Action<string> faultReceived)
@@ -472,27 +399,21 @@ public sealed class S7Help
                 int requestMask = 1 << target.ReadPermission.Bit;
                 if ((permissionBytes[0] & requestMask) == 0)
                 {
-                    byte[] feedbackBytes = ReadBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, 1);
-                    int feedbackSaveStatusMask = 1 << target.SaveStatus.Bit;
-                    int feedbackSaveFailureMask = 1 << target.SaveFailure.Bit;
-                    byte clearedFeedback = (byte)(feedbackBytes[0] & ~feedbackSaveStatusMask & ~feedbackSaveFailureMask);
-                    if (clearedFeedback != feedbackBytes[0])
-                    {
-                        feedbackBytes[0] = clearedFeedback;
-                        WriteBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, feedbackBytes);
-                        Publish(messageReceived, string.Format(
-                            "PLC={0} SAVE_REQUEST feedback cleared, DB{1}.{2}.{3}=0, DB{4}.{5}.{6}=0",
-                            target.Ip,
-                            target.SaveStatus.Db, target.SaveStatus.ByteOffset, target.SaveStatus.Bit,
-                            target.SaveFailure.Db, target.SaveFailure.ByteOffset, target.SaveFailure.Bit));
-                    }
+                    handledSaveRequests.Remove(target.Ip);
+                    SetFeedbackBits(plc, target.SaveStatus, target.SaveFailure, false, false);
                     return;
                 }
+                if (handledSaveRequests.Contains(target.Ip)) return;
 
                 byte[] barcodeBytes = ReadBlock(plc, target.Barcode.Db, target.Barcode.ByteOffset, target.Barcode.MaxLength);
                 string barcode = mesHelp.DecodeBarcode(barcodeBytes, target.Barcode);
                 if (string.IsNullOrWhiteSpace(barcode))
-                    throw new InvalidOperationException("PLC 存盘请求中的 DB50.2.0 没有二维码。");
+                {
+                    SetFeedbackBits(plc, target.SaveStatus, target.SaveFailure, false, true);
+                    handledSaveRequests.Add(target.Ip);
+                    Publish(faultReceived, "PLC=" + target.Ip + " SAVE_REQUEST 缺少二维码");
+                    return;
+                }
 
                 byte[] realBytes = ReadBlock(plc, target.TestValue.Db, target.TestValue.ByteOffset, target.TestValue.Length);
                 double testValue = ReadS7Real(realBytes);
@@ -500,13 +421,29 @@ public sealed class S7Help
                 int result = (judgementBytes[0] << 8) | judgementBytes[1];
                 if (!IsValidPlcResultCode(result)) result = int.Parse(PlcResultAbnormalCode, CultureInfo.InvariantCulture);
 
-                List<XHSPartPartProcessInfo> processes = partPartProcess.GetPartProcessesByPartNoIdAndProcessIdAndStatusId(
-                    barcode, GetScanFlowCode(), "Ready");
-                XHSPartPartProcessInfo partProcessInfo = processes != null && processes.Count > 0 ? processes[0] : null;
+                XHSPartPartProcessInfo partProcessInfo;
+                try
+                {
+                    partProcessInfo = partPartProcess.GetBarcodePartProcess(barcode, GetScanFlowCode(), "Ready");
+                }
+                catch (Exception ex)
+                {
+                    SetFeedbackBits(plc, target.SaveStatus, target.SaveFailure, false, true);
+                    handledSaveRequests.Add(target.Ip);
+                    Publish(faultReceived, "PLC=" + target.Ip + " SAVE_REQUEST 查询失败：" + ex.Message);
+                    return;
+                }
+                if (partProcessInfo == null || !partProcessInfo.ProcessNo.HasValue || !partProcessInfo.Id.HasValue)
+                {
+                    SetFeedbackBits(plc, target.SaveStatus, target.SaveFailure, false, true);
+                    handledSaveRequests.Add(target.Ip);
+                    Publish(faultReceived, "PLC=" + target.Ip + " SAVE_REQUEST 未找到有效 processno/partprocessid，barcode=" + barcode);
+                    return;
+                }
                 PLCResultInfo info = new PLCResultInfo
                 {
-                    ProcessNo = partProcessInfo == null || !partProcessInfo.ProcessNo.HasValue ? 0 : partProcessInfo.ProcessNo.Value,
-                    PartProcessId = partProcessInfo == null || !partProcessInfo.Id.HasValue ? 0 : partProcessInfo.Id.Value,
+                    ProcessNo = partProcessInfo.ProcessNo.Value,
+                    PartProcessId = partProcessInfo.Id.Value,
                     CreateDate = DateTime.Now,
                     ResultValue = testValue,
                     Result = result
@@ -517,26 +454,18 @@ public sealed class S7Help
                 if (!databaseSaved) localSaved = SavePLCResultLocally(barcode, info);
                 bool saved = databaseSaved;
                 Publish(messageReceived, string.Format(
-                    "PLC={0} SAVE_REQUEST barcode={1}, tb_PLCResult insert={2}, local PLCResult.csv={3}",
-                    target.Ip, barcode, databaseSaved ? "OK" : "FAILED", localSaved ? "OK" : "NOT_USED"));
+                    "PLC={0} SAVE_REQUEST barcode={1}, processno={4}, partprocessid={5}, tb_PLCResult insert={2}, local PLCResult.csv={3}",
+                    target.Ip, barcode, databaseSaved ? "OK" : "FAILED", localSaved ? "OK" : "NOT_USED",
+                    partProcessInfo.ProcessNo.Value, partProcessInfo.Id.Value));
 
-                byte[] statusBytes = ReadBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, 1);
-                int saveStatusMask = 1 << target.SaveStatus.Bit;
-                statusBytes[0] = saved
-                    ? (byte)(statusBytes[0] | saveStatusMask)
-                    : (byte)(statusBytes[0] & ~saveStatusMask);
-                int saveFailureMask = 1 << target.SaveFailure.Bit;
-                statusBytes[0] = saved
-                    ? (byte)(statusBytes[0] & ~saveFailureMask)
-                    : (byte)(statusBytes[0] | saveFailureMask);
-                WriteBlock(plc, target.SaveStatus.Db, target.SaveStatus.ByteOffset, statusBytes);
-                permissionBytes[0] = (byte)(permissionBytes[0] & ~requestMask);
-                WriteBlock(plc, target.ReadPermission.Db, target.ReadPermission.ByteOffset, permissionBytes);
+                SetFeedbackBits(plc, target.SaveStatus, target.SaveFailure, saved, !saved);
+                handledSaveRequests.Add(target.Ip);
                 Publish(messageReceived, string.Format(
-                    "PLC={0} SAVE_REQUEST handled, DB{1}.{2}.{3}={4}, DB{5}.{6}.{7}={8}, DB{9}.{10}.{11}=0",
+                    "PLC={0} SAVE_REQUEST handled, processno={9}, DB{1}.{2}.{3}={4}, DB{5}.{6}.{7}={8}; waiting DB{10}.{11}.{12}=0",
                     target.Ip,
                     target.SaveStatus.Db, target.SaveStatus.ByteOffset, target.SaveStatus.Bit, saved ? 1 : 0,
                     target.SaveFailure.Db, target.SaveFailure.ByteOffset, target.SaveFailure.Bit, saved ? 0 : 1,
+                    partProcessInfo.ProcessNo.Value,
                     target.ReadPermission.Db, target.ReadPermission.ByteOffset, target.ReadPermission.Bit));
                 barcodeFaultNotifications.Remove(target.Ip);
             }

@@ -47,6 +47,14 @@ namespace XHS.BLL
             return dal.GetPartProcessesByPartNoIdAndProcessIdAndStatusId(partNoId, processId, statusId);
         }
 
+        public XHSPartPartProcessInfo GetBarcodePartProcess(
+            string partNoId,
+            string processId,
+            string statusId)
+        {
+            return dal.GetBarcodePartProcess(partNoId, processId, statusId);
+        }
+
         public int CreateByStandardForLabels(
             string moduleId,
             string partNo,

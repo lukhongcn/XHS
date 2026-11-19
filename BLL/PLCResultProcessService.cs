@@ -77,7 +77,7 @@ namespace XHS.BLL
             if (!plcResult.MarkDeal(result.Id.Value))
                 return "PLCResult deal 更新失败：" + result.Id.Value;
 
-            return string.Empty;
+            return "PLCResult 工序更新成功，deal=1，Id=" + result.Id.Value;
         }
 
         private static PartPartProcessInfo CloneProcess(PartPartProcessInfo source)

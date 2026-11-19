@@ -20,5 +20,10 @@ namespace XHS.IDAL
             string partNoId,
             string processId,
             string statusId);
+
+        XHSPartPartProcessInfo GetBarcodePartProcess(
+            string partNoId,
+            string processId,
+            string statusId);
     }
 }
