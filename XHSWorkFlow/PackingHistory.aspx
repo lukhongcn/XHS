@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" CodeBehind="PackingHistory.aspx.cs" AutoEventWireup="false" OnLoad="Page_Load" Inherits="ModuleWorkFlow.PackingHistory" MasterPageFile="~/DefaultSub.Master" %>
+﻿<%@ Page Language="C#" CodePage="65001" CodeBehind="PackingHistory.aspx.cs" AutoEventWireup="false" OnLoad="Page_Load" Inherits="ModuleWorkFlow.PackingHistory" MasterPageFile="~/DefaultSub.Master" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="contentHolder" runat="server">
     <div id="Wrapper">
         <div id="Header"><div class="headbox"><div class="linebox"><a href="#">生产管理</a><img src="images/arrow.png" /><a href="#"><%= menuname %></a></div><div class="logout"><a href="login.aspx" target="_parent">登出</a></div><div class="clearbox"></div></div></div>
@@ -7,7 +7,7 @@
             <div class="space1"></div>
             <div class="container mt-3 border border-primary"><div class="container mt-3">
                 <h5>装箱历史查询</h5>
-                <div class="row mb-3"><div class="col-lg-8 d-flex"><asp:Label ID="Label_KDQRCode" runat="server" CssClass="me-10 packing-label" AssociatedControlID="txt_KDQRCode">KD标签</asp:Label><asp:TextBox ID="txt_KDQRCode" runat="server" CssClass="form-control text-start border-primary" /></div><div class="col-lg-4"><asp:Button ID="btn_Search" runat="server" Text="查询" CssClass="btn btn-primary" OnClick="btn_Search_Click" /><asp:Button ID="btn_Clear" runat="server" Text="清空" CssClass="btn btn-secondary ms-2" OnClick="btn_Clear_Click" CausesValidation="false" /></div></div>
+                <div class="row mb-3"><div class="col-lg-4"><asp:Label ID="Label_KDQRCode" runat="server" CssClass="packing-label" AssociatedControlID="txt_KDQRCode">KD标签</asp:Label><asp:TextBox ID="txt_KDQRCode" runat="server" CssClass="form-control text-start border-primary" /></div><div class="col-lg-4"><asp:Label ID="Label_MaterialQRCode" runat="server" CssClass="packing-label" AssociatedControlID="txt_MaterialQRCode">零件QRCode</asp:Label><asp:TextBox ID="txt_MaterialQRCode" runat="server" CssClass="form-control text-start border-primary" /></div><div class="col-lg-4"><asp:Button ID="btn_Search" runat="server" Text="查询" CssClass="btn btn-primary" OnClick="btn_Search_Click" /><asp:Button ID="btn_Clear" runat="server" Text="清空" CssClass="btn btn-secondary ms-2" OnClick="btn_Clear_Click" CausesValidation="false" /></div></div>
                 <asp:Label ID="Label_Message" runat="server" CssClass="text-danger"></asp:Label>
             </div></div>
             <asp:Panel ID="pnlPackingRecord" runat="server" Visible="false" CssClass="container mt-3 border border-primary"><div class="container mt-3"><h5>装箱任务</h5>

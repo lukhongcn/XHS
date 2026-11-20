@@ -26,7 +26,7 @@
         <header class="pda-topbar">
             <a href="javascript:history.back();" aria-label="返回">返回</a>
             <div class="pda-topbar-title"><%= PageTitle %></div>
-            <a href="<%= ResolveUrl("~/login.aspx") %>" target="_parent">登出</a>
+            <a href="<%= ResolveUrl("~/login.aspx") %>?ReturnUrl=<%= Server.UrlEncode(Request.RawUrl) %>" target="_parent">登出</a>
         </header>
         <main class="pda-page">
             <asp:Panel ID="pnlPdaLogin" runat="server" CssClass="pda-login-panel">

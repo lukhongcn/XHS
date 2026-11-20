@@ -49,7 +49,7 @@ namespace XHS.service.Formatter
             if (string.Equals(formatter, "XinWangDaDate", StringComparison.OrdinalIgnoreCase))
             {
                 return new XinWangDaDateCodeProvider(
-                    GetConfigPath("Date.json", "XinWangDaDate.json"));
+                    Path.Combine(configDirectory, "Date.json"));
             }
 
             if (string.Equals(formatter, "DailySerialNumber", StringComparison.OrdinalIgnoreCase))

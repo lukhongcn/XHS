@@ -1,51 +1,57 @@
 # BarcodeDesigner 安装程序
 
-## 当前安装包
+## 当前安装程序
 
-已生成测试安装包：
-
-```text
-Installer\output\BarcodeDesigner_Setup_1.0.0.exe
-```
-
-客户端只需要运行这个 EXE。程序默认安装到当前用户目录：
+发布安装包：
 
 ```text
-%LOCALAPPDATA%\XHS\BarcodeDesigner
+Installer\output\BarcodeDesigner_Setup_20261120_CDrive.exe
 ```
 
-## 重新构建安装包
+运行安装包并允许管理员权限后，程序固定安装到：
+
+```text
+C:\XHS\BarcodeDesigner
+```
+
+## 直接复制 Release
+
+本机 Release 目录：
+
+```text
+BarcodeDesigner_Codex_Project\bin\Release
+```
+
+可将目录内全部文件复制到 `C:\XHS\BarcodeDesigner`。此 Release 的 `欣旺达标签打印.exe.config` 已包含新数据库连接，并使用本机 DPAPI 加密；程序仍通过原有的 `ConfigurationManager.AppSettings` 读取，无需改代码。此加密配置只能在生成它的这台 Windows 电脑上解密，不能复制到另一台电脑使用。
+
+安装程序会更新数据库连接，并用 Windows DPAPI 加密安装目录中的 `欣旺达标签打印.exe.config` 的 `appSettings` 节。重新安装时会将数据库连接更新为下方配置，普通配置项按安装包更新；现有配置文件会保留其他已有设置。
+
+## 数据库连接
+
+```text
+Server: 192.168.1.71
+Database: XHS
+User: sa
+Password: ss#12345
+Connection string: server=192.168.1.71;Pooling=false;database=XHS;uid=sa;pwd=ss#12345
+```
+
+此密码是安装配置的一部分。请限制本说明文档和安装包的访问，不要上传到公开仓库或公开文件服务。
+
+## 重新构建
 
 在仓库根目录执行：
 
 ```powershell
-dotnet msbuild BarcodeDesigner_Codex_Project\BarcodeDesigner.csproj /t:Build /p:Configuration=Release /p:OutDir=bin\Release\ /v:minimal
+dotnet msbuild BarcodeDesigner_Codex_Project\BarcodeDesigner.csproj /t:Build /p:Configuration=Release /p:Platform=AnyCPU /v:quiet
+Compress-Archive -Path BarcodeDesigner_Codex_Project\bin\Release\* -DestinationPath Installer\staging\BarcodeDesignerPayload.zip -CompressionLevel Optimal -Force
 ```
 
-然后使用 Windows 自带的 IExpress，打开 `BarcodeDesigner.sed` 重新生成安装包。
+然后使用 Windows IExpress 以 `Installer\BarcodeDesigner.sed` 生成安装包。发布前请确认 SED 中的 `TargetName` 指向 `Installer\output`，且文件名与本说明一致。
 
-## 在自己的电脑测试
+## 安装检查
 
-可以直接在自己的测试电脑或虚拟机安装。建议先备份已有 BarcodeDesigner 配置，并验证：
-
-- 登录；
-- 生成条码；
-- 写入和查询 `tb_partprocess`；
-- 标签打印；
-- 重启程序后配置仍然有效。
-
-## 升级规则
-
-安装程序会替换程序和 DLL，但不会覆盖目标电脑已经存在的：
-
-```text
-欣旺达标签打印.exe.config
-```
-
-因此加密后的数据库配置不会在升级时被明文配置覆盖。JSON、模板和 DLL 会随安装包更新。
-
-安装程序在文件复制完成后，会自动加密目标目录中的 `欣旺达标签打印.exe.config` 的整个 `appSettings` 节。升级时会保留已经存在的配置文件，不覆盖用户电脑上的加密数据库配置。
-
-升级时会将新安装包中的普通 `appSettings` 项合并到旧配置；`MsSQLConnString` 始终保留目标电脑原有值。因此修改普通配置后，重新生成安装包并再次运行即可生效。
-
-注意：安装包内部的测试发布内容仍包含初始配置模板，安装过程中会立即加密安装目录中的配置；正式生产环境仍建议改用权限受限的数据库账号，不要使用 `sa`。
+- 程序文件位于 `C:\XHS\BarcodeDesigner`。
+- 启动后可登录、查询数据并打印标签。
+- 安装后配置文件的 `appSettings` 节显示为加密内容。
+- 升级会保留用户原有的其他配置，同时更新数据库连接。

@@ -55,7 +55,7 @@ namespace LabelHelp.Services
                     return Failure(Win32Error("StartPagePrinter"));
                 pageStarted = true;
 
-                byte[] bytes = Encoding.ASCII.GetBytes(content);
+                byte[] bytes = Encoding.UTF8.GetBytes(content);
                 int written;
                 if (!WritePrinter(printerHandle, bytes, bytes.Length, out written))
                     return Failure(Win32Error("WritePrinter"));

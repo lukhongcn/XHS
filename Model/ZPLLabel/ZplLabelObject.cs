@@ -24,5 +24,6 @@ namespace XHS.Model.ZPLLabel
     {
         public int Height { get; set; }
         public int Width { get; set; }
+        public string FontFile { get; set; }
     }
 }

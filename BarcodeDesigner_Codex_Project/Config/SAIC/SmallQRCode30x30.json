@@ -2,7 +2,8 @@
   "templateName": "SmallQRCode30x30-SQSD",
   "printer": {
     "type": "Zebra ZT211CN",
-    "dpi": 203
+    "dpi": 300,
+    "darknessAdjustment": 8
   },
   "label": {
     "widthMm": 42.56,
@@ -12,38 +13,38 @@
     {
       "type": "qrcode",
       "fieldIndex": 0,
-      "position": { "x": 35, "y": 150 },
-      "qrcode": { "module": 7 }
+      "position": { "x": 65, "y": 155 },
+      "qrcode": { "module": 8 }
     },
     {
       "type": "text",
       "fieldIndex": 1,
-      "position": { "x": 15, "y": 8 },
-      "text": { "height": 16, "width": 16 }
+      "position": { "x": 65, "y": 60 },
+      "text": { "height": 23, "width": 19, "fontFile": "E:SIMSUN.TTF" }
     },
     {
       "type": "text",
       "fieldIndex": 2,
-      "position": { "x": 15, "y": 32 },
-      "text": { "height": 16, "width": 16 }
+      "position": { "x": 65, "y": 81 },
+      "text": { "height": 23, "width": 16 }
     },
     {
       "type": "text",
       "fieldIndex": 3,
-      "position": { "x": 15, "y": 56 },
-      "text": { "height": 16, "width": 16 }
+      "position": { "x": 65, "y": 102 },
+      "text": { "height": 23, "width": 16 }
     },
     {
       "type": "text",
       "fieldIndex": 4,
-      "position": { "x": 15, "y": 80 },
-      "text": { "height": 16, "width": 16 }
+      "position": { "x": 65, "y": 123 },
+      "text": { "height": 23, "width": 16 }
     },
     {
       "type": "text",
       "fieldIndex": 5,
-      "position": { "x": 15, "y": 104 },
-      "text": { "height": 16, "width": 16 }
+      "position": { "x": 65, "y": 144 },
+      "text": { "height": 23, "width": 16 }
     }
   ]
 }

@@ -23,6 +23,9 @@ namespace LabelHelp.Services
                 int labelHeight = MmToDots(template.Label.HeightMm, dpi);
                 StringBuilder zpl = new StringBuilder();
                 zpl.AppendLine("^XA");
+                zpl.AppendLine("^CI28");
+                if (template.Printer.DarknessAdjustment.HasValue)
+                    zpl.AppendLine("^MD" + template.Printer.DarknessAdjustment.Value);
                 zpl.AppendLine("^PW" + labelWidth);
                 zpl.AppendLine("^LL" + labelHeight);
 
@@ -38,7 +41,15 @@ namespace LabelHelp.Services
                     else if (string.Equals(item.Type, "text", StringComparison.OrdinalIgnoreCase))
                     {
                         zpl.AppendLine(string.Format("^FO{0},{1}", item.Position.X, item.Position.Y));
-                        zpl.AppendLine(string.Format("^A0N,{0},{1}", item.Text.Height, item.Text.Width));
+                        if (string.IsNullOrWhiteSpace(item.Text.FontFile))
+                        {
+                            zpl.AppendLine(string.Format("^A0N,{0},{1}", item.Text.Height, item.Text.Width));
+                        }
+                        else
+                        {
+                            zpl.AppendLine(string.Format("^A@N,{0},{1},{2}",
+                                item.Text.Height, item.Text.Width, item.Text.FontFile));
+                        }
                         zpl.AppendLine("^FD" + value + "^FS");
                     }
                     else
@@ -75,6 +86,10 @@ namespace LabelHelp.Services
         {
             if (template.Printer == null || template.Printer.Dpi <= 0)
                 throw new InvalidDataException("模板缺少有效的 printer.dpi。");
+            if (template.Printer.DarknessAdjustment.HasValue
+                && (template.Printer.DarknessAdjustment.Value < -30
+                    || template.Printer.DarknessAdjustment.Value > 30))
+                throw new InvalidDataException("打印深度调整值必须在 -30 到 30 之间。");
             if (template.Label == null || template.Label.WidthMm <= 0 || template.Label.HeightMm <= 0)
                 throw new InvalidDataException("模板缺少有效的 label 尺寸。");
             if (template.Objects == null || template.Objects.Count == 0)
@@ -102,6 +117,9 @@ namespace LabelHelp.Services
                 {
                     if (item.Text == null || item.Text.Height <= 0 || item.Text.Width <= 0)
                         throw new InvalidDataException("文本对象缺少有效的字体尺寸。");
+                    if (!string.IsNullOrWhiteSpace(item.Text.FontFile)
+                        && item.Text.FontFile.IndexOfAny(new[] { '^', '~', '\r', '\n' }) >= 0)
+                        throw new InvalidDataException("字体文件名包含无效字符。");
                 }
             }
         }

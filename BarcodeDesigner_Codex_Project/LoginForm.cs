@@ -162,7 +162,7 @@ namespace BarcodeDesigner
                 return true;
             }
 
-            message = "当前账号没有 BarcodeDesigner 的新增权限。";
+            message = "当前账号没有权限。";
             return false;
         }
 

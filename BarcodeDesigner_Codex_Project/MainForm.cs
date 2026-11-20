@@ -339,9 +339,12 @@ namespace BarcodeDesigner
 
             if (batchNoControl != null)
             {
-                batchNoControl.Text = selectedPart == null
+                string batchNo = selectedPart == null
                     ? string.Empty
                     : (selectedPart.BatchNo ?? string.Empty).Trim();
+                batchNoControl.Text = string.IsNullOrWhiteSpace(batchNo)
+                    ? "1"
+                    : batchNo;
             }
         }
 
@@ -420,7 +423,7 @@ namespace BarcodeDesigner
             {
                 labels.Add(Convert.ToString(row["Barcode"]));
             }
-            int createdCount = new XHS.BLL.PartProcessService()
+            int createdCount = new XHS.BLL.XHSPartPartProcess()
                 .CreateByStandardForLabels(
                     customerProfile.CustomerAbbr,
                     selectedPart.JHSPartNo,

@@ -61,7 +61,6 @@
                             <HeaderStyle HorizontalAlign="Center" VerticalAlign="Middle" CssClass="table-primary" />
                             <ItemStyle HorizontalAlign="Center" VerticalAlign="Middle" Wrap="true" CssClass="wrap-text" />
                             <Columns>
-                                <asp:BoundColumn DataField="ModuleId" HeaderText="客户编号" />
                                 <asp:BoundColumn DataField="PartNo" HeaderText="零件编号" />
                                 <asp:BoundColumn DataField="PartNo_Id" HeaderText="二维码" />
                                 <asp:TemplateColumn HeaderText="打印日期">

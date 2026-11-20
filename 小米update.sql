@@ -425,12 +425,6 @@ SET XACT_ABORT ON;
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    IF DB_ID(N'HFAMD') IS NULL
-        THROW 50001, N'数据库 HFAMD 不存在。', 1;
-
-    IF OBJECT_ID(N'HFAMD.dbo.tb_standprocesstype', N'U') IS NULL
-        THROW 50002, N'HFAMD.dbo.tb_standprocesstype 不存在。', 1;
-
     IF OBJECT_ID(N'dbo.tb_standprocesstype', N'U') IS NULL
     BEGIN
         CREATE TABLE dbo.tb_standprocesstype
@@ -448,25 +442,16 @@ BEGIN TRY
 
     SET IDENTITY_INSERT dbo.tb_standprocesstype ON;
 
-    INSERT INTO dbo.tb_standprocesstype
-    (
-        Id,
-        typeName,
-        isProductType,
-        parentId
-    )
-    SELECT
-        s.Id,
-        s.typeName,
-        s.isProductType,
-        s.parentId
-    FROM HFAMD.dbo.tb_standprocesstype s
-    WHERE NOT EXISTS
+    IF NOT EXISTS
     (
         SELECT 1
         FROM dbo.tb_standprocesstype t
-        WHERE t.Id = s.Id
-    );
+        WHERE t.Id = 4
+    )
+    BEGIN
+        INSERT INTO dbo.tb_standprocesstype (Id)
+        VALUES (4);
+    END;
 
     SET IDENTITY_INSERT dbo.tb_standprocesstype OFF;
 
@@ -535,76 +520,8 @@ SET XACT_ABORT ON;
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    IF DB_ID(N'HFAMD') IS NULL
-        THROW 50011, N'数据库 HFAMD 不存在。', 1;
-
-    IF OBJECT_ID(N'HFAMD.dbo.tb_partprocess', N'U') IS NULL
-        THROW 50012, N'HFAMD.dbo.tb_partprocess 不存在。', 1;
-
     IF OBJECT_ID(N'dbo.tb_partprocess', N'U') IS NULL
-    BEGIN
-        DECLARE @columnDefinitions NVARCHAR(MAX);
-        DECLARE @createTableSql NVARCHAR(MAX);
-
-        SELECT @columnDefinitions = STUFF
-        (
-            (
-                SELECT
-                    N',' + QUOTENAME(c.name) + N' ' +
-                    CASE
-                        WHEN t.name IN (N'nvarchar', N'nchar') AND c.max_length = -1
-                            THEN t.name + N'(MAX)'
-                        WHEN t.name IN (N'nvarchar', N'nchar')
-                            THEN t.name + N'(' + CONVERT(NVARCHAR(10), c.max_length / 2) + N')'
-                        WHEN t.name IN (N'varchar', N'char', N'varbinary', N'binary') AND c.max_length = -1
-                            THEN t.name + N'(MAX)'
-                        WHEN t.name IN (N'varchar', N'char', N'varbinary', N'binary')
-                            THEN t.name + N'(' + CONVERT(NVARCHAR(10), c.max_length) + N')'
-                        WHEN t.name IN (N'decimal', N'numeric')
-                            THEN t.name + N'(' + CONVERT(NVARCHAR(10), c.precision) + N',' + CONVERT(NVARCHAR(10), c.scale) + N')'
-                        ELSE t.name
-                    END +
-                    CASE
-                        WHEN ic.is_identity = 1
-                            THEN N' IDENTITY(' + CONVERT(NVARCHAR(50), ic.seed_value) + N',' + CONVERT(NVARCHAR(50), ic.increment_value) + N')'
-                        ELSE N''
-                    END +
-                    CASE
-                        WHEN dc.definition IS NOT NULL
-                            THEN N' DEFAULT ' + dc.definition
-                        ELSE N''
-                    END +
-                    CASE
-                        WHEN c.is_nullable = 1 THEN N' NULL'
-                        ELSE N' NOT NULL'
-                    END
-                FROM HFAMD.sys.columns c
-                INNER JOIN HFAMD.sys.types t
-                    ON c.user_type_id = t.user_type_id
-                LEFT JOIN HFAMD.sys.identity_columns ic
-                    ON c.object_id = ic.object_id
-                   AND c.column_id = ic.column_id
-                LEFT JOIN HFAMD.sys.default_constraints dc
-                    ON c.default_object_id = dc.object_id
-                WHERE c.object_id = OBJECT_ID(N'HFAMD.dbo.tb_partprocess')
-                ORDER BY c.column_id
-                FOR XML PATH(N''), TYPE
-            ).value(N'.', N'NVARCHAR(MAX)'),
-            1,
-            1,
-            N''
-        );
-
-        IF @columnDefinitions IS NULL OR LEN(@columnDefinitions) = 0
-            THROW 50013, N'无法读取 HFAMD.dbo.tb_partprocess 的字段定义。', 1;
-
-        SET @createTableSql =
-            N'CREATE TABLE dbo.tb_partprocess (' +
-            @columnDefinitions +
-            N', CONSTRAINT PK_tb_partprocess PRIMARY KEY ([id]))';
-
-        EXEC sys.sp_executesql @createTableSql;
-    END;
+        THROW 50011, N'dbo.tb_partprocess 不存在，请先创建该表。', 1;
 
     COMMIT TRANSACTION;
 END TRY
@@ -795,20 +712,26 @@ BEGIN TRY
 
     IF OBJECT_ID(N'dbo.tb_status', N'U') IS NULL
     BEGIN
-        SELECT TOP (0) *
-        INTO dbo.tb_status
-        FROM HFAMD.dbo.tb_status;
+        CREATE TABLE dbo.tb_status
+        (
+            StatusId          NVARCHAR(100) NOT NULL,
+            StatusDescription NVARCHAR(200) NULL,
+            StatusColor       NVARCHAR(50) NULL,
+            isSearch          SMALLINT NULL,
+            fontColor         NVARCHAR(50) NULL,
+            menuid            NVARCHAR(100) NULL,
+            CONSTRAINT PK_tb_status PRIMARY KEY (StatusId)
+        );
     END;
 
-    INSERT INTO dbo.tb_status
-    SELECT sourceStatus.*
-    FROM HFAMD.dbo.tb_status sourceStatus
-    WHERE sourceStatus.StatusId IN (N'Ready', N'Pending')
-      AND NOT EXISTS
+    INSERT INTO dbo.tb_status (StatusId)
+    SELECT statusData.StatusId
+    FROM (VALUES (N'Ready'), (N'Pending')) AS statusData(StatusId)
+    WHERE NOT EXISTS
       (
           SELECT 1
           FROM dbo.tb_status targetStatus
-          WHERE targetStatus.StatusId = sourceStatus.StatusId
+          WHERE targetStatus.StatusId = statusData.StatusId
       );
 
     COMMIT TRANSACTION;

@@ -14,6 +14,7 @@ namespace XHS.Model.ZPLLabel
     {
         public string Type { get; set; }
         public int Dpi { get; set; }
+        public int? DarknessAdjustment { get; set; }
     }
 
     public sealed class LabelSettings
