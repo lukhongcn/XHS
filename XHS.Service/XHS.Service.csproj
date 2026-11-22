@@ -35,6 +35,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
   <ItemGroup>
@@ -45,6 +46,7 @@
     <Compile Include="Formatter\DrawingRevisionCodeFormatter.cs" />
     <Compile Include="Formatter\FormatterFactory.cs" />
     <Compile Include="Formatter\ICodeFormatter.cs" />
+    <Compile Include="PDAWorkFlowJsonRuntime.cs" />
     <Compile Include="SerialNumber\DailySerialNumberGenerator.cs" />
     <Compile Include="ServiceMarker.cs" />
     <Compile Include="UserFieldValuesStore.cs" />

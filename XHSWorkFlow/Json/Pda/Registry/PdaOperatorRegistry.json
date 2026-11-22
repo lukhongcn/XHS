@@ -1,0 +1,58 @@
+﻿{
+  "operators": [
+    {
+      "operatorId": "partprocess.ready.read",
+      "assemblyNamespace": "XHS.BLL",
+      "className": "XHSPartPartProcess",
+      "methodName": "GetBarcodePartProcess",
+      "signature": "GetBarcodePartProcess(string partNoId, string processId, string statusId)",
+      "sourceContract": "XHS.Model.XHSPartPartProcessInfo",
+      "implementationStatus": "registered"
+    },
+    {
+      "operatorId": "partprocess.snapshot.read",
+      "assemblyNamespace": "XHS.BLL",
+      "className": "XHSPartPartProcess",
+      "methodName": "GetBarcodePartProcess",
+      "signature": "GetBarcodePartProcess(string partNoId, string processId, string statusId)",
+      "sourceContract": "XHS.Model.XHSPartPartProcessInfo",
+      "implementationStatus": "registered"
+    },
+    {
+      "operatorId": "partprocess.pass.execute",
+      "assemblyNamespace": "ModuleWorkFlow.business",
+      "className": "PartProcess",
+      "methodName": "UpdatePartProcessFromModifyEdit",
+      "signature": "UpdatePartProcessFromModifyEdit(List<PartPartProcessInfo> source)",
+      "sourceContract": "System.Int32",
+      "implementationStatus": "registered"
+    },
+    {
+      "operatorId": "partprocess.recheck.execute",
+      "assemblyNamespace": "ModuleWorkFlow.business",
+      "className": "PartProcess",
+      "methodName": "UpdatePartProcessFromModifyEdit",
+      "signature": "UpdatePartProcessFromModifyEdit(List<PartPartProcessInfo> source)",
+      "sourceContract": "System.Int32",
+      "implementationStatus": "registered"
+    },
+    {
+      "operatorId": "partprocess.scrap.execute",
+      "assemblyNamespace": "ModuleWorkFlow.business",
+      "className": "PartProcess",
+      "methodName": "UpdatePartProcessFromModifyEdit",
+      "signature": "UpdatePartProcessFromModifyEdit(List<PartPartProcessInfo> source)",
+      "sourceContract": "System.Int32",
+      "implementationStatus": "registered"
+    },
+    {
+      "operatorId": "partprocess.pack.execute",
+      "assemblyNamespace": "ModuleWorkFlow.business",
+      "className": "PartProcess",
+      "methodName": "UpdatePartProcessFromModifyEdit",
+      "signature": "UpdatePartProcessFromModifyEdit(List<PartPartProcessInfo> source)",
+      "sourceContract": "System.Int32",
+      "implementationStatus": "registered"
+    }
+  ]
+}

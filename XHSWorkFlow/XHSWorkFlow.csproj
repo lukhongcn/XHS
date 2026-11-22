@@ -159,6 +159,12 @@
     <Compile Include="PartModifyList.aspx.cs">
       <DependentUpon>PartModifyList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PDAWorkFlow.aspx.cs">
+      <DependentUpon>PDAWorkFlow.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PDAWorkFlow.aspx.designer.cs">
+      <DependentUpon>PDAWorkFlow.aspx</DependentUpon>
+    </Compile>
     <Compile Include="XWDPartMasterList.aspx.cs">
       <DependentUpon>XWDPartMasterList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -364,6 +370,7 @@
     <Content Include="LabelBindingRecordList.aspx" />
     <Content Include="PartModifyEdit.aspx" />
     <Content Include="PartModifyList.aspx" />
+    <Content Include="PDAWorkFlow.aspx" />
     <Content Include="PLCResultList.aspx" />
     <Content Include="ScanFlowStep.aspx" />
     <Content Include="GSPartMasterUpload.aspx" />

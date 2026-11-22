@@ -1,0 +1,9 @@
+﻿{
+  "profiles": [
+    {
+      "profileId": "PART_PROCESS_DECISION",
+      "menuId": "D01",
+      "file": "Profiles/PartProcessDecisionPDA.json"
+    }
+  ]
+}
