@@ -1,0 +1,12 @@
+[
+  {
+    "CustomerName": "欣旺达",
+    "CustomerAbbr": "XWD",
+    "FormatterConfigDirectory": "Config\\XWD"
+  },
+  {
+    "CustomerName": "上汽时代",
+    "CustomerAbbr": "SQSD",
+    "FormatterConfigDirectory": "Config\\SAIC"
+  }
+]

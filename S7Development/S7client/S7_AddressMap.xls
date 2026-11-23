@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal"><Font ss:FontName="微软雅黑" ss:Size="10"/></Style>
+  <Style ss:ID="Title"><Font ss:FontName="微软雅黑" ss:Size="14" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>
+  <Style ss:ID="Header"><Font ss:FontName="微软雅黑" ss:Bold="1"/><Interior ss:Color="#D9EAF7" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+  <Style ss:ID="Center"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+  <Style ss:ID="Pass"><Interior ss:Color="#D9EAD3" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>
+  <Style ss:ID="Fail"><Interior ss:Color="#F4CCCC" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>
+  <Style ss:ID="Info"><Interior ss:Color="#FFF2CC" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>
+ </Styles>
+ <Worksheet ss:Name="地址块">
+  <Table>
+   <Column ss:Width="90"/><Column ss:Width="90"/><Column ss:Width="90"/><Column ss:Width="90"/><Column ss:Width="150"/><Column ss:Width="240"/><Column ss:Width="260"/>
+   <Row ss:Height="26"><Cell ss:MergeAcross="6" ss:StyleID="Title"><Data ss:Type="String">S7client PLC 地址块定义</Data></Cell></Row>
+   <Row><Cell ss:MergeAcross="6"><Data ss:Type="String">PLC：多台 PLC 由 S7client.json 配置；当前默认 IP 为 127.0.0.1，DB=50，Rack=0，Slot=1，S7 TCP 端口=102。</Data></Cell></Row>
+   <Row ss:StyleID="Header"><Cell><Data ss:Type="String">DB</Data></Cell><Cell><Data ss:Type="String">字节偏移</Data></Cell><Cell><Data ss:Type="String">位</Data></Cell><Cell><Data ss:Type="String">地址</Data></Cell><Cell><Data ss:Type="String">名称</Data></Cell><Cell><Data ss:Type="String">方向/类型</Data></Cell><Cell><Data ss:Type="String">说明</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">2</Data></Cell><Cell><Data ss:Type="String">0-7</Data></Cell><Cell><Data ss:Type="String">DB50.2.0</Data></Cell><Cell><Data ss:Type="String">二维码/条码</Data></Cell><Cell><Data ss:Type="String">PLC → MES，ASCII，最长64字节</Data></Cell><Cell><Data ss:Type="String">PLC请求时存放二维码；读取测试时也写入此区域。</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">258</Data></Cell><Cell><Data ss:Type="String">—</Data></Cell><Cell><Data ss:Type="String">DB50.258</Data></Cell><Cell><Data ss:Type="String">测试值</Data></Cell><Cell><Data ss:Type="String">PLC → MES，REAL，4字节</Data></Cell><Cell><Data ss:Type="String">读取测试弹框输入的 REAL 值写入此处。</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">262</Data></Cell><Cell><Data ss:Type="String">—</Data></Cell><Cell><Data ss:Type="String">DB50.262</Data></Cell><Cell><Data ss:Type="String">判定结果</Data></Cell><Cell><Data ss:Type="String">PLC → MES，UInt，2字节</Data></Cell><Cell><Data ss:Type="String">PLC写入，0异常、1合格、2不合格；MES读取。</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">0</Data></Cell><Cell><Data ss:Type="String">DB50.266.0</Data></Cell><Cell><Data ss:Type="String">PLC心跳</Data></Cell><Cell><Data ss:Type="String">PLC → MES，Bool</Data></Cell><Cell><Data ss:Type="String">PLC持续翻转；MES用于判断 PLC 通讯是否正常。</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">1</Data></Cell><Cell><Data ss:Type="String">DB50.266.1</Data></Cell><Cell><Data ss:Type="String">条码检测请求</Data></Cell><Cell><Data ss:Type="String">PLC ↔ MES，Bool</Data></Cell><Cell><Data ss:Type="String">PLC置1请求检测；成功时保持1，失败时复位0。</Data></Cell></Row>
+   <Row ss:StyleID="Pass"><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">2</Data></Cell><Cell><Data ss:Type="String">DB50.266.2</Data></Cell><Cell><Data ss:Type="String">MES反馈产品OK</Data></Cell><Cell><Data ss:Type="String">MES → PLC，Bool</Data></Cell><Cell><Data ss:Type="String">产品检测结果反馈，不再作为判定结果来源。</Data></Cell></Row>
+   <Row ss:StyleID="Fail"><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">3</Data></Cell><Cell><Data ss:Type="String">DB50.266.3</Data></Cell><Cell><Data ss:Type="String">MES反馈产品NG</Data></Cell><Cell><Data ss:Type="String">MES → PLC，Bool</Data></Cell><Cell><Data ss:Type="String">产品检测结果反馈，不再作为判定结果来源。</Data></Cell></Row>
+   <Row ss:StyleID="Info"><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">4</Data></Cell><Cell><Data ss:Type="String">DB50.266.4</Data></Cell><Cell><Data ss:Type="String">产品查询请求</Data></Cell><Cell><Data ss:Type="String">气密 → MES，Bool</Data></Cell><Cell><Data ss:Type="String">气密向 MES 发起产品查询请求。</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">5</Data></Cell><Cell><Data ss:Type="String">DB50.266.5</Data></Cell><Cell><Data ss:Type="String">结果保存状态</Data></Cell><Cell><Data ss:Type="String">MES → PLC，Bool</Data></Cell><Cell><Data ss:Type="String">数据库保存成功，或数据库失败但本地PLCResult.txt保存成功时置1；两者都失败置0。</Data></Cell></Row>
+    <Row ss:StyleID="Fail"><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">6</Data></Cell><Cell><Data ss:Type="String">DB50.266.6</Data></Cell><Cell><Data ss:Type="String">结果保存失败</Data></Cell><Cell><Data ss:Type="String">MES → PLC，Bool</Data></Cell><Cell><Data ss:Type="String">数据库和本地PLCResult.txt均保存失败时置1；保存成功时置0。</Data></Cell></Row>
+    <Row><Cell><Data ss:Type="Number">50</Data></Cell><Cell><Data ss:Type="Number">266</Data></Cell><Cell><Data ss:Type="Number">7</Data></Cell><Cell><Data ss:Type="String">DB50.266.7</Data></Cell><Cell><Data ss:Type="String">MES心跳</Data></Cell><Cell><Data ss:Type="String">MES → PLC，Bool</Data></Cell><Cell><Data ss:Type="String">S7client持续翻转；PLC可据此判断 MES 是否在线。</Data></Cell></Row>
+   <Row><Cell ss:MergeAcross="6"><Data ss:Type="String">检测查询：二维码作为 partno_id，processid=QMJC，statusid=Ready；查询到时 ProcessNo=tb_partprocess.processno，PartProcessId=tb_partprocess.id；未查到时两者均为0。</Data></Cell></Row>
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="时序说明">
+  <Table>
+   <Column ss:Width="70"/><Column ss:Width="160"/><Column ss:Width="180"/><Column ss:Width="180"/><Column ss:Width="180"/><Column ss:Width="230"/>
+   <Row ss:Height="26"><Cell ss:MergeAcross="5" ss:StyleID="Title"><Data ss:Type="String">二维码检测与结果保存时序</Data></Cell></Row>
+   <Row ss:StyleID="Header"><Cell><Data ss:Type="String">步骤</Data></Cell><Cell><Data ss:Type="String">PLC动作</Data></Cell><Cell><Data ss:Type="String">MES/S7client动作</Data></Cell><Cell><Data ss:Type="String">地址变化</Data></Cell><Cell><Data ss:Type="String">数据库/文件</Data></Cell><Cell><Data ss:Type="String">备注</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T0</Data></Cell><Cell><Data ss:Type="String">保持PLC心跳翻转</Data></Cell><Cell><Data ss:Type="String">保持MES心跳翻转</Data></Cell><Cell><Data ss:Type="String">266.0、266.7持续变化</Data></Cell><Cell><Data ss:Type="String">无</Data></Cell><Cell><Data ss:Type="String">正常待机</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T1</Data></Cell><Cell><Data ss:Type="String">准备允许MES取数</Data></Cell><Cell><Data ss:Type="String">点击“允许读取测试”</Data></Cell><Cell><Data ss:Type="String">266.4=1</Data></Cell><Cell><Data ss:Type="String">无</Data></Cell><Cell><Data ss:Type="String">心跳不中断</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T2</Data></Cell><Cell><Data ss:Type="String">写入二维码并发起请求</Data></Cell><Cell><Data ss:Type="String">读取DB50.2.0</Data></Cell><Cell><Data ss:Type="String">DB50.2.0=二维码；266.1=1</Data></Cell><Cell><Data ss:Type="String">无</Data></Cell><Cell><Data ss:Type="String">读取按钮二维码为空时，先再读DB50.2.0；仍为空则要求输入二维码</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T3</Data></Cell><Cell><Data ss:Type="String">提供检测值</Data></Cell><Cell><Data ss:Type="String">读取DB50.258 REAL，并按二维码查询QMJC/Ready</Data></Cell><Cell><Data ss:Type="String">读取DB50.258</Data></Cell><Cell><Data ss:Type="String">得到ProcessNo和PartProcessId；查不到均为0</Data></Cell><Cell><Data ss:Type="String">读取测试不停止心跳</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T4</Data></Cell><Cell><Data ss:Type="String">接收结果</Data></Cell><Cell><Data ss:Type="String">组成PLCResultInfo</Data></Cell><Cell><Data ss:Type="String">自动检测：266.2/266.3；读取测试不改这两个位</Data></Cell><Cell><Data ss:Type="String">ResultValue=REAL，Result=0/1/2</Data></Cell><Cell><Data ss:Type="String">1=合格，2=不合格，0=异常</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T5</Data></Cell><Cell><Data ss:Type="String">等待保存状态</Data></Cell><Cell><Data ss:Type="String">先写数据库；失败则追加PLCResult.txt</Data></Cell><Cell><Data ss:Type="String">266.5=保存结果</Data></Cell><Cell><Data ss:Type="String">数据库或本地文件成功=1；都失败=0</Data></Cell><Cell><Data ss:Type="String">本地文件位于S7client.exe目录</Data></Cell></Row>
+   <Row><Cell ss:StyleID="Center"><Data ss:Type="String">T6</Data></Cell><Cell><Data ss:Type="String">读取处理反馈</Data></Cell><Cell><Data ss:Type="String">继续保持心跳</Data></Cell><Cell><Data ss:Type="String">正常检测成功：266.1=1；失败：266.1=0</Data></Cell><Cell><Data ss:Type="String">完成一次结果记录</Data></Cell><Cell><Data ss:Type="String">读取测试不停止心跳，也不改266.2/266.3</Data></Cell></Row>
+  </Table>
+ </Worksheet>
+</Workbook>

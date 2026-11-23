@@ -632,6 +632,8 @@ namespace PrintServiceInstaller
             CopyAppSetting(oldConfig, newConfig, "PrintClient.MachineId");
             CopyAppSetting(oldConfig, newConfig, "PrintClient.PrinterName");
             CopyAppSetting(oldConfig, newConfig, "PrintClient.PollIntervalSeconds");
+            CopyAppSetting(oldConfig, newConfig, "PrintClient.PendingBatchSize");
+            CopyAppSetting(oldConfig, newConfig, "PrintClient.LockTimeoutMinutes");
             CopyAppSetting(oldConfig, newConfig, "PrintClient.PrintPauseMilliseconds");
             CopyAppSetting(oldConfig, newConfig, "PrintClient.LogFolder");
             SaveConfigDocument(newConfig, newConfigPath);

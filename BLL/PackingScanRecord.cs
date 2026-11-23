@@ -33,6 +33,13 @@ namespace XHS.BLL
             return dal.GetExPackingScanRecordsByPartNo(partNo);
         }
 
+        public List<PackingScanRecordInfo> GetPackingScanRecordsByMaterialQRCode(string qrCode)
+        {
+            return string.IsNullOrWhiteSpace(qrCode)
+                ? new List<PackingScanRecordInfo>()
+                : dal.GetPackingScanRecordsByMaterialQRCode(qrCode.Trim());
+        }
+
         public string InsertPackingScanRecord(List<PackingScanRecordInfo> packingScanRecordInfos)
         {
             ParamterInfo paramterInfo = dal.InsertPackingScanRecord(packingScanRecordInfos);

@@ -1,0 +1,42 @@
+{
+  "TemplateFile": "Config\\SAIC\\SmallQRCode30x30.json",
+  "Values": [
+    {
+      "Name": "Barcode",
+      "Parts": [
+        { "Field": "Barcode" }
+      ]
+    },
+    {
+      "Name": "CompanyName",
+      "Parts": [
+        { "Value": "苏州金鸿顺汽车部件股份有限公司" }
+      ]
+    },
+    {
+      "Name": "ProjectName",
+      "Parts": [
+        { "Value": "IP5PM" }
+      ]
+    },
+    {
+      "Name": "ProductionDateText",
+      "Parts": [
+        { "DateFormat": "yyyy/MM/dd" }
+      ]
+    },
+    {
+      "Name": "SerialNoText",
+      "Parts": [
+        { "Field": "SerialNo" }
+      ]
+    },
+    {
+      "Name": "PartAndVersion",
+      "Parts": [
+        { "Field": "PartNo" },
+        { "Field": "DrawingVersion" }
+      ]
+    }
+  ]
+}

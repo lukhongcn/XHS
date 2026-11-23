@@ -1,0 +1,31 @@
+{
+  "templateName": "SmallQRCode30x30",
+  "printer": {
+    "type": "Zebra ZT211CN",
+    "dpi": 203
+  },
+  "label": {
+    "widthMm": 42.56,
+    "heightMm": 50.05
+  },
+  "objects": [
+    {
+      "type": "qrcode",
+      "fieldIndex": 0,
+      "position": { "x": 45, "y": 40 },
+      "qrcode": { "module": 9 }
+    },
+    {
+      "type": "text",
+      "fieldIndex": 1,
+      "position": { "x": 45, "y": 290 },
+      "text": { "height": 38, "width": 27 }
+    },
+    {
+      "type": "text",
+      "fieldIndex": 2,
+      "position": { "x": 45, "y": 330 },
+      "text": { "height": 38, "width": 27 }
+    }
+  ]
+}

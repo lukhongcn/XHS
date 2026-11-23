@@ -1,38 +1,48 @@
-﻿# XHS 项目代理规则
+﻿# XHS 项目代码规范补充
 
-本文件定义 XHS 项目中的统一协作规则，所有代理、自动化脚本和代码修改都必须遵守。
+## MSSQL 查询方法规范
 
-## 通用规则
+1. 公开 `Get`、`Search` 查询方法只负责组装 SQL 和 `SqlParameter[]` 参数，不直接执行数据读取。
+2. 每个查询实体统一通过对应的私有 `_get...` 方法读取数据。例如：
 
-1. 项目中所有需要中文的地方一律使用简体中文。
-2. 文本文件默认保存为 UTF-8 with BOM 编码。
-3. C# 类名、属性名和字段名统一使用 C# 命名风格，公共成员使用 PascalCase。
-4. 不允许使用硬编码，配置项、连接字符串和可变业务规则必须集中配置或统一管理。
-5. 所有 `aspx` 文件中的中文内容一律使用简体中文，文件保存格式统一为 UTF-8 with BOM。
-6. `aspx` 页面中的浏览按钮统一使用 `btn5` 样式，标准写法为 `<li class="btn5"><asp:LinkButton ID="lnk_view" runat="server" OnClick="lnk_view_Click" ToolTip="浏览">浏览</asp:LinkButton></li>`。
-7. `aspx` 页面中的上传按钮统一使用 `btn13` 样式，对应图片资源为 `up.jpeg`，标准写法为 `<li class="btn13"><asp:LinkButton ID="lnkbutton_upload" runat="server" OnClick="lnkbutton_upload_Click" ToolTip="上传">上传</asp:LinkButton></li>`。
-8. `aspx` 页面中的编辑按钮统一使用 `btn2` 样式，并放入 `mod1` 区域，标准写法为 `<li class="btn2"><asp:LinkButton ID="lnkbutton_edit" runat="server" OnClick="lnkbutton_edit_Click" ToolTip="编辑/edit">编辑/edit</asp:LinkButton></li>`。
-9. `aspx` 页面中的上传修改按钮统一使用 `btn14` 样式，对应图片资源为 `up-edit.jpeg`，标准写法为 `<li class="btn14"><asp:LinkButton ID="lnkbutton_upload_edit" runat="server" OnClick="lnkbutton_upload_edit_Click" ToolTip="上传修改">上传修改</asp:LinkButton></li>`。
-10. `aspx` 页面中的保存按钮统一使用 `btn3` 样式，并放入 `mod2` 区域，标准写法为 `<li class="btn3"><asp:LinkButton ID="lnkbutton_save" runat="server" ToolTip="保存/save" OnClick="lnkbutton_save_Click">保存/save</asp:LinkButton></li>`。
-11. 完成任务后需要发送 beep 提示音。
+   ```csharp
+   string querystring = "select * from tb_process order by listorder";
+   List<ProcessInfo> ps = _getProcessInfo(querystring, null);
 
-## 分层约束
+   private List<ProcessInfo> _getProcessInfo(string querystring, SqlParameter[] pars)
+   {
+       DataSet ds;
+       if (pars != null)
+       {
+           ds = Data.getDataSet(querystring, pars);
+       }
+       else
+       {
+           ds = Data.getDataSet(querystring);
+       }
 
-1. BLL 层不允许直接执行 SQL 语句。
-2. 所有 SQL 语句必须在 MSSQL 层执行。
-3. `Model` 中带 `Info` 后缀的类一般都有对应的数据表，表名统一为 `tb_去掉Info后缀的类名`。
-4. 当前项目模型层统一命名为 `XHS.Model`，模型类命名空间统一使用 `XHS.Model`，子目录模型使用 `XHS.Model.子命名空间`。
-5. `IDAL` 中定义的方法，`MSSQL` 层必须提供对应实现。
-6. `DALFactory` 负责创建 `MSSQL` 层实例。
-7. `BLL` 层负责向页面提供可调用的方法，不直接承担底层 SQL 执行职责。
-8. `MSSQL` 层的 `Insert`、`Update`、`Delete` 方法统一接收 `List<Info>` 类型参数，方法统一返回 `ParamterInfo`。
-9. `Get` 类方法统一返回 `List<Info>` 类型结果。
-10. `BLL` 层通过构造函数初始化 `dal` 成员，例如 `dal = XHS.DALFactory.XXX.Create();`，业务方法统一通过该 `dal` 成员调用。
-11. `BLL` 层的保存类方法按以下方式处理：先调用 `dal` 获取 `ParamterInfo`，再使用 `IList source = new ArrayList(); source.Add(paramterInfo);` 调用 `Common.Save(source)`，方法返回 `string`。
-12. 数据库连接字符串统一为 `server=.;Pooling=false;database=XHS;uid=sa;pwd=MES2016mj`。
-13. 使用 `sqlcmd` 连接本地数据库时，统一使用命令前缀 `sqlcmd -S . -d XHS -U sa -P MES2016mj -N -C -Q`。
+       DataTable dt = ds.Tables[0];
+       IList ilist = new ArrayList();
+       // 将 DataRow 转换为 Info 对象并返回 List<Info>。
+   }
+   ```
 
-## 测试要求
+3. 私有查询方法统一接收 `string querystring, SqlParameter[] pars`，统一负责 `DataSet` 读取和 `DataRow` 到 `Info` 的转换。
+4. 查询条件必须使用参数化 SQL，不得通过字符串拼接用户输入值。
+5. `Get` 类方法统一返回 `List<Info>`，SQL 只允许在 MSSQL 层执行。
 
-1. 页面功能完成后，使用 Playwright 生成或补充对应测试。
+## Playwright 测试部署规范
 
+1. 修改 `XHSWorkFlow` 下的页面、后台代码、配置或静态资源后，必须先将本次修改涉及的文件同步到 `deploy/XHSWorkFlow` 对应目录，再进行 Playwright 测试。
+2. 同步时只复制本次修改涉及的文件，保留用户在 `deploy` 目录中的无关修改，不得使用会覆盖整个目录或删除文件的操作。
+3. 确认 IIS 的 `XHS` 应用实际指向 `deploy/XHSWorkFlow`，并在同步后重新加载应用；Playwright 测试统一使用 `http://localhost/XHS/`，登录地址统一使用 `http://localhost/XHS/login.aspx`。
+4. 如果修改涉及程序集或编译输出，必须先完成对应项目的构建，并将更新后的程序集及其依赖同步到 `deploy/XHSWorkFlow/bin` 后再测试。
+5. 测试报告中必须说明已同步到 `deploy`，避免把对源目录的修改误认为已部署到测试站点。
+
+## Git 提交与推送规范
+
+1. `deploy` 目录仅用于本地部署和 Playwright 测试，不需要上传到 GitHub；提交或推送时只包含源目录中的修改，忽略 `deploy` 目录中的对应文件。
+
+## 文件权限规范
+
+1. 发现准备修改的目标文件为只读文件时，必须先询问用户，获得确认后才能继续。

@@ -125,6 +125,11 @@ namespace XHS.Model
         public string ExSupplyBatchNo { get; set; }
 
         /// <summary>
+        /// 配送单号。
+        /// </summary>
+        public string DeliveryNo { get; set; }
+
+        /// <summary>
         /// 外包装箱名。
         /// </summary>
         public string PackageName { get; set; }
@@ -133,6 +138,17 @@ namespace XHS.Model
         /// 装箱阶段：Scanning=装箱中，PackingComplete=装箱完成，Completed=已完成。
         /// </summary>
         public string PackingStage { get; set; }
+
+        /// <summary>装箱阶段中文显示名称。</summary>
+        public string PackingStageName
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(PackingStage)) return PackingStageInfo.未装箱.StatusName;
+                string statusName = PackingStageInfo.GetStatusName(PackingStage);
+                return string.IsNullOrWhiteSpace(statusName) ? PackingStage : statusName;
+            }
+        }
     }
 }
 

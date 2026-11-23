@@ -35,6 +35,10 @@
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="BLL">
+      <HintPath>..\XHSWorkFlow\bin\BLL.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\lib\NPOI\ICSharpCode.SharpZipLib.dll</HintPath>
@@ -51,6 +55,21 @@
     <Reference Include="ModuleWorkFlow.Model">
       <HintPath>..\business\bin\Debug\ModuleWorkFlow.Model.dll</HintPath>
     </Reference>
+    <Reference Include="WorkFlow.BLL.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.BLL.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.DALFactory.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.DALFactory.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.IDAL.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.IDAL.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.Model.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.Model.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkFlow.MsSQL.Standard">
+      <HintPath>..\..\new_xuxiang2018_zhengqin_twNJ\bin\WorkFlow.MsSQL.Standard.dll</HintPath>
+    </Reference>
     <Reference Include="NPOI">
       <HintPath>..\lib\NPOI\NPOI.dll</HintPath>
     </Reference>
@@ -66,20 +85,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CheryUpload.cs" />
-    <Compile Include="BatchRule.cs" />
     <Compile Include="LabelCodeRule.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Label.cs" />
-    <Compile Include="LabelCode.cs" />
     <Compile Include="LabelCodeRuleField.cs" />
-    <Compile Include="FieldType.cs" />
+    <Compile Include="LabelCodeRuleSub.cs" />
     <Compile Include="PackingExceptionType.cs" />
     <Compile Include="PackingException.cs" />
     <Compile Include="PackingOperationResult.cs" />
     <Compile Include="PackingOperationService.cs" />
     <Compile Include="PackingRecord.cs" />
+    <Compile Include="DeliveryUploadRecord.cs" />
     <Compile Include="PackingScanRecord.cs" />
+    <Compile Include="PackingUnboundScanRecord.cs" />
     <Compile Include="PartMaster.cs" />
+    <Compile Include="XHSPartPartProcess.cs" />
+    <Compile Include="PLCResult.cs" />
+    <Compile Include="PLCResultProcessService.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="ShippingGoodsLabelBuilder.cs" />
@@ -87,9 +109,23 @@
     <Compile Include="QRCode.cs" />
     <Compile Include="RegexFieldParser.cs" />
     <Compile Include="FactoryBarcodeParser.cs" />
+    <Compile Include="ScanFlowScanRecord.cs" />
+    <Compile Include="LabelBindingRecord.cs" />
+    <Compile Include="ScanFlowStep.cs" />
+    <Compile Include="ScanStepHandlerRegistry.cs" />
+    <Compile Include="ScanFlow.cs" />
     <Compile Include="ShippingGoods.cs" />
     <Compile Include="UnRegularTableImport.cs" />
     <Compile Include="UnRegularTableImportField.cs" />
+    <Compile Include="BatchRule.cs" />
+    <Compile Include="FieldType.cs" />
+    <Compile Include="LabelBindingRecord.cs" />
+    <Compile Include="LabelBindingFailure.cs" />
+    <Compile Include="LabelCode.cs" />
+    <Compile Include="ScanFlow.cs" />
+    <Compile Include="ScanFlowScanRecord.cs" />
+    <Compile Include="ScanFlowStep.cs" />
+    <Compile Include="ScanStepHandlerRegistry.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\business\business.csproj">
@@ -111,6 +147,10 @@
     <ProjectReference Include="..\XHS.IDAL\XHS.IDAL.csproj">
       <Project>{EE584718-8A95-4115-AE35-8458AEF4222F}</Project>
       <Name>XHS.IDAL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\XHS.MSSQL\XHS.MSSQL.csproj">
+      <Project>{5D0D1F1B-3C50-4D37-A40F-6A6A9E2A7B11}</Project>
+      <Name>XHS.MSSQL</Name>
     </ProjectReference>
     <ProjectReference Include="..\Utility\Utility.csproj">
       <Project>{421F17D9-9D55-4E8E-A292-3857605AE16D}</Project>

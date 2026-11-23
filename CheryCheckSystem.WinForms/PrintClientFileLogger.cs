@@ -7,6 +7,7 @@ namespace CheryCheckSystem.PrintClient
     {
         private readonly object _syncRoot = new object();
         private readonly string _logFilePath;
+        private readonly string _fetchLogFilePath;
 
         public PrintClientFileLogger(string logFolder)
         {
@@ -16,14 +17,25 @@ namespace CheryCheckSystem.PrintClient
 
             Directory.CreateDirectory(safeLogFolder);
             _logFilePath = Path.Combine(safeLogFolder, "print-client.log");
+            _fetchLogFilePath = Path.Combine(safeLogFolder, "print-client-fetch.log");
         }
 
         public void Write(string message)
         {
-            string line = string.Format("{0:yyyy-MM-dd HH:mm:ss}  {1}", DateTime.Now, message);
+            WriteToFile(_logFilePath, message);
+        }
+
+        public void WriteFetch(string message)
+        {
+            WriteToFile(_fetchLogFilePath, message);
+        }
+
+        private void WriteToFile(string filePath, string message)
+        {
+            string line = string.Format("{0:yyyy-MM-dd HH:mm:ss.fff}  {1}", DateTime.Now, message);
             lock (_syncRoot)
             {
-                File.AppendAllText(_logFilePath, line + Environment.NewLine, System.Text.Encoding.UTF8);
+                File.AppendAllText(filePath, line + Environment.NewLine, System.Text.Encoding.UTF8);
             }
         }
     }

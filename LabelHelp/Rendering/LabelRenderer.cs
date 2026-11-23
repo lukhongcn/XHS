@@ -64,10 +64,10 @@ namespace LabelHelp.Rendering
             float tableHeight = height - margin * 2f;
 
             float titleRowHeight = tableHeight * 0.12f;
-            float rowHeight = (tableHeight - titleRowHeight) / 9f;
-            float leftColumnRatio = NormalizeRatio(config.TableLeftColumnRatio, 0.26f);
-            float middleColumnRatio = NormalizeRatio(config.TableMiddleColumnRatio, 0.42f);
-            float qrColumnRatio = NormalizeRatio(config.TableQrColumnRatio, 0.32f);
+            float rowHeight = (tableHeight - titleRowHeight) / 10f;
+            float leftColumnRatio = NormalizeRatio(config.TableLeftColumnRatio, 0.34f);
+            float middleColumnRatio = NormalizeRatio(config.TableMiddleColumnRatio, 0.48f);
+            float qrColumnRatio = NormalizeRatio(config.TableQrColumnRatio, 0.18f);
             float ratioTotal = leftColumnRatio + middleColumnRatio + qrColumnRatio;
 
             float leftColWidth = tableWidth * leftColumnRatio / ratioTotal;
@@ -94,7 +94,7 @@ namespace LabelHelp.Rendering
                 graphics.DrawRectangle(borderPen, tableX, tableY, tableWidth, tableHeight);
                 graphics.DrawLine(innerPen, tableX, row0Y, tableRight, row0Y);
 
-                for (int i = 1; i <= 9; i++)
+                for (int i = 1; i <= 10; i++)
                 {
                     float lineY = row0Y + rowHeight * i;
 
@@ -121,6 +121,7 @@ namespace LabelHelp.Rendering
                 DrawRow(graphics, titleFont, valueFont, textBrush, "生产日期", ValueOrSlash(info.ProduceDate), col1X, col2X, col3X, row0Y, rowHeight, 6);
                 DrawRow(graphics, titleFont, valueFont, textBrush, "检验确认/日期", ValueOrSlash(info.CheckConfirmDate), col1X, col2X, col3X, row0Y, rowHeight, 7);
                 DrawRow(graphics, titleFont, valueFont, textBrush, "纸箱编号", GetBoxNumber(info), col1X, col2X, col3X, row0Y, rowHeight, 8);
+                DrawRow(graphics, titleFont, valueFont, textBrush, "毛重", ValueOrSlash(info.GrossWeight), col1X, col2X, col3X, row0Y, rowHeight, 9);
 
                 // 二维码
                 string qrContent = new QrCodeGenerator().BuildDefaultQrContent(info);
@@ -130,7 +131,9 @@ namespace LabelHelp.Rendering
                     float qrAreaY = row0Y + rowHeight * 2f;
                     float qrAreaWidth = rightColWidth;
                     float qrAreaHeight = tableBottom - qrAreaY;
-                    float qrSize = Math.Min(qrAreaWidth - 8f, qrAreaHeight - 8f);
+                    float qrPadding = config.TableQrPadding > 0f ? config.TableQrPadding : 12f;
+                    float qrSize = Math.Min(qrAreaWidth - qrPadding, qrAreaHeight - qrPadding);
+                    qrSize = Math.Max(1f, qrSize);
 
                     float qrX = qrAreaX + (qrAreaWidth - qrSize) / 2f;
                     float qrY = qrAreaY + (qrAreaHeight - qrSize) / 2f;

@@ -10,9 +10,14 @@ namespace XHS.IDAL
     {
         List<PartMasterInfo> GetPartMasters();
 
+        List<PartMasterInfo> GetPartMasters(string jhsPartNo, string customerMaterialNo);
+
+        List<PartMasterInfo> GetPartByCustomerAbbr(string customerAbbr);
+
         PartMasterInfo GetPartMaster(int partMasterId);
 
-        PartMasterInfo GetPartMasterByJHSPartNo(string jhsPartNo);
+        PartInfo GetPartMasterByJHSPartNo(string jhsPartNo);
+        PartInfo GetPartMasterByCustomerMaterialNo(string customerMaterialNo);
 
         ParamterInfo InsertPartMasters(List<PartMasterInfo> infos);
 
