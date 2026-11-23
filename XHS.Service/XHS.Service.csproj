@@ -39,6 +39,9 @@
     <Reference Include="System.Web.Extensions" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiBindingRuntime.cs" />
+    <Compile Include="BindingEngine.cs" />
+    <Compile Include="JsonActionDispatcher.cs" />
     <Compile Include="BarcodeDesignerJsonRuleLoader.cs" />
     <Compile Include="Barcode\BarcodeBuilder.cs" />
     <Compile Include="DateCode\DateCodeRule.cs" />
@@ -50,6 +53,7 @@
     <Compile Include="SerialNumber\DailySerialNumberGenerator.cs" />
     <Compile Include="ServiceMarker.cs" />
     <Compile Include="UserFieldValuesStore.cs" />
+    <Compile Include="WebFormsJsonRuntime.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

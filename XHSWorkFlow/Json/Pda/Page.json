@@ -1,0 +1,304 @@
+{
+  "version": "1.0",
+  "page": "PDAWorkFlow",
+  "modals": {
+    "ActionModal": {
+      "controlId": "pnlActionModal",
+      "controls": [
+        {
+          "type": "GridView",
+          "id": "gvActions",
+          "dataSource": "$config.actions",
+          "columns": [
+            {
+              "type": "Button",
+              "id": "btnAction",
+              "textField": "text",
+              "commandField": "code",
+              "backgroundColorField": "color",
+              "textColorField": "textColor",
+              "event": "ActionButton.Click"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "actions": [
+    {
+      "code": "RECHECK",
+      "text": "重检",
+      "color": "#4CAF50",
+      "textColor": "#FFFFFF",
+      "binding": "PDA.RECHECK"
+    },
+    {
+      "code": "SCRAP",
+      "text": "报废",
+      "color": "#F44336",
+      "textColor": "#FFFFFF",
+      "binding": "PDA.SCRAP"
+    },
+    {
+      "code": "PACK",
+      "text": "装箱",
+      "color": "#2196F3",
+      "textColor": "#FFFFFF",
+      "binding": "PDA.PACK"
+    }
+  ],
+  "allowedControls": [
+    "txtQRCode",
+    "labMessage",
+    "labScanState",
+    "gvPartProcesses",
+    "gvActions",
+    "pnlActionModal",
+    "labModalMessage",
+    "btnCloseModal",
+    "hidPartNoId",
+    "hidPartProcessId",
+    "hidScannedCode"
+  ],
+  "events": {
+    "txtQRCode.TextChanged": {
+      "action": "PDA.SCAN",
+      "inputs": {
+        "partNoId": "$controls.txtQRCode.Text"
+      },
+      "onSuccess": [
+        {
+          "type": "clear",
+          "target": "txtQRCode"
+        },
+        {
+          "type": "clear",
+          "target": "labMessage"
+        },
+        {
+          "type": "hide",
+          "target": "labMessage"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartNoId"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartProcessId"
+        },
+        {
+          "type": "clear",
+          "target": "hidScannedCode"
+        },
+        {
+          "type": "setValue",
+          "target": "hidPartNoId",
+          "value": "$result.processes[0].PartNo_Id"
+        },
+        {
+          "type": "setValue",
+          "target": "hidPartProcessId",
+          "value": "$result.processes[0].Id"
+        },
+        {
+          "type": "setValue",
+          "target": "hidScannedCode",
+          "value": "$result.processes[0].PartNo_Id"
+        },
+        {
+          "type": "hide",
+          "target": "labModalMessage"
+        },
+        {
+          "type": "hide",
+          "target": "btnCloseModal"
+        },
+        {
+          "type": "show",
+          "target": "gvActions"
+        },
+        {
+          "type": "setText",
+          "target": "labScanState",
+          "value": "请选择处理动作"
+        },
+        {
+          "type": "show",
+          "target": "pnlActionModal"
+        }
+      ],
+      "onError": [
+        {
+          "type": "clear",
+          "target": "txtQRCode"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartNoId"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartProcessId"
+        },
+        {
+          "type": "clear",
+          "target": "hidScannedCode"
+        },
+        {
+          "type": "hide",
+          "target": "gvActions"
+        },
+        {
+          "type": "showMessage",
+          "target": "labModalMessage",
+          "message": "$error.message",
+          "cssClass": "workflow-status workflow-error"
+        },
+        {
+          "type": "show",
+          "target": "btnCloseModal"
+        },
+        {
+          "type": "show",
+          "target": "pnlActionModal"
+        }
+      ]
+    },
+    "ActionButton.Click": {
+      "action": "$action.binding",
+      "inputs": {
+        "partNoId": "$controls.hidPartNoId.Value",
+        "expectedId": "$controls.hidPartProcessId.Value"
+      },
+      "onSuccess": [
+        {
+          "type": "bindGrid",
+          "target": "gvPartProcesses",
+          "data": "$result.snapshotProcesses",
+          "projection": {
+            "RowNumber": {
+              "value": "$index"
+            },
+            "Customer": {
+              "value": "$row.ModuleId",
+              "map": "$config.customerMap",
+              "fallback": "$row.ModuleId"
+            },
+            "PartNo_Id": {
+              "value": "$row.PartNo_Id"
+            },
+            "ScannedCode": {
+              "value": ""
+            },
+            "ReplaceQRCode": {
+              "value": "$row.RelationPartNoId"
+            },
+            "ProcessNo": {
+              "value": "$row.ProcessNo"
+            },
+            "ActionText": {
+              "value": "$action.metadata.Text",
+              "when": {
+                "operator": "equals",
+                "left": "$row.ProcessNo",
+                "right": "$result.currentProcess.ProcessNo"
+              }
+            }
+          }
+        },
+        {
+          "type": "hide",
+          "target": "pnlActionModal"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartNoId"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartProcessId"
+        },
+        {
+          "type": "clear",
+          "target": "hidScannedCode"
+        },
+        {
+          "type": "setText",
+          "target": "labScanState",
+          "value": "动作完成，请扫描下一个 QRCode"
+        },
+        {
+          "type": "showMessage",
+          "target": "labMessage",
+          "message": "动作“${action.metadata.Text}”处理成功。",
+          "cssClass": "workflow-status workflow-ok"
+        },
+        {
+          "type": "focus",
+          "target": "txtQRCode"
+        }
+      ],
+      "onError": [
+        {
+          "type": "hide",
+          "target": "gvActions"
+        },
+        {
+          "type": "showMessage",
+          "target": "labModalMessage",
+          "message": "$error.message",
+          "cssClass": "workflow-status workflow-error"
+        },
+        {
+          "type": "show",
+          "target": "btnCloseModal"
+        },
+        {
+          "type": "show",
+          "target": "pnlActionModal"
+        }
+      ]
+    },
+    "btnCloseModal.Click": {
+      "action": "",
+      "inputs": {},
+      "onSuccess": [
+        {
+          "type": "hide",
+          "target": "pnlActionModal"
+        },
+        {
+          "type": "hide",
+          "target": "labModalMessage"
+        },
+        {
+          "type": "hide",
+          "target": "btnCloseModal"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartNoId"
+        },
+        {
+          "type": "clear",
+          "target": "hidPartProcessId"
+        },
+        {
+          "type": "clear",
+          "target": "hidScannedCode"
+        },
+        {
+          "type": "setText",
+          "target": "labScanState",
+          "value": "等待扫描 QRCode"
+        },
+        {
+          "type": "focus",
+          "target": "txtQRCode"
+        }
+      ],
+      "onError": []
+    }
+  }
+}

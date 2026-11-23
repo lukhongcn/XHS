@@ -25,12 +25,14 @@
             </div>
             <asp:Panel ID="pnlActionModal" runat="server" CssClass="workflow-modal-mask" Visible="false" role="dialog" aria-modal="true">
                 <div class="workflow-modal">
+                    <asp:Label ID="labModalMessage" runat="server" CssClass="workflow-status workflow-error" Visible="false" />
                     <asp:GridView ID="gvActions" runat="server" AutoGenerateColumns="false" GridLines="None" CssClass="workflow-actions-grid">
                         <Columns>
                             <asp:TemplateField>
                                 <ItemTemplate>
                                     <asp:Button ID="btnAction" runat="server" CssClass="workflow-action"
                                         Text='<%# Eval("Text") %>'
+                                        CommandName='<%# Eval("Code") %>'
                                         CommandArgument='<%# Eval("Code") %>'
                                         OnClick="ActionButton_Click"
                                         style='<%# "background-color:" + Eval("Color") + ";color:" + Eval("TextColor") + ";" %>' />
@@ -38,6 +40,8 @@
                             </asp:TemplateField>
                         </Columns>
                     </asp:GridView>
+                    <asp:Button ID="btnCloseModal" runat="server" Text="重新扫描" CssClass="workflow-action workflow-cancel"
+                        Visible="false" CausesValidation="false" OnClick="btnCloseModal_Click" />
                 </div>
             </asp:Panel>
             <asp:HiddenField ID="hidPartNoId" runat="server" />

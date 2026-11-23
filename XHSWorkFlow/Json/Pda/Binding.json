@@ -1,0 +1,492 @@
+{
+  "version": "2.0",
+  "actions": {
+    "PDA.SCAN": {
+      "bindingName": "PART_PROCESS_DECISION",
+      "steps": [
+        {
+          "id": "query",
+          "api": "PartProcess.QuerySnapshot",
+          "inputs": {
+            "partNoId": "$input.partNoId"
+          }
+        },
+        {
+          "id": "checkProcess",
+          "type": "assert",
+          "condition": {
+            "op": "notEmpty",
+            "value": "$steps.query.processes"
+          },
+          "errorCode": "PROCESS_NOT_FOUND",
+          "errorMessage": "没有找到对应的工序资料！"
+        },
+        {
+          "id": "ready",
+          "type": "select",
+          "source": "$steps.query.processes",
+          "where": {
+            "op": "and",
+            "conditions": [
+              {
+                "op": "equals",
+                "left": "$row.ProcessId",
+                "right": "$config.processId"
+              },
+              {
+                "op": "equals",
+                "left": "$row.StatusId",
+                "right": "$config.readyStatus"
+              }
+            ]
+          },
+          "output": "processes"
+        },
+        {
+          "id": "checkReady",
+          "type": "assert",
+          "condition": {
+            "op": "notEmpty",
+            "value": "$steps.ready.processes"
+          },
+          "errorCode": "READY_PROCESS_NOT_FOUND",
+          "errorMessage": "没有找到可处理的待判工序！"
+        },
+        {
+          "id": "checkUnique",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.ready.processes",
+            "right": 1
+          },
+          "errorCode": "MULTIPLE_READY_PROCESSES",
+          "errorMessage": "当前扫码匹配到多条待判工序，请联系管理员确认。"
+        }
+      ],
+      "outputs": {
+        "processes": "$steps.ready.processes"
+      }
+    },
+    "PDA.RECHECK": {
+      "bindingName": "PART_PROCESS_DECISION",
+      "lockKey": "$input.partNoId",
+      "steps": [
+        {
+          "id": "ready",
+          "api": "PartProcess.QueryReady",
+          "inputs": {
+            "partNoId": "$input.partNoId",
+            "processId": "$config.processId",
+            "statusId": "$config.readyStatus"
+          }
+        },
+        {
+          "id": "checkReady",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.ready.processes",
+            "right": 1
+          },
+          "errorCode": "READY_PROCESS_CHANGED",
+          "errorMessage": "当前工序已经变化，请重新扫描。"
+        },
+        {
+          "id": "checkExpectedId",
+          "type": "assert",
+          "condition": {
+            "op": "equals",
+            "left": "$steps.ready.processes[0].Id",
+            "right": "$input.expectedId"
+          },
+          "errorCode": "PROCESS_ID_CHANGED",
+          "errorMessage": "当前工序记录已经变化，请重新扫描。"
+        },
+        {
+          "id": "source",
+          "api": "PartProcess.QueryUpdateSource",
+          "inputs": {
+            "moduleId": "$steps.ready.processes[0].ModuleId",
+            "partNoId": "$steps.ready.processes[0].PartNo_Id"
+          }
+        },
+        {
+          "id": "selected",
+          "type": "select",
+          "source": "$steps.source.processes",
+          "where": {
+            "op": "and",
+            "conditions": [
+              {
+                "op": "equals",
+                "left": "$row.PartNo_Id",
+                "right": "$steps.ready.processes[0].PartNo_Id"
+              },
+              {
+                "op": "equals",
+                "left": "$row.ProcessNo",
+                "right": "$steps.ready.processes[0].ProcessNo"
+              },
+              {
+                "op": "equals",
+                "left": "$row.ProcessId",
+                "right": "$config.processId"
+              },
+              {
+                "op": "equals",
+                "left": "$row.StatusId",
+                "right": "$config.readyStatus"
+              }
+            ]
+          },
+          "output": "processes"
+        },
+        {
+          "id": "checkSource",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.selected.processes",
+            "right": 1
+          },
+          "errorCode": "UPDATE_SOURCE_NOT_FOUND",
+          "errorMessage": "未找到对应的完整工序资料，未执行动作。"
+        },
+        {
+          "id": "setStatus",
+          "type": "set",
+          "source": "$steps.selected.processes",
+          "set": {
+            "StatusId": "Ready"
+          },
+          "output": "processes"
+        },
+        {
+          "id": "setUnnormal",
+          "type": "set",
+          "when": {
+            "op": "equals",
+            "left": false,
+            "right": true
+          },
+          "source": "$steps.setStatus.processes",
+          "set": {
+            "IsUnnormal": 1
+          },
+          "output": "processes"
+        },
+        {
+          "id": "update",
+          "api": "PartProcess.Update",
+          "inputs": {
+            "processes": "$steps.setStatus.processes"
+          }
+        },
+        {
+          "id": "checkUpdate",
+          "type": "assert",
+          "condition": {
+            "op": "greaterThan",
+            "left": "$steps.update.affectedRows",
+            "right": 0
+          },
+          "errorCode": "PROCESS_UPDATE_FAILED",
+          "errorMessage": "没有更新到工序记录，可能已被其他人处理。"
+        },
+        {
+          "id": "snapshot",
+          "api": "PartProcess.QuerySnapshot",
+          "inputs": {
+            "partNoId": "$input.partNoId"
+          }
+        }
+      ],
+      "outputs": {
+        "currentProcess": "$steps.ready.processes[0]",
+        "affectedRows": "$steps.update.affectedRows",
+        "snapshotProcesses": "$steps.snapshot.processes"
+      }
+    },
+    "PDA.SCRAP": {
+      "bindingName": "PART_PROCESS_DECISION",
+      "lockKey": "$input.partNoId",
+      "steps": [
+        {
+          "id": "ready",
+          "api": "PartProcess.QueryReady",
+          "inputs": {
+            "partNoId": "$input.partNoId",
+            "processId": "$config.processId",
+            "statusId": "$config.readyStatus"
+          }
+        },
+        {
+          "id": "checkReady",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.ready.processes",
+            "right": 1
+          },
+          "errorCode": "READY_PROCESS_CHANGED",
+          "errorMessage": "当前工序已经变化，请重新扫描。"
+        },
+        {
+          "id": "checkExpectedId",
+          "type": "assert",
+          "condition": {
+            "op": "equals",
+            "left": "$steps.ready.processes[0].Id",
+            "right": "$input.expectedId"
+          },
+          "errorCode": "PROCESS_ID_CHANGED",
+          "errorMessage": "当前工序记录已经变化，请重新扫描。"
+        },
+        {
+          "id": "source",
+          "api": "PartProcess.QueryUpdateSource",
+          "inputs": {
+            "moduleId": "$steps.ready.processes[0].ModuleId",
+            "partNoId": "$steps.ready.processes[0].PartNo_Id"
+          }
+        },
+        {
+          "id": "selected",
+          "type": "select",
+          "source": "$steps.source.processes",
+          "where": {
+            "op": "and",
+            "conditions": [
+              {
+                "op": "equals",
+                "left": "$row.PartNo_Id",
+                "right": "$steps.ready.processes[0].PartNo_Id"
+              },
+              {
+                "op": "equals",
+                "left": "$row.ProcessNo",
+                "right": "$steps.ready.processes[0].ProcessNo"
+              },
+              {
+                "op": "equals",
+                "left": "$row.ProcessId",
+                "right": "$config.processId"
+              },
+              {
+                "op": "equals",
+                "left": "$row.StatusId",
+                "right": "$config.readyStatus"
+              }
+            ]
+          },
+          "output": "processes"
+        },
+        {
+          "id": "checkSource",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.selected.processes",
+            "right": 1
+          },
+          "errorCode": "UPDATE_SOURCE_NOT_FOUND",
+          "errorMessage": "未找到对应的完整工序资料，未执行动作。"
+        },
+        {
+          "id": "setStatus",
+          "type": "set",
+          "source": "$steps.selected.processes",
+          "set": {
+            "StatusId": "Rejected"
+          },
+          "output": "processes"
+        },
+        {
+          "id": "setUnnormal",
+          "type": "set",
+          "when": {
+            "op": "equals",
+            "left": true,
+            "right": true
+          },
+          "source": "$steps.setStatus.processes",
+          "set": {
+            "IsUnnormal": 1
+          },
+          "output": "processes"
+        },
+        {
+          "id": "update",
+          "api": "PartProcess.Update",
+          "inputs": {
+            "processes": "$steps.setStatus.processes"
+          }
+        },
+        {
+          "id": "checkUpdate",
+          "type": "assert",
+          "condition": {
+            "op": "greaterThan",
+            "left": "$steps.update.affectedRows",
+            "right": 0
+          },
+          "errorCode": "PROCESS_UPDATE_FAILED",
+          "errorMessage": "没有更新到工序记录，可能已被其他人处理。"
+        },
+        {
+          "id": "snapshot",
+          "api": "PartProcess.QuerySnapshot",
+          "inputs": {
+            "partNoId": "$input.partNoId"
+          }
+        }
+      ],
+      "outputs": {
+        "currentProcess": "$steps.ready.processes[0]",
+        "affectedRows": "$steps.update.affectedRows",
+        "snapshotProcesses": "$steps.snapshot.processes"
+      }
+    },
+    "PDA.PACK": {
+      "bindingName": "PART_PROCESS_DECISION",
+      "lockKey": "$input.partNoId",
+      "steps": [
+        {
+          "id": "ready",
+          "api": "PartProcess.QueryReady",
+          "inputs": {
+            "partNoId": "$input.partNoId",
+            "processId": "$config.processId",
+            "statusId": "$config.readyStatus"
+          }
+        },
+        {
+          "id": "checkReady",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.ready.processes",
+            "right": 1
+          },
+          "errorCode": "READY_PROCESS_CHANGED",
+          "errorMessage": "当前工序已经变化，请重新扫描。"
+        },
+        {
+          "id": "checkExpectedId",
+          "type": "assert",
+          "condition": {
+            "op": "equals",
+            "left": "$steps.ready.processes[0].Id",
+            "right": "$input.expectedId"
+          },
+          "errorCode": "PROCESS_ID_CHANGED",
+          "errorMessage": "当前工序记录已经变化，请重新扫描。"
+        },
+        {
+          "id": "source",
+          "api": "PartProcess.QueryUpdateSource",
+          "inputs": {
+            "moduleId": "$steps.ready.processes[0].ModuleId",
+            "partNoId": "$steps.ready.processes[0].PartNo_Id"
+          }
+        },
+        {
+          "id": "selected",
+          "type": "select",
+          "source": "$steps.source.processes",
+          "where": {
+            "op": "and",
+            "conditions": [
+              {
+                "op": "equals",
+                "left": "$row.PartNo_Id",
+                "right": "$steps.ready.processes[0].PartNo_Id"
+              },
+              {
+                "op": "equals",
+                "left": "$row.ProcessNo",
+                "right": "$steps.ready.processes[0].ProcessNo"
+              },
+              {
+                "op": "equals",
+                "left": "$row.ProcessId",
+                "right": "$config.processId"
+              },
+              {
+                "op": "equals",
+                "left": "$row.StatusId",
+                "right": "$config.readyStatus"
+              }
+            ]
+          },
+          "output": "processes"
+        },
+        {
+          "id": "checkSource",
+          "type": "assert",
+          "condition": {
+            "op": "countEquals",
+            "left": "$steps.selected.processes",
+            "right": 1
+          },
+          "errorCode": "UPDATE_SOURCE_NOT_FOUND",
+          "errorMessage": "未找到对应的完整工序资料，未执行动作。"
+        },
+        {
+          "id": "setStatus",
+          "type": "set",
+          "source": "$steps.selected.processes",
+          "set": {
+            "StatusId": "Implementation"
+          },
+          "output": "processes"
+        },
+        {
+          "id": "setUnnormal",
+          "type": "set",
+          "when": {
+            "op": "equals",
+            "left": false,
+            "right": true
+          },
+          "source": "$steps.setStatus.processes",
+          "set": {
+            "IsUnnormal": 1
+          },
+          "output": "processes"
+        },
+        {
+          "id": "update",
+          "api": "PartProcess.Update",
+          "inputs": {
+            "processes": "$steps.setStatus.processes"
+          }
+        },
+        {
+          "id": "checkUpdate",
+          "type": "assert",
+          "condition": {
+            "op": "greaterThan",
+            "left": "$steps.update.affectedRows",
+            "right": 0
+          },
+          "errorCode": "PROCESS_UPDATE_FAILED",
+          "errorMessage": "没有更新到工序记录，可能已被其他人处理。"
+        },
+        {
+          "id": "snapshot",
+          "api": "PartProcess.QuerySnapshot",
+          "inputs": {
+            "partNoId": "$input.partNoId"
+          }
+        }
+      ],
+      "outputs": {
+        "currentProcess": "$steps.ready.processes[0]",
+        "affectedRows": "$steps.update.affectedRows",
+        "snapshotProcesses": "$steps.snapshot.processes"
+      }
+    }
+  }
+}

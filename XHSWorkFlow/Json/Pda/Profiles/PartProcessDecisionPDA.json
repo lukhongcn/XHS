@@ -1,4 +1,4 @@
-﻿{
+{
   "profileId": "PART_PROCESS_DECISION",
   "pageTitle": "工序质量判定 PDA",
   "permission": {
@@ -22,41 +22,35 @@
     "processGrid": {
       "source": "view.readyPartProcesses",
       "columns": [
-        { "field": "RowNumber", "title": "序号", "type": "index" },
-        { "field": "Customer", "title": "客户" },
-        { "field": "PartNo_Id", "title": "零件编号" },
-        { "field": "ScannedCode", "title": "零件编码" },
-        { "field": "ReplaceQRCode", "title": "替换QRCode" },
-        { "field": "ProcessNo", "title": "ProcessNo", "visible": false },
-        { "field": "ActionText", "title": "操作" }
-      ]
-    },
-    "actionDialog": {
-      "title": "请选择处理动作",
-      "actions": [
         {
-          "code": "RECHECK",
-          "text": "重新检测",
-          "color": "#5B9BD5",
-          "textColor": "#FFFFFF",
-          "operatorId": "partprocess.recheck.execute",
-          "targetStatusId": "Ready"
+          "field": "RowNumber",
+          "title": "序号",
+          "type": "index"
         },
         {
-          "code": "SCRAP",
-          "text": "报废",
-          "color": "#FFD966",
-          "textColor": "#333333",
-          "operatorId": "partprocess.scrap.execute",
-          "targetStatusId": "Rejected"
+          "field": "Customer",
+          "title": "客户"
         },
         {
-          "code": "PACK",
-          "text": "直接装箱",
-          "color": "#D9534F",
-          "textColor": "#FFFFFF",
-          "operatorId": "partprocess.pack.execute",
-          "targetStatusId": "Implementation"
+          "field": "PartNo_Id",
+          "title": "零件编号"
+        },
+        {
+          "field": "ScannedCode",
+          "title": "零件编码"
+        },
+        {
+          "field": "ReplaceQRCode",
+          "title": "替换QRCode"
+        },
+        {
+          "field": "ProcessNo",
+          "title": "ProcessNo",
+          "visible": false
+        },
+        {
+          "field": "ActionText",
+          "title": "操作"
         }
       ]
     }

@@ -59,14 +59,12 @@ namespace XHS.service
             PdaProfileDefinition profile = LoadJson<PdaProfileDefinition>(catalogItem.File);
             ValidateProfileIdentity(catalogItem, profile);
 
-            PdaOperatorRegistry registry = LoadOperatorRegistry();
-            ValidateProfile(profile, registry);
+            ValidateProfile(profile);
 
             return new PdaWorkFlowDefinition
             {
                 Catalog = catalogItem,
-                Profile = profile,
-                Operators = registry
+                Profile = profile
             };
         }
 
@@ -93,7 +91,7 @@ namespace XHS.service
             PdaWorkFlowDefinition definition,
             string actionCode)
         {
-            if (definition == null || definition.Profile == null || definition.Operators == null)
+            if (definition == null || definition.Profile == null)
             {
                 throw new PdaWorkFlowConfigurationException("PDA 工作流配置未加载。");
             }
@@ -110,12 +108,6 @@ namespace XHS.service
                 throw new PdaWorkFlowActionException("当前 Profile 不允许动作：" + (actionCode ?? string.Empty));
             }
 
-            if (string.IsNullOrWhiteSpace(action.OperatorId))
-            {
-                throw new PdaWorkFlowActionException("动作没有绑定算子：" + action.Code);
-            }
-
-            definition.Operators.Resolve(action.OperatorId);
             return action;
         }
 
@@ -135,9 +127,7 @@ namespace XHS.service
             }
         }
 
-        private static void ValidateProfile(
-            PdaProfileDefinition profile,
-            PdaOperatorRegistry registry)
+        private static void ValidateProfile(PdaProfileDefinition profile)
         {
             if (string.IsNullOrWhiteSpace(profile.PageTitle))
             {
@@ -152,32 +142,10 @@ namespace XHS.service
                     "Profile 必须同时配置 read 和 write 权限：" + profile.ProfileId);
             }
 
-            if (profile.Ui == null || profile.Ui.ActionDialog == null
-                || profile.Ui.ActionDialog.Actions == null
-                || profile.Ui.ActionDialog.Actions.Count == 0)
+            if (profile.Ui == null || profile.Ui.ProcessGrid == null)
             {
                 throw new PdaWorkFlowConfigurationException(
-                    "Profile 没有配置动作：" + profile.ProfileId);
-            }
-
-            HashSet<string> actionCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (PdaActionDefinition action in profile.Ui.ActionDialog.Actions)
-            {
-                if (action == null || string.IsNullOrWhiteSpace(action.Code)
-                    || string.IsNullOrWhiteSpace(action.Text)
-                    || string.IsNullOrWhiteSpace(action.OperatorId))
-                {
-                    throw new PdaWorkFlowConfigurationException(
-                        "Profile 存在不完整的动作定义：" + profile.ProfileId);
-                }
-
-                if (!actionCodes.Add(action.Code))
-                {
-                    throw new PdaWorkFlowConfigurationException(
-                        "Profile 存在重复动作代码：" + action.Code);
-                }
-
-                registry.Resolve(action.OperatorId);
+                    "Profile 没有配置工序 GridView：" + profile.ProfileId);
             }
         }
 

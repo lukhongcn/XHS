@@ -165,6 +165,13 @@
     <Compile Include="PDAWorkFlow.aspx.designer.cs">
       <DependentUpon>PDAWorkFlow.aspx</DependentUpon>
     </Compile>
+    <Compile Include="PDAWorkFlowApiHandlers.cs" />
+    <Compile Include="FXWorkFlow.aspx.cs">
+      <DependentUpon>FXWorkFlow.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="FXWorkFlow.aspx.designer.cs">
+      <DependentUpon>FXWorkFlow.aspx</DependentUpon>
+    </Compile>
     <Compile Include="XWDPartMasterList.aspx.cs">
       <DependentUpon>XWDPartMasterList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -371,6 +378,13 @@
     <Content Include="PartModifyEdit.aspx" />
     <Content Include="PartModifyList.aspx" />
     <Content Include="PDAWorkFlow.aspx" />
+    <Content Include="FXWorkFlow.aspx" />
+    <Content Include="Json\Pda\Binding.json" />
+    <Content Include="Json\Pda\Page.json" />
+    <Content Include="Json\Pda\Catalog\PdaProfileCatalog.json" />
+    <Content Include="Json\Pda\Profiles\PartProcessDecisionPDA.json" />
+    <Content Include="Json\Pda\Register.json" />
+    <Content Include="Json\Pda\Registry\PdaOperatorRegistry.json" />
     <Content Include="PLCResultList.aspx" />
     <Content Include="ScanFlowStep.aspx" />
     <Content Include="GSPartMasterUpload.aspx" />

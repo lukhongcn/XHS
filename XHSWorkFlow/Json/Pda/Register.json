@@ -1,0 +1,69 @@
+{
+  "version": "2.0",
+  "apis": {
+    "PartProcess.QueryReady": {
+      "service": "XHS.BLL.XHSPartPartProcess",
+      "method": "GetPartProcessesByPartNoIdAndProcessIdAndStatusId",
+      "parameters": ["partNoId", "processId", "statusId"],
+      "output": "processes",
+      "outputType": "XHSPartProcessInfoList",
+      "operation": "query",
+      "permission": "PQUERY",
+      "inputs": {
+        "partNoId": { "type": "string", "required": true },
+        "processId": { "type": "string", "required": true },
+        "statusId": { "type": "string", "required": true }
+      },
+      "outputs": {
+        "processes": { "type": "PartProcessList", "required": true }
+      }
+    },
+    "PartProcess.QuerySnapshot": {
+      "service": "XHS.BLL.XHSPartPartProcess",
+      "method": "GetPartProcessesByPartNoId",
+      "parameters": ["partNoId"],
+      "output": "processes",
+      "outputType": "XHSPartProcessInfoList",
+      "operation": "query",
+      "permission": "PQUERY",
+      "inputs": {
+        "partNoId": { "type": "string", "required": true }
+      },
+      "outputs": {
+        "processes": { "type": "PartProcessList", "required": true }
+      }
+    },
+    "PartProcess.QueryUpdateSource": {
+      "service": "ModuleWorkFlow.BLL.PartPartProcess",
+      "method": "getListPartProcessInfo",
+      "parameters": ["moduleId", "partNoId"],
+      "output": "processes",
+      "outputType": "PartProcessList",
+      "operation": "query",
+      "permission": "PQUERY",
+      "inputs": {
+        "moduleId": { "type": "string", "required": true },
+        "partNoId": { "type": "string", "required": true }
+      },
+      "outputs": {
+        "processes": { "type": "PartProcessList", "required": true }
+      }
+    },
+    "PartProcess.Update": {
+      "service": "ModuleWorkFlow.business.PartProcess",
+      "method": "UpdatePartProcessFromModifyEdit",
+      "static": true,
+      "parameters": ["processes"],
+      "output": "affectedRows",
+      "outputType": "integer",
+      "operation": "write",
+      "permission": "PEDIT",
+      "inputs": {
+        "processes": { "type": "PartProcessList", "required": true }
+      },
+      "outputs": {
+        "affectedRows": { "type": "integer", "required": true }
+      }
+    }
+  }
+}

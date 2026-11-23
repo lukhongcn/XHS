@@ -15,7 +15,9 @@ namespace ModuleWorkFlow
         protected global::System.Web.UI.WebControls.Label labMessage;
         protected global::System.Web.UI.WebControls.GridView gvPartProcesses;
         protected global::System.Web.UI.WebControls.Panel pnlActionModal;
+        protected global::System.Web.UI.WebControls.Label labModalMessage;
         protected global::System.Web.UI.WebControls.GridView gvActions;
+        protected global::System.Web.UI.WebControls.Button btnCloseModal;
         protected global::System.Web.UI.WebControls.HiddenField hidPartNoId;
         protected global::System.Web.UI.WebControls.HiddenField hidPartProcessId;
         protected global::System.Web.UI.WebControls.HiddenField hidScannedCode;
