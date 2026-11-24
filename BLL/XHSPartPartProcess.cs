@@ -18,6 +18,11 @@ namespace XHS.BLL
     /// </summary>
     public class XHSPartPartProcess
     {
+        private const string RecheckProcessId = "QMJC";
+        private const string ReadyStatusId = "Ready";
+        private const string ImplementationStatusId = "Implementation";
+        private const string PendingStatusId = "Pending";
+
         private readonly IXHSPartPartProcess dal;
 
         public XHSPartPartProcess()
@@ -37,6 +42,54 @@ namespace XHS.BLL
         public List<XHSPartPartProcessInfo> GetPartProcessesByPartNoId(string partNoId)
         {
             return dal.GetPartProcessesByPartNoId(partNoId);
+        }
+
+        public List<PartPartProcessInfo> GetPartProcessInfoListByPartNoId(string partNoId)
+        {
+            List<XHSPartPartProcessInfo> infos =
+                GetPartProcessesByPartNoId(partNoId) ?? new List<XHSPartPartProcessInfo>();
+            return infos.Where(item => item != null)
+                .Select(ToPartProcessInfo)
+                .ToList();
+        }
+
+        public List<PartPartProcessInfo> GetPartProcessInfoListFromProcessNo(
+            string partNoId,
+            int processNo)
+        {
+            List<PartPartProcessInfo> processes =
+                GetPartProcessInfoListByPartNoId(NormalizeValue(partNoId));
+            PartPartProcessInfo current = processes.FirstOrDefault(item =>
+                item != null && item.ProcessNo == processNo);
+            if (current == null)
+            {
+                throw new InvalidOperationException(
+                    "未找到 ProcessNo " + processNo + " 对应的工序资料。");
+            }
+
+            return processes.Where(item =>
+                    item != null && item.ProcessOrder >= current.ProcessOrder)
+                .OrderBy(item => item.ProcessOrder)
+                .ThenBy(item => item.ProcessNo)
+                .ToList();
+        }
+
+        public ModuleWorkFlow.Model.ParamterInfo UpdatePartProcessFromModifyEdit(
+            List<PartPartProcessInfo> source)
+        {
+            return dal.UpdatePartProcessFromModifyEdit(source);
+        }
+
+        public ModuleWorkFlow.Model.ParamterInfo updateDiscount(string partNoId)
+        {
+            return dal.updateDiscount(partNoId);
+        }
+
+        public ModuleWorkFlow.Model.ParamterInfo UpdatePartNoId(
+            string partNoId,
+            string replacementPartNoId)
+        {
+            return dal.UpdatePartNoId(partNoId, replacementPartNoId);
         }
 
         public List<XHSPartPartProcessInfo> GetPartProcessesByPartNoIdAndProcessIdAndStatusId(
@@ -239,6 +292,78 @@ namespace XHS.BLL
 
             object result = Data.getDataScalar(queryString, pars);
             return result == null ? -1 : Convert.ToInt32(result);
+        }
+
+        private static void ApplyReplacementQRCode(
+            PartPartProcessInfo process,
+            string originalPartNoId,
+            string replacementQRCode)
+        {
+            if (process == null || replacementQRCode.Length == 0)
+                return;
+
+            process.PartNo_Id = replacementQRCode;
+            process.SameProcessNo = originalPartNoId + ",";
+        }
+
+        private static PartPartProcessInfo CloneProcess(PartPartProcessInfo source)
+        {
+            return new PartPartProcessInfo
+            {
+                ModuleId = source.ModuleId,
+                PartNo = source.PartNo,
+                PartNo_Id = source.PartNo_Id,
+                ProcessId = source.ProcessId,
+                ProcessNeedMinutes = source.ProcessNeedMinutes,
+                Priority = source.Priority,
+                StartDate = source.StartDate,
+                SelfStartDate = source.SelfStartDate,
+                SelfEndDate = source.SelfEndDate,
+                isConfirm = source.isConfirm,
+                ProcessComment = source.ProcessComment,
+                ProcessMachineId = source.ProcessMachineId,
+                IsUnnormal = source.IsUnnormal,
+                UnNormalReasonsId = source.UnNormalReasonsId,
+                DepartMentId = source.DepartMentId,
+                NeedProduct = source.NeedProduct,
+                CustomerProcessId = source.CustomerProcessId,
+                RelationPartNo = source.RelationPartNo,
+                RelationPartNoId = source.RelationPartNoId,
+                SameProcessNo = source.SameProcessNo,
+                Ispcnc = source.Ispcnc
+            };
+        }
+
+        private static PartPartProcessInfo ToPartProcessInfo(XHSPartPartProcessInfo source)
+        {
+            return new PartPartProcessInfo
+            {
+                ModuleId = source.ModuleId,
+                PartNo = source.PartNo,
+                PartNo_Id = source.PartNo_Id,
+                ProcessNo = source.ProcessNo ?? 0,
+                ProcessId = source.ProcessId,
+                ProcessNeedMinutes = source.ProcessNeedMinutes ?? 0,
+                ProcessOrder = source.ProcessOrder ?? 0,
+                StatusId = source.StatusId,
+                ProcessComment = source.ProcessComment,
+                ProcessMachineId = source.ProcessMachineId,
+                IsUnnormal = source.IsUnnormal ?? 0,
+                UnNormalReasonsId = source.UnNormalReasonsId ?? 0,
+                DepartMentId = source.DepartmentId ?? 0,
+                NeedProduct = source.NeedProduct ?? 0,
+                CustomerProcessId = source.CustomerProcessId,
+                RelationPartNo = source.RelationPartNo,
+                RelationPartNoId = source.RelationPartNoId
+            };
+        }
+
+        private static string NormalizeValue(string value)
+        {
+            return (value ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Trim();
         }
     }
 }

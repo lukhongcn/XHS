@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using ModuleWorkFlow.Model;
 using Utility;
 using XHS.IDAL;
 using XHS.Model;
@@ -193,6 +194,175 @@ namespace XHS.MSSQL
             };
 
             return _getBarcodePartProcessInfo(queryString, parameters);
+        }
+
+        public ModuleWorkFlow.Model.ParamterInfo UpdatePartProcessFromModifyEdit(
+            List<PartPartProcessInfo> source)
+        {
+            const string queryString = @"
+if @ProcessNo = 0
+begin
+    insert into tb_partprocess
+    (ModuleId, PartNo, ProcessId, PartNo_Id, StatusId, ProcessNeedMinutes,
+     ProcessOrder, priority, StartDate, SelfStartDate, SelfEndDate, isConfirm,
+     processComment, processMachineid, isUnnormal, unNormalReasonsId, departMentId,
+     SameProcessNo, DiscardCount)
+    values
+    (@ModuleId, @PartNo, @ProcessId, @PartNo_Id, @StatusId, @ProcessNeedMinutes,
+     @ProcessOrder, @priority, @StartDate, @SelfStartDate, @SelfEndDate, @isConfirm,
+     @processComment, @processMachineid, @isUnnormal, @unNormalReasonsId, @departMentId,
+     @SameProcessNo, @DiscardCount);
+
+    declare @NewPartProcessId int;
+    set @NewPartProcessId = convert(int, scope_identity());
+    update tb_partprocess set ProcessNo = @NewPartProcessId where id = @NewPartProcessId;
+end
+else
+begin
+    update tb_partprocess set
+        ProcessId = @ProcessId,
+        StatusId = @StatusId,
+        ProcessNeedMinutes = @ProcessNeedMinutes,
+        ProcessOrder = @ProcessOrder,
+        priority = @priority,
+        StartDate = @StartDate,
+        SelfStartDate = @SelfStartDate,
+        SelfEndDate = @SelfEndDate,
+        isConfirm = @isConfirm,
+        processComment = @processComment,
+        processMachineid = @processMachineid,
+        isUnnormal = @isUnnormal,
+        unNormalReasonsId = @unNormalReasonsId,
+        departMentId = @departMentId,
+        DiscardCount = @DiscardCount,
+        PartNo_Id = @PartNo_Id,
+        SameProcessNo = case
+            when @SameProcessNo is null or @SameProcessNo=N'' then SameProcessNo
+            else @SameProcessNo
+        end
+    where ModuleId = @ModuleId and ProcessNo = @ProcessNo;
+end";
+
+            ModuleWorkFlow.Model.ParamterInfo parameterInfo =
+                new ModuleWorkFlow.Model.ParamterInfo
+                {
+                    Sql = queryString,
+                    Type = CommandType.Text,
+                    AlSQL = new ArrayList(),
+                    AlPAR = new ArrayList(),
+                    AlCOM = new ArrayList()
+                };
+
+            foreach (PartPartProcessInfo process in source ?? new List<PartPartProcessInfo>())
+            {
+                if (process == null)
+                    continue;
+
+                parameterInfo.AlSQL.Add(queryString);
+                parameterInfo.AlPAR.Add(BuildPartProcessParameters(process));
+                parameterInfo.AlCOM.Add(CommandType.Text);
+            }
+
+            return parameterInfo;
+        }
+
+        public ModuleWorkFlow.Model.ParamterInfo updateDiscount(string partNoId)
+        {
+            const string queryString =
+                "update tb_partprocess set DiscardCount=1 " +
+                "where PartNo_Id=@PartNo_Id";
+            return new ModuleWorkFlow.Model.ParamterInfo
+            {
+                Sql = queryString,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList { queryString },
+                AlPAR = new ArrayList
+                {
+                    new[]
+                    {
+                        new SqlParameter("@PartNo_Id", SqlDbType.NVarChar, 100)
+                        {
+                            Value = (object)(partNoId ?? string.Empty).Trim()
+                        }
+                    }
+                },
+                AlCOM = new ArrayList { CommandType.Text }
+            };
+        }
+
+        public ModuleWorkFlow.Model.ParamterInfo UpdatePartNoId(
+            string partNoId,
+            string replacementPartNoId)
+        {
+            const string queryString =
+                "update tb_partprocess set PartNo_Id=@ReplacementPartNo_Id, " +
+                "SameProcessNo=@PartNo_Id + ',' " +
+                "where PartNo_Id=@PartNo_Id";
+            return new ModuleWorkFlow.Model.ParamterInfo
+            {
+                Sql = queryString,
+                Type = CommandType.Text,
+                AlSQL = new ArrayList { queryString },
+                AlPAR = new ArrayList
+                {
+                    new[]
+                    {
+                        new SqlParameter("@PartNo_Id", SqlDbType.NVarChar, 100)
+                        {
+                            Value = (object)(partNoId ?? string.Empty).Trim()
+                        },
+                        new SqlParameter("@ReplacementPartNo_Id", SqlDbType.NVarChar, 100)
+                        {
+                            Value = (object)(replacementPartNoId ?? string.Empty).Trim()
+                        }
+                    }
+                },
+                AlCOM = new ArrayList { CommandType.Text }
+            };
+        }
+
+        private static SqlParameter[] BuildPartProcessParameters(
+            PartPartProcessInfo process)
+        {
+            return new[]
+            {
+                new SqlParameter("@ProcessId", SqlDbType.NVarChar, 50) { Value = ToDbValue(process.ProcessId) },
+                new SqlParameter("@StatusId", SqlDbType.NVarChar, 50) { Value = ToDbValue(process.StatusId) },
+                new SqlParameter("@ProcessNeedMinutes", SqlDbType.Int) { Value = process.ProcessNeedMinutes },
+                new SqlParameter("@ProcessOrder", SqlDbType.Int) { Value = process.ProcessOrder },
+                new SqlParameter("@priority", SqlDbType.Int) { Value = process.Priority },
+                new SqlParameter("@StartDate", SqlDbType.DateTime) { Value = ToDbDate(process.StartDate) },
+                new SqlParameter("@SelfStartDate", SqlDbType.DateTime)
+                {
+                    Value = process.isConfirm == 1 ? ToDbDate(process.SelfStartDate) : DBNull.Value
+                },
+                new SqlParameter("@SelfEndDate", SqlDbType.DateTime)
+                {
+                    Value = process.isConfirm == 1 ? ToDbDate(process.SelfEndDate) : DBNull.Value
+                },
+                new SqlParameter("@isConfirm", SqlDbType.Int) { Value = process.isConfirm },
+                new SqlParameter("@processComment", SqlDbType.NVarChar) { Value = ToDbValue(process.ProcessComment) },
+                new SqlParameter("@processMachineid", SqlDbType.NVarChar) { Value = ToDbValue(process.ProcessMachineId) },
+                new SqlParameter("@isUnnormal", SqlDbType.Int) { Value = process.IsUnnormal },
+                new SqlParameter("@unNormalReasonsId", SqlDbType.Int) { Value = process.UnNormalReasonsId },
+                new SqlParameter("@departMentId", SqlDbType.Int) { Value = process.DepartMentId },
+                new SqlParameter("@ModuleId", SqlDbType.NVarChar, 50) { Value = ToDbValue(process.ModuleId) },
+                new SqlParameter("@PartNo_Id", SqlDbType.NVarChar, 50) { Value = ToDbValue(process.PartNo_Id) },
+                new SqlParameter("@ProcessNo", SqlDbType.Int) { Value = process.ProcessNo },
+                new SqlParameter("@PartNo", SqlDbType.NVarChar, 50) { Value = ToDbValue(process.PartNo) },
+                new SqlParameter("@SameProcessNo", SqlDbType.NVarChar, 500) { Value = ToDbValue(process.SameProcessNo) },
+                new SqlParameter("@DiscardCount", SqlDbType.Int) { Value = process.DiscardCount }
+            };
+        }
+
+        private static object ToDbDate(DateTime value)
+        {
+            return value == DateTime.MinValue ? (object)DBNull.Value : value;
+        }
+
+        private static object ToDbValue(object value)
+        {
+            return value ?? DBNull.Value;
         }
 
         private XHSPartPartProcessInfo _getBarcodePartProcessInfo(

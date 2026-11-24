@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ModuleWorkFlow.Model;
 using XHS.Model;
 
 namespace XHS.IDAL
@@ -25,5 +26,14 @@ namespace XHS.IDAL
             string partNoId,
             string processId,
             string statusId);
+
+        ModuleWorkFlow.Model.ParamterInfo UpdatePartProcessFromModifyEdit(
+            List<PartPartProcessInfo> source);
+
+        ModuleWorkFlow.Model.ParamterInfo updateDiscount(string partNoId);
+
+        ModuleWorkFlow.Model.ParamterInfo UpdatePartNoId(
+            string partNoId,
+            string replacementPartNoId);
     }
 }
