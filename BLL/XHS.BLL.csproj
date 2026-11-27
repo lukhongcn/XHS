@@ -100,6 +100,8 @@
     <Compile Include="PackingUnboundScanRecord.cs" />
     <Compile Include="PartMaster.cs" />
     <Compile Include="XHSPartPartProcess.cs" />
+    <Compile Include="PLCResult.cs" />
+    <Compile Include="PLCResultProcessService.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="ShippingGoodsLabelBuilder.cs" />
@@ -141,6 +143,10 @@
     <ProjectReference Include="..\XHS.DALFactory\XHS.DALFactory.csproj">
       <Project>{C961E696-6EA4-42E5-AFFC-B21673D07595}</Project>
       <Name>XHS.DALFactory</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\XHS.MSSQL\XHS.MSSQL.csproj">
+      <Project>{F2E31CB8-4C85-49B8-AC76-E4D01C0D0E5D}</Project>
+      <Name>XHS.MSSQL</Name>
     </ProjectReference>
     <ProjectReference Include="..\XHS.IDAL\XHS.IDAL.csproj">
       <Project>{EE584718-8A95-4115-AE35-8458AEF4222F}</Project>

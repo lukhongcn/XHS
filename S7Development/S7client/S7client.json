@@ -1,0 +1,85 @@
+{
+  "pollIntervalMs": 1000,
+  "heartbeatTimeoutSeconds": 5,
+  "plc": [
+    {
+      "ip": "192.168.0.150",
+      "rack": 0,
+      "slot": 1,
+      "db": 50,
+      "byteOffset": 266,
+      "plcHeartbeatBit": 0,
+      "mesHeartbeatBit": 7,
+      "interaction": {
+        "name": "交互[1]",
+        "db": 50,
+        "byteOffset": 266,
+        "bit": 1,
+        "initialValue": false,
+        "description": "气密给MES发送条码查询请求时，气密将其持续置True，得到MES反馈后False"
+      },
+      "partProcessResult": {
+        "name": "工序查询结果",
+        "db": 50,
+        "byteOffset": 266,
+        "bit": 2,
+        "initialValue": false,
+        "description": "条码对应工序状态为 Ready 时置True，否则置False"
+      },
+      "partProcessFailure": {
+        "name": "工序查询失败",
+        "db": 50,
+        "byteOffset": 266,
+        "bit": 3,
+        "initialValue": false,
+        "description": "条码查询失败时置True，查询成功时置False"
+      },
+      "judgement": {
+        "name": "判定结果",
+        "db": 50,
+        "byteOffset": 262,
+        "length": 2,
+        "description": "PLC写入：0异常、1合格、2不合格；MES读取"
+      },
+      "readPermission": {
+        "name": "允许读取",
+        "db": 50,
+        "byteOffset": 266,
+        "bit": 4,
+        "initialValue": false,
+        "description": "允许MES读取数据时置True"
+      },
+      "testValue": {
+        "name": "测试值",
+        "db": 50,
+        "byteOffset": 258,
+        "length": 4,
+        "description": "REAL 测试值"
+      },
+      "saveStatus": {
+        "name": "PLC结果保存状态",
+        "db": 50,
+        "byteOffset": 266,
+        "bit": 5,
+        "initialValue": false,
+        "description": "数据库或本地 PLCResult.txt 保存成功时置True"
+      },
+      "saveFailure": {
+        "name": "PLC结果保存失败",
+        "db": 50,
+        "byteOffset": 266,
+        "bit": 6,
+        "initialValue": false,
+        "description": "数据库和本地 PLCResult.txt 都保存失败时置True"
+      },
+      "barcode": {
+        "name": "条码",
+        "db": 50,
+        "byteOffset": 2,
+        "maxLength": 64,
+        "encoding": "ASCII",
+        "description": "条码存放在 DB50.2.0 起始位置"
+      }
+    }
+  ]
+}

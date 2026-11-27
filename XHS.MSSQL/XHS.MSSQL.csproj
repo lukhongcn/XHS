@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ModuleWorkFlow.Model">
+      <HintPath>..\XHSWorkFlow\bin\ModuleWorkFlow.Model.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -49,6 +52,7 @@
     <Compile Include="PackingUnboundScanRecord.cs" />
     <Compile Include="PartMaster.cs" />
     <Compile Include="XHSPartPartProcess.cs" />
+    <Compile Include="PLCResult.cs" />
     <Compile Include="PrintRecord.cs" />
     <Compile Include="ReprintReason.cs" />
     <Compile Include="LabelCodeRuleField.cs" />

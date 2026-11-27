@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>S7client</AssemblyName>
+    <RootNamespace>S7client</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputPath>bin\Release\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="S7netplus" Version="0.20.0" />
+    <None Include="S7client.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="XHS.BLL">
+      <HintPath>..\..\BLL\bin\Debug\XHS.BLL.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="XHS.DALFactory">
+      <HintPath>..\..\XHS.DALFactory\bin\Debug\XHS.DALFactory.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="XHS.IDAL">
+      <HintPath>..\..\XHS.IDAL\bin\Debug\XHS.IDAL.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="XHS.MSSQL">
+      <HintPath>..\..\XHS.MSSQL\bin\Debug\XHS.MSSQL.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="XHS.Model">
+      <HintPath>..\..\Model\bin\Debug\XHS.Model.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Utility">
+      <HintPath>..\..\Utility\bin\Debug\Utility.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
